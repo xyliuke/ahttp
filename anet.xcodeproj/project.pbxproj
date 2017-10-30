@@ -1,0 +1,583 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 48;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		6135E635DFA9CE3FE898B8D4 /* uv_wrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135E2A0832EA6891E99CE15 /* uv_wrapper.cpp */; };
+		E3786C741F98A13A00AD5C88 /* common_callback.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3786C721F98A13A00AD5C88 /* common_callback.cpp */; };
+		E385F3FC1F973D5B00E26281 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = E385F3FB1F973D5B00E26281 /* AppDelegate.m */; };
+		E385F3FF1F973D5B00E26281 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = E385F3FE1F973D5B00E26281 /* ViewController.mm */; };
+		E385F4011F973D5B00E26281 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E385F4001F973D5B00E26281 /* Assets.xcassets */; };
+		E385F4041F973D5B00E26281 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E385F4021F973D5B00E26281 /* Main.storyboard */; };
+		E385F4071F973D5B00E26281 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E385F4061F973D5B00E26281 /* main.m */; };
+		E385F50E1F97408700E26281 /* libuv.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E385F4F81F97407200E26281 /* libuv.a */; };
+		E385F5111F9740DC00E26281 /* atcp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E385F50F1F9740DC00E26281 /* atcp.cpp */; };
+		E39A09D91F9CE60900962656 /* string_parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E39A09D71F9CE60900962656 /* string_parser.cpp */; };
+		E3FA31351F9C61FD00DC851D /* ahttp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3FA31331F9C61FD00DC851D /* ahttp.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		6135E2A0832EA6891E99CE15 /* uv_wrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = uv_wrapper.cpp; sourceTree = "<group>"; };
+		6135EDBBFE73664E8A225FBF /* uv_wrapper.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = uv_wrapper.hpp; sourceTree = "<group>"; };
+		E3786C721F98A13A00AD5C88 /* common_callback.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = common_callback.cpp; sourceTree = "<group>"; };
+		E3786C731F98A13A00AD5C88 /* common_callback.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = common_callback.hpp; sourceTree = "<group>"; };
+		E385F3F71F973D5B00E26281 /* anet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = anet.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E385F3FA1F973D5B00E26281 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		E385F3FB1F973D5B00E26281 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		E385F3FD1F973D5B00E26281 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		E385F3FE1F973D5B00E26281 /* ViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
+		E385F4001F973D5B00E26281 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E385F4031F973D5B00E26281 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		E385F4051F973D5B00E26281 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E385F4061F973D5B00E26281 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		E385F4081F973D5B00E26281 /* anet.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = anet.entitlements; sourceTree = "<group>"; };
+		E385F4D21F973FC200E26281 /* uv-posix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-posix.h"; sourceTree = "<group>"; };
+		E385F4D31F973FC200E26281 /* uv-unix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-unix.h"; sourceTree = "<group>"; };
+		E385F4D41F973FC200E26281 /* uv-threadpool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-threadpool.h"; sourceTree = "<group>"; };
+		E385F4D51F973FC200E26281 /* uv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = uv.h; sourceTree = "<group>"; };
+		E385F4D61F973FC200E26281 /* uv-win.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-win.h"; sourceTree = "<group>"; };
+		E385F4D71F973FC200E26281 /* uv-aix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-aix.h"; sourceTree = "<group>"; };
+		E385F4D81F973FC200E26281 /* uv-errno.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-errno.h"; sourceTree = "<group>"; };
+		E385F4D91F973FC200E26281 /* tree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tree.h; sourceTree = "<group>"; };
+		E385F4DA1F973FC200E26281 /* uv-os390.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-os390.h"; sourceTree = "<group>"; };
+		E385F4DB1F973FC200E26281 /* uv-sunos.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-sunos.h"; sourceTree = "<group>"; };
+		E385F4DC1F973FC200E26281 /* android-ifaddrs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "android-ifaddrs.h"; sourceTree = "<group>"; };
+		E385F4DD1F973FC200E26281 /* uv-version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-version.h"; sourceTree = "<group>"; };
+		E385F4DE1F973FC200E26281 /* uv-darwin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-darwin.h"; sourceTree = "<group>"; };
+		E385F4DF1F973FC200E26281 /* uv-bsd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-bsd.h"; sourceTree = "<group>"; };
+		E385F4E01F973FC200E26281 /* stdint-msvc2008.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "stdint-msvc2008.h"; sourceTree = "<group>"; };
+		E385F4E11F973FC200E26281 /* uv-linux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-linux.h"; sourceTree = "<group>"; };
+		E385F4E21F973FC200E26281 /* pthread-barrier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "pthread-barrier.h"; sourceTree = "<group>"; };
+		E385F4E71F97407200E26281 /* uv-posix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-posix.h"; sourceTree = "<group>"; };
+		E385F4E81F97407200E26281 /* uv-unix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-unix.h"; sourceTree = "<group>"; };
+		E385F4E91F97407200E26281 /* uv-threadpool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-threadpool.h"; sourceTree = "<group>"; };
+		E385F4EA1F97407200E26281 /* uv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = uv.h; sourceTree = "<group>"; };
+		E385F4EB1F97407200E26281 /* uv-win.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-win.h"; sourceTree = "<group>"; };
+		E385F4EC1F97407200E26281 /* uv-aix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-aix.h"; sourceTree = "<group>"; };
+		E385F4ED1F97407200E26281 /* uv-errno.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-errno.h"; sourceTree = "<group>"; };
+		E385F4EE1F97407200E26281 /* tree.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tree.h; sourceTree = "<group>"; };
+		E385F4EF1F97407200E26281 /* uv-os390.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-os390.h"; sourceTree = "<group>"; };
+		E385F4F01F97407200E26281 /* uv-sunos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-sunos.h"; sourceTree = "<group>"; };
+		E385F4F11F97407200E26281 /* android-ifaddrs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "android-ifaddrs.h"; sourceTree = "<group>"; };
+		E385F4F21F97407200E26281 /* uv-version.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-version.h"; sourceTree = "<group>"; };
+		E385F4F31F97407200E26281 /* uv-darwin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-darwin.h"; sourceTree = "<group>"; };
+		E385F4F41F97407200E26281 /* uv-bsd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-bsd.h"; sourceTree = "<group>"; };
+		E385F4F51F97407200E26281 /* stdint-msvc2008.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "stdint-msvc2008.h"; sourceTree = "<group>"; };
+		E385F4F61F97407200E26281 /* uv-linux.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-linux.h"; sourceTree = "<group>"; };
+		E385F4F71F97407200E26281 /* pthread-barrier.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "pthread-barrier.h"; sourceTree = "<group>"; };
+		E385F4F81F97407200E26281 /* libuv.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libuv.a; sourceTree = "<group>"; };
+		E385F4FB1F97407200E26281 /* uv-posix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-posix.h"; sourceTree = "<group>"; };
+		E385F4FC1F97407200E26281 /* uv-unix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-unix.h"; sourceTree = "<group>"; };
+		E385F4FD1F97407200E26281 /* uv-threadpool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-threadpool.h"; sourceTree = "<group>"; };
+		E385F4FE1F97407200E26281 /* uv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = uv.h; sourceTree = "<group>"; };
+		E385F4FF1F97407200E26281 /* uv-win.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-win.h"; sourceTree = "<group>"; };
+		E385F5001F97407200E26281 /* uv-aix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-aix.h"; sourceTree = "<group>"; };
+		E385F5011F97407200E26281 /* uv-errno.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-errno.h"; sourceTree = "<group>"; };
+		E385F5021F97407200E26281 /* tree.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tree.h; sourceTree = "<group>"; };
+		E385F5031F97407200E26281 /* uv-os390.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-os390.h"; sourceTree = "<group>"; };
+		E385F5041F97407200E26281 /* uv-sunos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-sunos.h"; sourceTree = "<group>"; };
+		E385F5051F97407200E26281 /* android-ifaddrs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "android-ifaddrs.h"; sourceTree = "<group>"; };
+		E385F5061F97407200E26281 /* uv-version.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-version.h"; sourceTree = "<group>"; };
+		E385F5071F97407200E26281 /* uv-darwin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-darwin.h"; sourceTree = "<group>"; };
+		E385F5081F97407200E26281 /* uv-bsd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-bsd.h"; sourceTree = "<group>"; };
+		E385F5091F97407200E26281 /* stdint-msvc2008.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "stdint-msvc2008.h"; sourceTree = "<group>"; };
+		E385F50A1F97407200E26281 /* uv-linux.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-linux.h"; sourceTree = "<group>"; };
+		E385F50B1F97407200E26281 /* pthread-barrier.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "pthread-barrier.h"; sourceTree = "<group>"; };
+		E385F50F1F9740DC00E26281 /* atcp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = atcp.cpp; sourceTree = "<group>"; };
+		E385F5101F9740DC00E26281 /* atcp.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = atcp.hpp; sourceTree = "<group>"; };
+		E39A09D71F9CE60900962656 /* string_parser.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = string_parser.cpp; sourceTree = "<group>"; };
+		E39A09D81F9CE60900962656 /* string_parser.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = string_parser.hpp; sourceTree = "<group>"; };
+		E3FA31331F9C61FD00DC851D /* ahttp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ahttp.cpp; sourceTree = "<group>"; };
+		E3FA31341F9C61FD00DC851D /* ahttp.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ahttp.hpp; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E385F3F41F973D5B00E26281 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E385F50E1F97408700E26281 /* libuv.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E3786C711F98A07800AD5C88 /* common */ = {
+			isa = PBXGroup;
+			children = (
+				E3786C721F98A13A00AD5C88 /* common_callback.cpp */,
+				E3786C731F98A13A00AD5C88 /* common_callback.hpp */,
+				E39A09D71F9CE60900962656 /* string_parser.cpp */,
+				E39A09D81F9CE60900962656 /* string_parser.hpp */,
+			);
+			path = common;
+			sourceTree = "<group>";
+		};
+		E385F3EE1F973D5B00E26281 = {
+			isa = PBXGroup;
+			children = (
+				E385F3F91F973D5B00E26281 /* anet */,
+				E385F3F81F973D5B00E26281 /* Products */,
+				E385F4E31F97407200E26281 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		E385F3F81F973D5B00E26281 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E385F3F71F973D5B00E26281 /* anet.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E385F3F91F973D5B00E26281 /* anet */ = {
+			isa = PBXGroup;
+			children = (
+				E385F40F1F973D8800E26281 /* network */,
+				E385F3FA1F973D5B00E26281 /* AppDelegate.h */,
+				E385F3FB1F973D5B00E26281 /* AppDelegate.m */,
+				E385F3FD1F973D5B00E26281 /* ViewController.h */,
+				E385F3FE1F973D5B00E26281 /* ViewController.mm */,
+				E385F4001F973D5B00E26281 /* Assets.xcassets */,
+				E385F4021F973D5B00E26281 /* Main.storyboard */,
+				E385F4051F973D5B00E26281 /* Info.plist */,
+				E385F4061F973D5B00E26281 /* main.m */,
+				E385F4081F973D5B00E26281 /* anet.entitlements */,
+			);
+			path = anet;
+			sourceTree = "<group>";
+		};
+		E385F40F1F973D8800E26281 /* network */ = {
+			isa = PBXGroup;
+			children = (
+				E3786C711F98A07800AD5C88 /* common */,
+				E385F4D01F973FC200E26281 /* libuv */,
+				E385F4131F973DE900E26281 /* thread */,
+				E385F4111F973DAC00E26281 /* http */,
+				E385F4101F973D9F00E26281 /* tcp */,
+			);
+			path = network;
+			sourceTree = "<group>";
+		};
+		E385F4101F973D9F00E26281 /* tcp */ = {
+			isa = PBXGroup;
+			children = (
+				E385F50F1F9740DC00E26281 /* atcp.cpp */,
+				E385F5101F9740DC00E26281 /* atcp.hpp */,
+			);
+			path = tcp;
+			sourceTree = "<group>";
+		};
+		E385F4111F973DAC00E26281 /* http */ = {
+			isa = PBXGroup;
+			children = (
+				E3FA31331F9C61FD00DC851D /* ahttp.cpp */,
+				E3FA31341F9C61FD00DC851D /* ahttp.hpp */,
+			);
+			path = http;
+			sourceTree = "<group>";
+		};
+		E385F4131F973DE900E26281 /* thread */ = {
+			isa = PBXGroup;
+			children = (
+				6135E2A0832EA6891E99CE15 /* uv_wrapper.cpp */,
+				6135EDBBFE73664E8A225FBF /* uv_wrapper.hpp */,
+			);
+			path = thread;
+			sourceTree = "<group>";
+		};
+		E385F4D01F973FC200E26281 /* libuv */ = {
+			isa = PBXGroup;
+			children = (
+				E385F4D11F973FC200E26281 /* include */,
+			);
+			path = libuv;
+			sourceTree = "<group>";
+		};
+		E385F4D11F973FC200E26281 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				E385F4D21F973FC200E26281 /* uv-posix.h */,
+				E385F4D31F973FC200E26281 /* uv-unix.h */,
+				E385F4D41F973FC200E26281 /* uv-threadpool.h */,
+				E385F4D51F973FC200E26281 /* uv.h */,
+				E385F4D61F973FC200E26281 /* uv-win.h */,
+				E385F4D71F973FC200E26281 /* uv-aix.h */,
+				E385F4D81F973FC200E26281 /* uv-errno.h */,
+				E385F4D91F973FC200E26281 /* tree.h */,
+				E385F4DA1F973FC200E26281 /* uv-os390.h */,
+				E385F4DB1F973FC200E26281 /* uv-sunos.h */,
+				E385F4DC1F973FC200E26281 /* android-ifaddrs.h */,
+				E385F4DD1F973FC200E26281 /* uv-version.h */,
+				E385F4DE1F973FC200E26281 /* uv-darwin.h */,
+				E385F4DF1F973FC200E26281 /* uv-bsd.h */,
+				E385F4E01F973FC200E26281 /* stdint-msvc2008.h */,
+				E385F4E11F973FC200E26281 /* uv-linux.h */,
+				E385F4E21F973FC200E26281 /* pthread-barrier.h */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		E385F4E31F97407200E26281 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E385F4E41F97407200E26281 /* network */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		E385F4E41F97407200E26281 /* network */ = {
+			isa = PBXGroup;
+			children = (
+				E385F4E51F97407200E26281 /* libuv */,
+				E385F4F91F97407200E26281 /* tcp */,
+				E385F50C1F97407200E26281 /* http */,
+				E385F50D1F97407200E26281 /* thread */,
+			);
+			name = network;
+			path = anet/network;
+			sourceTree = "<group>";
+		};
+		E385F4E51F97407200E26281 /* libuv */ = {
+			isa = PBXGroup;
+			children = (
+				E385F4E61F97407200E26281 /* include */,
+				E385F4F81F97407200E26281 /* libuv.a */,
+			);
+			path = libuv;
+			sourceTree = "<group>";
+		};
+		E385F4E61F97407200E26281 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				E385F4E71F97407200E26281 /* uv-posix.h */,
+				E385F4E81F97407200E26281 /* uv-unix.h */,
+				E385F4E91F97407200E26281 /* uv-threadpool.h */,
+				E385F4EA1F97407200E26281 /* uv.h */,
+				E385F4EB1F97407200E26281 /* uv-win.h */,
+				E385F4EC1F97407200E26281 /* uv-aix.h */,
+				E385F4ED1F97407200E26281 /* uv-errno.h */,
+				E385F4EE1F97407200E26281 /* tree.h */,
+				E385F4EF1F97407200E26281 /* uv-os390.h */,
+				E385F4F01F97407200E26281 /* uv-sunos.h */,
+				E385F4F11F97407200E26281 /* android-ifaddrs.h */,
+				E385F4F21F97407200E26281 /* uv-version.h */,
+				E385F4F31F97407200E26281 /* uv-darwin.h */,
+				E385F4F41F97407200E26281 /* uv-bsd.h */,
+				E385F4F51F97407200E26281 /* stdint-msvc2008.h */,
+				E385F4F61F97407200E26281 /* uv-linux.h */,
+				E385F4F71F97407200E26281 /* pthread-barrier.h */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		E385F4F91F97407200E26281 /* tcp */ = {
+			isa = PBXGroup;
+			children = (
+				E385F4FA1F97407200E26281 /* include */,
+			);
+			path = tcp;
+			sourceTree = "<group>";
+		};
+		E385F4FA1F97407200E26281 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				E385F4FB1F97407200E26281 /* uv-posix.h */,
+				E385F4FC1F97407200E26281 /* uv-unix.h */,
+				E385F4FD1F97407200E26281 /* uv-threadpool.h */,
+				E385F4FE1F97407200E26281 /* uv.h */,
+				E385F4FF1F97407200E26281 /* uv-win.h */,
+				E385F5001F97407200E26281 /* uv-aix.h */,
+				E385F5011F97407200E26281 /* uv-errno.h */,
+				E385F5021F97407200E26281 /* tree.h */,
+				E385F5031F97407200E26281 /* uv-os390.h */,
+				E385F5041F97407200E26281 /* uv-sunos.h */,
+				E385F5051F97407200E26281 /* android-ifaddrs.h */,
+				E385F5061F97407200E26281 /* uv-version.h */,
+				E385F5071F97407200E26281 /* uv-darwin.h */,
+				E385F5081F97407200E26281 /* uv-bsd.h */,
+				E385F5091F97407200E26281 /* stdint-msvc2008.h */,
+				E385F50A1F97407200E26281 /* uv-linux.h */,
+				E385F50B1F97407200E26281 /* pthread-barrier.h */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		E385F50C1F97407200E26281 /* http */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = http;
+			sourceTree = "<group>";
+		};
+		E385F50D1F97407200E26281 /* thread */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = thread;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E385F3F61F973D5B00E26281 /* anet */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E385F40B1F973D5B00E26281 /* Build configuration list for PBXNativeTarget "anet" */;
+			buildPhases = (
+				E385F3F31F973D5B00E26281 /* Sources */,
+				E385F3F41F973D5B00E26281 /* Frameworks */,
+				E385F3F51F973D5B00E26281 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = anet;
+			productName = anet;
+			productReference = E385F3F71F973D5B00E26281 /* anet.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E385F3EF1F973D5B00E26281 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0900;
+				ORGANIZATIONNAME = "ke liu";
+				TargetAttributes = {
+					E385F3F61F973D5B00E26281 = {
+						CreatedOnToolsVersion = 9.0.1;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = E385F3F21F973D5B00E26281 /* Build configuration list for PBXProject "anet" */;
+			compatibilityVersion = "Xcode 8.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E385F3EE1F973D5B00E26281;
+			productRefGroup = E385F3F81F973D5B00E26281 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E385F3F61F973D5B00E26281 /* anet */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E385F3F51F973D5B00E26281 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E385F4011F973D5B00E26281 /* Assets.xcassets in Resources */,
+				E385F4041F973D5B00E26281 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E385F3F31F973D5B00E26281 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E3FA31351F9C61FD00DC851D /* ahttp.cpp in Sources */,
+				E385F3FF1F973D5B00E26281 /* ViewController.mm in Sources */,
+				E3786C741F98A13A00AD5C88 /* common_callback.cpp in Sources */,
+				E385F5111F9740DC00E26281 /* atcp.cpp in Sources */,
+				E385F4071F973D5B00E26281 /* main.m in Sources */,
+				E39A09D91F9CE60900962656 /* string_parser.cpp in Sources */,
+				E385F3FC1F973D5B00E26281 /* AppDelegate.m in Sources */,
+				6135E635DFA9CE3FE898B8D4 /* uv_wrapper.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		E385F4021F973D5B00E26281 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				E385F4031F973D5B00E26281 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		E385F4091F973D5B00E26281 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		E385F40A1F973D5B00E26281 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		E385F40C1F973D5B00E26281 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = anet/anet.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = anet/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/anet/network/libuv",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = GZ.anet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		E385F40D1F973D5B00E26281 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = anet/anet.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = anet/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/anet/network/libuv",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = GZ.anet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E385F3F21F973D5B00E26281 /* Build configuration list for PBXProject "anet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E385F4091F973D5B00E26281 /* Debug */,
+				E385F40A1F973D5B00E26281 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E385F40B1F973D5B00E26281 /* Build configuration list for PBXNativeTarget "anet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E385F40C1F973D5B00E26281 /* Debug */,
+				E385F40D1F973D5B00E26281 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E385F3EF1F973D5B00E26281 /* Project object */;
+}

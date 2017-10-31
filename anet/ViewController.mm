@@ -113,36 +113,45 @@
     req->append_header("Accept", "*/*");
     req->append_header("Accept-Encoding", "gzip, deflate");
     req->append_header("Accept-Language", "en-Us,en;q=0.9");
-    static std::shared_ptr<ahttp> ah;
-    ah.reset(new ahttp);
-    ah->set_dns_event_callback([=](std::shared_ptr<common_callback>) {
-        auto tp = std::chrono::system_clock::now();
-        std::cout << "dns " << tp.time_since_epoch().count() / 1000 << std::endl;
-    });
-    ah->set_connected_event_callback([=](std::shared_ptr<common_callback>) {
-        auto tp = std::chrono::system_clock::now();
-        std::cout << "connected " << tp.time_since_epoch().count() / 1000 << std::endl;
-    });
-    ah->set_send_event_callback([=](std::shared_ptr<common_callback>, int bytes) {
-        auto tp = std::chrono::system_clock::now();
-        std::cout << "send " << tp.time_since_epoch().count() / 1000 << "\tsize : " << bytes << std::endl;
-    });
-    ah->set_read_begin_event_callback([=](std::shared_ptr<common_callback>) {
-        auto tp = std::chrono::system_clock::now();
-        std::cout << "read begin " << tp.time_since_epoch().count() / 1000 << std::endl;
-    });
-    ah->set_read_end_event_callback([=](std::shared_ptr<common_callback>, int bytes) {
-        auto tp = std::chrono::system_clock::now();
-        std::cout << "read end " << tp.time_since_epoch().count() / 1000 << "\tsize : " << bytes << std::endl;
-    });
-    ah->set_disconnected_event_callback([=](std::shared_ptr<common_callback>) {
-        auto tp = std::chrono::system_clock::now();
-        std::cout << "disconnected " << tp.time_since_epoch().count() / 1000 << std::endl;
-    });
-    ah->exec(req, [=](std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
-        std::cout << request->to_string() << std::endl;
-        std::cout << response->to_string() << std::endl;
-    });
+    for (int i = 0; i < 5; ++i) {
+        static std::vector<std::shared_ptr<ahttp>> list;
+        std::shared_ptr<ahttp> ah;
+        ah.reset(new ahttp);
+
+        list.push_back(ah);
+
+        ah->set_dns_event_callback([=](std::shared_ptr<common_callback>) {
+            auto tp = std::chrono::system_clock::now();
+            std::cout << i << " dns " << tp.time_since_epoch().count() / 1000 << std::endl;
+        });
+        ah->set_connected_event_callback([=](std::shared_ptr<common_callback>) {
+            auto tp = std::chrono::system_clock::now();
+            std::cout << i << " connected " << tp.time_since_epoch().count() / 1000 << std::endl;
+        });
+        ah->set_send_event_callback([=](std::shared_ptr<common_callback>, int bytes) {
+            auto tp = std::chrono::system_clock::now();
+            std::cout << i << " send " << tp.time_since_epoch().count() / 1000 << "\tsize : " << bytes << std::endl;
+        });
+        ah->set_read_begin_event_callback([=](std::shared_ptr<common_callback>) {
+            auto tp = std::chrono::system_clock::now();
+            std::cout << i << " read begin " << tp.time_since_epoch().count() / 1000 << std::endl;
+        });
+        ah->set_read_end_event_callback([=](std::shared_ptr<common_callback>, int bytes) {
+            auto tp = std::chrono::system_clock::now();
+            std::cout << i << " read end " << tp.time_since_epoch().count() / 1000 << "\tsize : " << bytes << std::endl;
+        });
+        ah->set_disconnected_event_callback([=](std::shared_ptr<common_callback>) {
+            auto tp = std::chrono::system_clock::now();
+            std::cout << i << "disconnected " << tp.time_since_epoch().count() / 1000 << std::endl;
+        });
+        ah->exec2(req, [=](std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
+//            std::cout << request->to_string() << std::endl;
+//            std::cout << response->to_string() << std::endl;
+        });
+        if (i == 0) {
+            sleep(3);
+        }
+    }
 }
 
 

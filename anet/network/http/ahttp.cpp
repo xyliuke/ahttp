@@ -14,6 +14,27 @@
 
 namespace plan9 {
 
+    class mutex_wrap {
+    public:
+        mutex_wrap() {
+            uv_mutex_init(&mutex);
+        }
+
+        void lock() {
+            uv_mutex_lock(&mutex);
+        }
+
+        void unlock() {
+            uv_mutex_unlock(&mutex);
+        }
+
+        ~mutex_wrap() {
+            uv_mutex_destroy(&mutex);
+        }
+    private:
+        uv_mutex_t mutex;
+    };
+
     class ahttp_request::ahttp_request_impl {
     public:
         ahttp_request_impl() : header(new std::vector<std::string>), method("GET"), version("1.1"), port(80), path("/") {
@@ -317,74 +338,165 @@ namespace plan9 {
     class ahttp::ahttp_impl {
     public:
 
-        static void exec(std::shared_ptr<ahttp::ahttp_impl> http, std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
-            if (model != nullptr && "" != model->get_domain()) {
-                uv_wrapper::resolve(model->get_domain(), model->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips){
+        static void exec_reused_connect(int tcp_id) {
+            if (tcp_http_map.find(tcp_id) != tcp_http_map.end()) {
+                auto list = tcp_http_map[tcp_id];
+                if (list->size() > 0) {
+                    auto http = list->at(0);
+
+                    std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>> list_disconnected;
+                    if (tcp_http_disconnected_map.find(tcp_id) != tcp_http_disconnected_map.end()) {
+                        list_disconnected = tcp_http_disconnected_map[tcp_id];
+                    } else {
+                        list_disconnected.reset(new std::vector<std::shared_ptr<ahttp_impl>>);
+                        tcp_http_disconnected_map[tcp_id] = list_disconnected;
+                    }
+                    list_disconnected->push_back(http);
+
+                    std::shared_ptr<common_callback> ccb(new common_callback);
                     http->send_dns_event(ccb);
-                    if (ccb->success) {
-                        if (ips->size() > 0) {
-                            std::string ip = (*ips)[0];
-                            bool need_new_connect = true;
-                            if (ahttp_impl::ip_tcp_map.find(ip) != ahttp_impl::ip_tcp_map.end()) {
-                                int tcp_id = ahttp_impl::ip_tcp_map[ip];
-                                if (uv_wrapper::tcp_alive(tcp_id)) {
-                                    tcp_http_map[tcp_id] = http;
-                                    need_new_connect = false;
-                                    std::string str = model->get_http_string();
-                                    uv_wrapper::write(tcp_id, (char*)str.c_str(), (int)str.size(), [=](std::shared_ptr<common_callback> write_callback) {
-                                        http->send_send_event(write_callback, (int)str.size());
-                                    });
-                                }
+                    uv_wrapper::write(tcp_id, (char*)(http->request->get_http_string().c_str()), (int)http->request->get_http_string().size(), [=](std::shared_ptr<common_callback> write_callback){
+                        http->send_send_event(write_callback, (int) http->request->get_http_string().size());
+                    });
+                }
+            }
+        }
+
+        static void exec_new_connect(std::shared_ptr<ahttp::ahttp_impl> http, std::string ip, int port) {
+            uv_wrapper::connect(ip, port, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
+
+                mutex.lock();
+                if (http->request) {
+                    url_tcp_map[http->request->get_domain()] = tcp_id;
+                }
+                url_tcp_map[ip] = tcp_id;
+
+                std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>> list_disconnected;
+                if (tcp_http_disconnected_map.find(tcp_id) != tcp_http_disconnected_map.end()) {
+                    list_disconnected = tcp_http_disconnected_map[tcp_id];
+                } else {
+                    list_disconnected.reset(new std::vector<std::shared_ptr<ahttp_impl>>);
+                    tcp_http_disconnected_map[tcp_id] = list_disconnected;
+                }
+                list_disconnected->push_back(http);
+
+                mutex.unlock();
+
+                std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>> list;
+                if (tcp_http_map.find(tcp_id) != tcp_http_map.end()) {
+                    list = tcp_http_map[tcp_id];
+                } else {
+                    list.reset(new std::vector<std::shared_ptr<ahttp_impl>>);
+                    mutex.lock();
+                    tcp_http_map[tcp_id] = list;
+                    mutex.unlock();
+                }
+                mutex.lock();
+                list->push_back(http);
+                mutex.unlock();
+
+                http->send_connected_event(ccb);
+                if (ccb->success) {
+                    std::string str = http->request->get_http_string();
+                    uv_wrapper::write(tcp_id, (char *) str.c_str(), (int) str.size(), [=](std::shared_ptr<common_callback> write_callback) {
+                        http->send_send_event(write_callback, (int) str.size());
+                    });
+                } else {
+                    uv_wrapper::close(tcp_id);
+                }
+            }, [=](int tcp_id, char *data, int len) {
+                if (tcp_http_map.find(tcp_id) != tcp_http_map.end()) {
+                    auto http_list = tcp_http_map[tcp_id];
+                    if (http_list->size() > 0) {
+                        auto h = http_list->at(0);
+                        if (h->append(data, len)) {
+                            mutex.lock();
+                            http_list->erase(http_list->begin());
+                            mutex.unlock();
+                            if (h->callback != nullptr) {
+                                h->callback(h->request, h->response);
                             }
-                            if (need_new_connect) {
-                                uv_wrapper::connect(ip, model->get_port(), [=](std::shared_ptr<common_callback> ccb1, int tcp_id){
-                                    ip_tcp_map[ip] = tcp_id;
-                                    http->send_connected_event(ccb1);
-                                    if (ccb->success) {
-                                        std::string str = model->get_http_string();
-                                        uv_wrapper::write(tcp_id, (char*)str.c_str(), (int)str.size(), [=](std::shared_ptr<common_callback> write_callback) {
-                                            http->send_send_event(write_callback, (int)str.size());
-                                        });
-                                    } else {
-                                        uv_wrapper::close(tcp_id);
-                                    }
-                                }, [=](int tcp_id, char* data, int len){
-                                    if (tcp_http_map.find(tcp_id) != tcp_http_map.end()) {
-                                        auto http_ = tcp_http_map[tcp_id];
-                                        if (http_->append(data, len)) {
-                                            tcp_http_map.erase(tcp_id);
-                                            if (callback != nullptr) {
-                                                callback(model, http_->response);
-                                            }
-                                        }
-                                    }
-                                    delete (data);
-                                }, [=](std::shared_ptr<common_callback> disconnect_ccb, int tcp_id){
-                                    std::map<std::string, int>::const_iterator it = ip_tcp_map.begin();
-                                    while (it != ip_tcp_map.end()) {
-                                        if (it->second == tcp_id) {
-                                            break;
-                                        }
-                                        it ++;
-                                    }
-                                    if (it != ip_tcp_map.end()) {
-                                        ip_tcp_map.erase(it);
-                                    }
-                                    if (tcp_http_map.find(tcp_id) != tcp_http_map.end()) {
-                                        auto http_ = tcp_http_map[tcp_id];
-                                        http_->send_disconnected_event(disconnect_ccb);
-                                    }
-                                });
+                            if (http_list->size() > 0) {
+                                exec_reused_connect(tcp_id);
                             }
                         }
                     }
-                });
+                }
+                delete (data);
+            }, [=](std::shared_ptr<common_callback> disconnect_ccb, int tcp_id) {
+                mutex.lock();
+                std::map<std::string, int>::const_iterator it = url_tcp_map.begin();
+                while (it != url_tcp_map.end()) {
+                    if (it->second == tcp_id) {
+                        break;
+                    }
+                    it++;
+                }
+                if (it != url_tcp_map.end()) {
+                    url_tcp_map.erase(it);
+                }
+                mutex.unlock();
+
+                if (tcp_http_disconnected_map.find(tcp_id) != tcp_http_disconnected_map.end()) {
+                    auto http_list = tcp_http_disconnected_map[tcp_id];
+                    tcp_http_disconnected_map.erase(tcp_id);
+                    std::vector<std::shared_ptr<ahttp_impl>>::const_iterator it = http_list->begin();
+                    while (it != http_list->end()) {
+                        (*it)->send_disconnected_event(disconnect_ccb);
+                        it ++;
+                    }
+                }
+            });
+        }
+
+        static void exec(std::shared_ptr<ahttp::ahttp_impl> http) {
+            if (http && http->request != nullptr && http->callback != nullptr) {
+                bool reused_connect = false;
+                if (url_tcp_map.find(http->request->get_domain()) != url_tcp_map.end()) {
+                    //重用tcp
+                    int tcp_id = url_tcp_map[http->request->get_domain()];
+                    std::shared_ptr<std::vector<std::shared_ptr<ahttp::ahttp_impl>>> list;
+                    if (tcp_http_map.find(tcp_id) != tcp_http_map.end()) {
+                        list = tcp_http_map[tcp_id];
+                    } else {
+                        list.reset(new std::vector<std::shared_ptr<ahttp::ahttp_impl>>);
+                        mutex.lock();
+                        tcp_http_map[tcp_id] = list;
+                        mutex.unlock();
+                    }
+                    mutex.lock();
+                    list->push_back(http);
+                    mutex.unlock();
+                    if (list->size() == 1) {
+                        if (uv_wrapper::tcp_alive(tcp_id)) {
+                            exec_reused_connect(tcp_id);
+                            reused_connect = true;
+                        } else {
+                            reused_connect = false;
+                        }
+                    } else {
+                        reused_connect = true;
+                    }
+                }
+                if (!reused_connect) {
+                    uv_wrapper::resolve(http->request->get_domain(), http->request->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips){
+                        http->send_dns_event(ccb);
+                        if (ccb->success) {
+                            if (ips->size() > 0) {
+                                std::string ip = (*ips)[0];
+                                exec_new_connect(http, ip, http->request->get_port());
+                            }
+                        }
+                    });
+                }
             }
         }
 
         void exec2(std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
             std::shared_ptr<ahttp_impl> self(this);
-            ahttp_impl::exec(self, model, callback);
+            self->request = model;
+            self->callback = callback;
+            ahttp_impl::exec(self);
         }
 
         void exec(std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
@@ -470,6 +582,13 @@ namespace plan9 {
                 disconnect_callback(callback);
             }
         }
+
+        void send_callback_event() {
+            if (callback != nullptr) {
+                callback(request, response);
+            }
+        }
+
         bool append(char* data, int len) {
             if (!response) {
                 response.reset(new ahttp_response);
@@ -482,9 +601,13 @@ namespace plan9 {
             return isEnd;
         }
 
-        static std::map<std::string, int> ip_tcp_map;
-        static std::map<int, std::shared_ptr<ahttp_impl>> tcp_http_map;
+        static std::map<std::string, int> url_tcp_map;
+        static std::map<int, std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>>> tcp_http_map;
+        static std::map<int, std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>>> tcp_http_disconnected_map;
+        static mutex_wrap mutex;
         std::shared_ptr<ahttp_response> response;
+        std::shared_ptr<ahttp_request> request;
+        std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback;
         std::function<void(std::shared_ptr<common_callback>)> dns_callback;
         std::function<void(std::shared_ptr<common_callback>)> connect_callback;
         std::function<void(std::shared_ptr<common_callback>, int)> send_callback;
@@ -493,8 +616,10 @@ namespace plan9 {
         std::function<void(std::shared_ptr<common_callback>)> disconnect_callback;
     };
 
-    std::map<std::string, int> ahttp::ahttp_impl::ip_tcp_map;
-    std::map<int, std::shared_ptr<ahttp::ahttp_impl>> ahttp::ahttp_impl::tcp_http_map;
+    std::map<std::string, int> ahttp::ahttp_impl::url_tcp_map;
+    std::map<int, std::shared_ptr<std::vector<std::shared_ptr<ahttp::ahttp_impl>>>> ahttp::ahttp_impl::tcp_http_map;
+    std::map<int, std::shared_ptr<std::vector<std::shared_ptr<ahttp::ahttp_impl>>>> ahttp::ahttp_impl::tcp_http_disconnected_map;
+    mutex_wrap ahttp::ahttp_impl::mutex;
 
     ahttp::ahttp() : impl(new ahttp_impl) {
 

@@ -63,11 +63,17 @@
 //    std::string rep = "HTTP/1.1 200 OK\r\nServer: openresty\r\nDate: Mon, 23 Oct 2017 10:20:26 GMT\r\nContent-Type: application/json\r\nTransfer-Encoding: chunked\r\nConnection: keep-alive\r\nAccess-Control-Allow-Credentials: true\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: POST, GET, OPTIONS, DELETE, PUT\r\nAccess-Control-Allow-Headers: Content-Type,PAI-TOKEN\r\n\r\n33\r\n{\"code\":-1,\"message\":\"uri match failed.\",\"data\":[]}\r\n0\r\n\r\n";
 //    plan9::ahttp_response response;
 //    response.set_response_string(rep);
-    std::string string = "Server: openresty";
-    auto ret = plan9::string_parser::split(string, ":");
-    for (int i = 0; i < ret->size(); ++i) {
-        std::cout << ret->at(i) << "\t";
-    }
+//    std::string string = "Server: openresty";
+//    auto ret = plan9::string_parser::split(string, ":");
+//    for (int i = 0; i < ret->size(); ++i) {
+//        std::cout << ret->at(i) << "\t";
+//    }
+    plan9::ahttp_request request;
+    std::shared_ptr<std::map<std::string, std::string>> data(new std::map<std::string, std::string>);
+    (*data)["a"] = "b";
+    (*data)["c"] = "d";
+    request.append_data(data);
+    std::string d = request.get_http_string();
 }
 - (IBAction)click_send:(id)sender {
 
@@ -108,12 +114,15 @@
     req->set_url("http://api.chesupai.cn");
 //    req->set_url("http://cn.bing.com/az/hprichbg/rb/Forest_ZH-CN16430313748_1920x1080.jpg");
 //    req->set_url("http://localhost:4567/hello?a=b");
-//    req->set_mothod("GET");
+    req->set_method("POST");
     req->append_header("Connection", "keep-alive");
     req->append_header("Accept", "*/*");
     req->append_header("Accept-Encoding", "gzip, deflate");
     req->append_header("Accept-Language", "en-Us,en;q=0.9");
-    for (int i = 0; i < 5; ++i) {
+
+    req->append_data("a", "b");
+
+    for (int i = 0; i < 1; ++i) {
         static std::vector<std::shared_ptr<ahttp>> list;
         std::shared_ptr<ahttp> ah;
         ah.reset(new ahttp);

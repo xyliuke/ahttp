@@ -37,11 +37,26 @@ namespace plan9 {
 
     class ahttp_request::ahttp_request_impl {
     public:
-        ahttp_request_impl() : header(new std::vector<std::string>), method("GET"), version("1.1"), port(80), path("/") {
+        ahttp_request_impl() : header(new std::map<std::string, std::string>), method("GET"), version("1.1"), port(80), path("/") {
         }
         void append_header(std::string key, std::string value) {
-            header->push_back(key + ": " + value);
+            (*header)[key] = value;
         }
+        void append_header(std::string key, int value) {
+            std::stringstream ss;
+            ss << value;
+            append_header(key, ss.str());
+        }
+
+        void append_header(std::shared_ptr<std::map<std::string, std::string>> headers) {
+            if (headers) {
+                std::map<std::string, std::string>::const_iterator it = headers->begin();
+                while (it != headers->end()) {
+                    append_header(it->first, it->second);
+                }
+            }
+        }
+
         void set_mothod(std::string method) {
             this->method = method;
         }
@@ -84,6 +99,36 @@ namespace plan9 {
             append_header("Host", ss.str());
         }
 
+
+        void append_data(std::shared_ptr<std::map<std::string, std::string>> data) {
+            if (data && data->size() > 0) {
+                if (boundary == "") {
+                    boundary = get_boundary_string();
+                    (*header)["Content-Type"] = "Content-Type:multipart/form-data;boundary=" + boundary;
+                }
+                if (!this->data) {
+                    this->data.reset(new std::map<std::string, std::string>);
+                }
+
+                std::map<std::string, std::string>::const_iterator it = data->begin();
+                while (it != data->end()) {
+                    (*this->data)[it->first] = it->second;
+                    it ++;
+                }
+            }
+        }
+
+        void append_data(std::string key, std::string value) {
+            if (!this->data) {
+                this->data.reset(new std::map<std::string, std::string>);
+            }
+            if (boundary == "") {
+                boundary = get_boundary_string();
+                (*header)["Content-Type"] = "multipart/form-data;boundary=" + boundary;
+            }
+            (*data)[key] = value;
+        }
+
         std::string get_http_method_string() {
             std::stringstream ss;
             ss << method;
@@ -98,13 +143,36 @@ namespace plan9 {
         std::string get_http_header_string() {
             std::stringstream ss;
             if (header != nullptr) {
-                for (int i = 0; i < header->size(); ++i) {
-                    std::string h = header->at(i);
-                    ss << h;
+                std::map<std::string, std::string>::const_iterator it = header->begin();
+                while (it != header->end()) {
+                    ss << it->first;
+                    ss << ":";
+                    ss << it->second;
                     ss << "\r\n";
+                    it ++;
                 }
             }
             return ss.str();
+        }
+
+        std::string get_http_body_string(){
+            if (data && data->size() > 0) {
+                using namespace std;
+                stringstream ss;
+                ss << boundary;
+                std::map<std::string, std::string>::const_iterator it = data->begin();
+                while (it != data->end()) {
+                    ss << "\r\nContent-Disposition: form-data;name=\"";
+                    ss << it->first;
+                    ss << "\"\r\n";
+                    ss << it->second;
+                    ss << "\r\n";
+                    ss << boundary;
+                    it ++;
+                }
+                return ss.str();
+            }
+            return "";
         }
 
         std::string get_domain() {
@@ -119,13 +187,25 @@ namespace plan9 {
             std::stringstream ss;
             ss << get_http_method_string();
             ss << "\r\n";
+            std::string body = get_http_body_string();
+            if (body.length() > 0) {
+                append_header("Content-Length", (int)body.length());
+            }
             ss << get_http_header_string();
             ss << "\r\n";
+            ss << body;
             return ss.str();
         }
 
+        static std::string get_boundary_string() {
+            std::stringstream ss;
+            ss << "--------------------------";
+            ss << "AA0xadsds";
+            return ss.str();
+        }
     private:
-        std::shared_ptr<std::vector<std::string>> header;
+        std::shared_ptr<std::map<std::string, std::string>> header;
+        std::shared_ptr<std::map<std::string, std::string>> data;
         std::string method;
         std::string version;
         std::string url;
@@ -133,6 +213,7 @@ namespace plan9 {
         std::string domain;
         std::string path;
         int port;
+        std::string boundary;
 
     };
 
@@ -144,7 +225,15 @@ namespace plan9 {
         impl->append_header(key, value);
     }
 
-    void ahttp_request::set_mothod(std::string method) {
+    void ahttp_request::append_header(std::string key, int value) {
+        impl->append_header(key, value);
+    }
+
+    void ahttp_request::append_header(std::shared_ptr<std::map<std::string, std::string>> headers) {
+        impl->append_header(headers);
+    }
+
+    void ahttp_request::set_method(std::string method) {
         impl->set_mothod(method);
     }
 
@@ -154,6 +243,14 @@ namespace plan9 {
 
     void ahttp_request::set_url(std::string url) {
         impl->set_url(url);
+    }
+
+    void ahttp_request::append_data(std::shared_ptr<std::map<std::string, std::string>> data) {
+        impl->append_data(data);
+    }
+
+    void ahttp_request::append_data(std::string key, std::string value) {
+        impl->append_data(key, value);
     }
 
     std::string ahttp_request::get_http_method_string() {
@@ -364,39 +461,38 @@ namespace plan9 {
 
         static void exec_new_connect(std::shared_ptr<ahttp::ahttp_impl> http, std::string ip, int port) {
             uv_wrapper::connect(ip, port, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
-
-                mutex.lock();
-                if (http->request) {
-                    url_tcp_map[http->request->get_domain()] = tcp_id;
-                }
-                url_tcp_map[ip] = tcp_id;
-
-                std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>> list_disconnected;
-                if (tcp_http_disconnected_map.find(tcp_id) != tcp_http_disconnected_map.end()) {
-                    list_disconnected = tcp_http_disconnected_map[tcp_id];
-                } else {
-                    list_disconnected.reset(new std::vector<std::shared_ptr<ahttp_impl>>);
-                    tcp_http_disconnected_map[tcp_id] = list_disconnected;
-                }
-                list_disconnected->push_back(http);
-
-                mutex.unlock();
-
-                std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>> list;
-                if (tcp_http_map.find(tcp_id) != tcp_http_map.end()) {
-                    list = tcp_http_map[tcp_id];
-                } else {
-                    list.reset(new std::vector<std::shared_ptr<ahttp_impl>>);
-                    mutex.lock();
-                    tcp_http_map[tcp_id] = list;
-                    mutex.unlock();
-                }
-                mutex.lock();
-                list->push_back(http);
-                mutex.unlock();
-
-                http->send_connected_event(ccb);
                 if (ccb->success) {
+                    mutex.lock();
+                    if (http->request) {
+                        url_tcp_map[http->request->get_domain()] = tcp_id;
+                    }
+                    url_tcp_map[ip] = tcp_id;
+
+                    std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>> list_disconnected;
+                    if (tcp_http_disconnected_map.find(tcp_id) != tcp_http_disconnected_map.end()) {
+                        list_disconnected = tcp_http_disconnected_map[tcp_id];
+                    } else {
+                        list_disconnected.reset(new std::vector<std::shared_ptr<ahttp_impl>>);
+                        tcp_http_disconnected_map[tcp_id] = list_disconnected;
+                    }
+                    list_disconnected->push_back(http);
+
+                    mutex.unlock();
+
+                    std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>> list;
+                    if (tcp_http_map.find(tcp_id) != tcp_http_map.end()) {
+                        list = tcp_http_map[tcp_id];
+                    } else {
+                        list.reset(new std::vector<std::shared_ptr<ahttp_impl>>);
+                        mutex.lock();
+                        tcp_http_map[tcp_id] = list;
+                        mutex.unlock();
+                    }
+                    mutex.lock();
+                    list->push_back(http);
+                    mutex.unlock();
+
+                    http->send_connected_event(ccb);
                     std::string str = http->request->get_http_string();
                     uv_wrapper::write(tcp_id, (char *) str.c_str(), (int) str.size(), [=](std::shared_ptr<common_callback> write_callback) {
                         http->send_send_event(write_callback, (int) str.size());
@@ -551,6 +647,23 @@ namespace plan9 {
             disconnect_callback = callback;
         }
 
+        void get(std::string url, std::shared_ptr<std::map<std::string, std::string>>header, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
+            std::shared_ptr<ahttp_request> request(new ahttp_request);
+            request->set_method("GET");
+            request->set_url(url);
+            request->append_header(header);
+            exec2(request, callback);
+        }
+
+        void post(std::string url, std::shared_ptr<std::map<std::string, std::string>>header, std::shared_ptr<std::map<std::string, std::string>> data, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
+            std::shared_ptr<ahttp_request> request(new ahttp_request);
+            request->set_method("POST");
+            request->set_url(url);
+            request->append_header(header);
+            request->append_data(data);
+            exec2(request, callback);
+        }
+
     private:
         void send_dns_event(std::shared_ptr<common_callback> callback) {
             if (dns_callback) {
@@ -600,6 +713,7 @@ namespace plan9 {
             }
             return isEnd;
         }
+
 
         static std::map<std::string, int> url_tcp_map;
         static std::map<int, std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>>> tcp_http_map;
@@ -654,4 +768,13 @@ namespace plan9 {
     void ahttp::set_disconnected_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback) {
         impl->set_disconnected_event_callback(callback);
     }
+
+    void ahttp::get(std::string url, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
+        impl->get(url, header, callback);
+    }
+
+    void ahttp::post(std::string url, std::shared_ptr<std::map<std::string, std::string>> header, std::shared_ptr<std::map<std::string, std::string>> data, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
+        impl->post(url, header, data, callback);
+    }
+
 }

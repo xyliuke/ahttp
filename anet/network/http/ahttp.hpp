@@ -21,9 +21,13 @@ namespace plan9 {
     public:
         ahttp_request();
         void append_header(std::string key, std::string value);
-        void set_mothod(std::string method);
+        void append_header(std::string key, int value);
+        void append_header(std::shared_ptr<std::map<std::string, std::string>> headers);
+        void set_method(std::string method);
         void set_http_version(std::string version);
         void set_url(std::string url);
+        void append_data(std::shared_ptr<std::map<std::string, std::string>> data);
+        void append_data(std::string key, std::string value);
 
         std::string get_http_method_string();
         std::string get_http_header_string();
@@ -57,6 +61,9 @@ namespace plan9 {
 
         void exec(std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
         void exec2(std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
+
+        void get(std::string url, std::shared_ptr<std::map<std::string, std::string>>header, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
+        void post(std::string url, std::shared_ptr<std::map<std::string, std::string>>header, std::shared_ptr<std::map<std::string, std::string>> data, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
 
         //各个时间段事件回调
         void set_dns_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);

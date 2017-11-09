@@ -11,6 +11,8 @@
 
 
 namespace plan9 {
+
+
     static std::string &ltrim(std::string &s) {
         s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
         return s;
@@ -55,5 +57,27 @@ namespace plan9 {
             ret->push_back(string.substr(pos1));
 
         return ret;
+    }
+
+    int string_parser::dex_to_dec(char *dex, long len) {
+        int ret = 0;
+        for (int i = 0; i < len; ++ i) {
+            char c = dex[i];
+            ret += dex_to_dec(c);
+            if (i != len - 1) {
+                ret = ret << 4;
+            }
+        }
+        return ret;
+    }
+    int string_parser::dex_to_dec(char c) {
+        if (c >= '0' && c <= '9') {
+            return (c - 48);
+        } else if (c >= 'A' && c <= 'F'){
+            return c - 'A' + 10;
+        } else if (c >= 'a' && c <= 'f') {
+            return c - 'a' + 10;
+        }
+        return 0;
     }
 }

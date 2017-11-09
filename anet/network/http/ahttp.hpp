@@ -54,6 +54,7 @@ namespace plan9 {
         template <typename T>
         T get_header(std::string key);
         std::string get_header(std::string key);
+        std::shared_ptr<std::map<std::string, std::string>> get_headers();
 
         bool append_response_data(char* data, int len);
         void set_response_data_file(std::string file);
@@ -62,6 +63,7 @@ namespace plan9 {
         long get_response_header_length();
         long get_response_length();
         long get_content_length();
+        std::string get_body_string();
         std::string to_string();
     private:
         class ahttp_response_impl;

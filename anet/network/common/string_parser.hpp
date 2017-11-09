@@ -22,6 +22,8 @@ namespace plan9 {
         static std::string to_lower(std::string string);
         static std::string to_upper(std::string string);
         static std::shared_ptr<std::vector<std::string>> split(std::string string, std::string split_string);
+        static int dex_to_dec(char* dex, long len);
+        static int dex_to_dec(char c);
     };
 }
 

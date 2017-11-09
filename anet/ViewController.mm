@@ -76,12 +76,15 @@
 //    request.append_data(data);
 //    std::string d = request.get_http_string();
 
-    auto tp = std::chrono::system_clock::now();
-    std::cout << " timer " << tp.time_since_epoch().count() / 1000 << std::endl;
-    plan9::uv_wrapper::post_timer([=](){
-        auto tp = std::chrono::system_clock::now();
-        std::cout << " timer " << tp.time_since_epoch().count() / 1000 << std::endl;
-    }, 5000, 0);
+//    auto tp = std::chrono::system_clock::now();
+//    std::cout << " timer " << tp.time_since_epoch().count() / 1000 << std::endl;
+//    plan9::uv_wrapper::post_timer([=](){
+//        auto tp = std::chrono::system_clock::now();
+//        std::cout << " timer " << tp.time_since_epoch().count() / 1000 << std::endl;
+//    }, 5000, 0);
+    int d = plan9::string_parser::dex_to_dec("12", 2);
+    d = plan9::string_parser::dex_to_dec("1A", 2);
+    d = plan9::string_parser::dex_to_dec("DA", 2);
 }
 - (IBAction)click_send:(id)sender {
 
@@ -178,7 +181,7 @@
         std::shared_ptr<std::map<std::string, std::string>> h(new std::map<std::string, std::string>);
 //        (*h)["Accept-Encoding"] = "gzip, deflate";
         ah->get("http://api.chesupai.cn", h, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
-            std::cout << response->to_string() << std::endl;
+            std::cout << response->get_body_string() << std::endl;
         });
 //        ah->download("http://cn.bing.com/az/hprichbg/rb/Forest_ZH-CN16430313748_1920x1080.jpg", "/Users/keliu/Downloads/a.jpg", nullptr, [=](long current, long total){
 //            std::cout << current << "/" << total << std::endl;

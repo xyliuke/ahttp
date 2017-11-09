@@ -320,9 +320,9 @@ namespace plan9 {
     public:
 
         ahttp_response_impl() : header_buf((char*)malloc(65536)), header_buf_size(65536), header_len(0), block_num(0), status(-1),
-                                data_buf(nullptr), data_buf_size(0), data_len(0), content_length(0),
+                                data_buf(nullptr), data_buf_size(0), data_len(0), content_length(0), http_header_end_position(0),
                                 http_status_end_position(0), headers(new std::map<std::string, std::string>),
-                                transfer_encoding_chunked(tri_undefined) {
+                                transfer_encoding_chunked(tri_undefined), data_real_len(0), data_real_index(0) {
         }
 
         ~ahttp_response_impl() {
@@ -386,7 +386,11 @@ namespace plan9 {
                 }
                 memcpy(data_buf + data_len, data, len);
                 data_len += len;
-                return is_over(data_buf, data_len);
+                bool over = is_over(data_buf, data_len);
+                if (over) {
+                    parse_http_body();
+                }
+                return over;
             }
             return true;
         }
@@ -470,7 +474,7 @@ namespace plan9 {
         void parse_http_header() {
             if (http_status_end_position > 0) {
                 int pre_header_item_end_pos = http_status_end_position;
-                for (int i = http_status_end_position + 1; i < header_buf_size; i ++) {
+                for (int i = http_status_end_position + 1; i < header_len; i ++) {
                     char c = header_buf[i];
                     if ('\r' == c && '\n' == header_buf[i + 1]){
                         int key_begin, key_end, value_begin, value_end;
@@ -496,7 +500,14 @@ namespace plan9 {
             if (!ofstream) {
                 //没有写文件
                 if (is_transfer_encoding_chunked()) {
-                    //TODO 解析Transfer-Encoding: chunked类型数据
+                    for (int i = 0; i < data_len; ++i) {
+                        char c = data_buf[i];
+                        if (c == '\r' && data_buf[i + 1] == '\n') {
+                            data_real_index = i + 2;
+                            break;
+                        }
+                    }
+                    data_real_len = string_parser::dex_to_dec(data_buf, data_real_index - 2);
                 }
             }
         }
@@ -533,7 +544,7 @@ namespace plan9 {
                 } else {
                     transfer_encoding_chunked = tri_false;
                 }
-                return transfer_encoding_chunked;
+                return transfer_encoding_chunked == tri_true;
             } else {
                 return transfer_encoding_chunked == tri_true;
             }
@@ -554,7 +565,6 @@ namespace plan9 {
         template <typename T>
         T get_header(std::string key) {
             std::string ret = string_parser::trim(get_header_string(key));
-            std::cout << "header " << key << ":" << ret << std::endl;
             std::stringstream ss(ret);
             T t;
             ss >> t;
@@ -572,6 +582,9 @@ namespace plan9 {
         std::shared_ptr<std::map<std::string, std::string>> get_headers() {
             return headers;
         };
+        std::string get_body_string() {
+            return std::string(data_buf + data_real_index, data_real_len);
+        }
 
         std::string to_string() {
             if (ofstream) {
@@ -592,6 +605,8 @@ namespace plan9 {
         char* data_buf;
         int data_buf_size;
         int data_len;
+        int data_real_index;
+        int data_real_len;
         int block_num;
         std::string http_version;
         int status;
@@ -615,6 +630,10 @@ namespace plan9 {
 
     std::string ahttp_response::get_header(std::string key) {
         return impl->get_header_string(key);
+    }
+
+    std::shared_ptr<std::map<std::string, std::string>> ahttp_response::get_headers() {
+        return impl->get_headers();
     }
 
     bool ahttp_response::append_response_data(char *data, int len) {
@@ -643,6 +662,10 @@ namespace plan9 {
 
     std::string ahttp_response::to_string() {
         return impl->to_string();
+    }
+
+    std::string ahttp_response::get_body_string() {
+        return impl->get_body_string();
     }
 
     class ahttp::ahttp_impl {

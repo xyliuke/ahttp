@@ -29,6 +29,12 @@ namespace plan9 {
         void append_data(std::shared_ptr<std::map<std::string, std::string>> data);
         void append_data(std::string key, std::string value);
 
+        void set_reused_tcp(bool reused);
+        bool is_reused_tcp();
+
+        void set_timeout(int seconds);
+        int get_timeout();
+
         std::string get_http_method_string();
         std::string get_http_header_string();
         std::string get_http_string();
@@ -45,10 +51,17 @@ namespace plan9 {
     public:
         ahttp_response();
 
-        bool append_response_data(char* data, int len);
+        template <typename T>
+        T get_header(std::string key);
+        std::string get_header(std::string key);
 
+        bool append_response_data(char* data, int len);
+        void set_response_data_file(std::string file);
         int get_response_code();
-        int get_response_data_length();
+        long get_response_data_length();
+        long get_response_header_length();
+        long get_response_length();
+        long get_content_length();
         std::string to_string();
     private:
         class ahttp_response_impl;
@@ -59,18 +72,26 @@ namespace plan9 {
     public:
         ahttp();
 
-        void exec(std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
-        void exec2(std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
+        void exec(std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<common_callback>ccb, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
 
-        void get(std::string url, std::shared_ptr<std::map<std::string, std::string>>header, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
-        void post(std::string url, std::shared_ptr<std::map<std::string, std::string>>header, std::shared_ptr<std::map<std::string, std::string>> data, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
+        void get(std::string url, std::shared_ptr<std::map<std::string, std::string>>header, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
+        void post(std::string url, std::shared_ptr<std::map<std::string, std::string>>header, std::shared_ptr<std::map<std::string, std::string>> data, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
+        void download(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
 
         //各个时间段事件回调
+        //解析DNS后事件
         void set_dns_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);
+        //连接服务器后事件
         void set_connected_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);
+        //客户端发送数据后事件
         void set_send_event_callback(std::function<void(std::shared_ptr<common_callback>, int)> callback);
+        //读取数据事件，每次读取数据都会触发，调用download函数时不要使用这个事件
+        void set_read_event_callback(std::function<void(std::shared_ptr<common_callback>, long size)> callback);
+        //第一次读到数据的事件
         void set_read_begin_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);
-        void set_read_end_event_callback(std::function<void(std::shared_ptr<common_callback>, int)> callback);
+        //最后一次读到数据的事件
+        void set_read_end_event_callback(std::function<void(std::shared_ptr<common_callback>, long)> callback);
+        //关闭连接的事件
         void set_disconnected_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);
 
     private:

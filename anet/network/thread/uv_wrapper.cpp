@@ -41,7 +41,7 @@ namespace plan9 {
         }
 
         bool minus() {
-            if (current_times == 0) {
+            if (current_times == 1) {
                 return true;
             } else if (current_times == TIMER_EVER_LOOP) {
                 return false;
@@ -156,6 +156,9 @@ namespace plan9 {
         if (handle->data != nullptr) {
             auto func = (function_wrap<std::function<void(void)>> *) handle->data;
             if (func->minus()) {
+                if (func->function != nullptr) {
+                    func->function();
+                }
                 uv_timer_stop(handle);
                 uv_mutex_trylock(get_timer_mutex());
                 timer_map.erase(func->id);
@@ -285,7 +288,11 @@ namespace plan9 {
             timer = new uv_timer_t;
         }
         timer_map[timer_id] = timer;
-        auto func = new function_wrap<std::function<void(void)>>(callback, times);
+        int t = times;
+        if (repeat <= 0) {
+            t = 1;
+        }
+        auto func = new function_wrap<std::function<void(void)>>(callback, t);
         func->id = timer_id;
         timer->data = (void *) (func);
         uv_mutex_unlock(get_timer_mutex());

@@ -14,6 +14,7 @@
 #include <iostream>
 #include "string_parser.hpp"
 #include "tri_bool.h"
+#include "zlib_wrap.hpp"
 
 namespace plan9 {
 
@@ -322,7 +323,7 @@ namespace plan9 {
         ahttp_response_impl() : header_buf((char*)malloc(65536)), header_buf_size(65536), header_len(0), block_num(0), status(-1),
                                 data_buf(nullptr), data_buf_size(0), data_len(0), content_length(0), http_header_end_position(0),
                                 http_status_end_position(0), headers(new std::map<std::string, std::string>),
-                                transfer_encoding_chunked(tri_undefined), data_real_len(0), data_real_index(0) {
+                                transfer_encoding_chunked(tri_undefined) {
         }
 
         ~ahttp_response_impl() {
@@ -500,6 +501,8 @@ namespace plan9 {
             if (!ofstream) {
                 //没有写文件
                 if (is_transfer_encoding_chunked()) {
+                    int data_real_index;
+                    int data_real_len;
                     for (int i = 0; i < data_len; ++i) {
                         char c = data_buf[i];
                         if (c == '\r' && data_buf[i + 1] == '\n') {
@@ -508,6 +511,23 @@ namespace plan9 {
                         }
                     }
                     data_real_len = string_parser::dex_to_dec(data_buf, data_real_index - 2);
+                    std::string zip = get_header_string("Content-Encoding");
+                    if ("gzip" == zip) {
+                        unsigned long len = 0;
+                        char* new_data = zlib_wrap::ungzip(data_buf + data_real_index, data_real_len, &len);
+                        if (len > 0) {
+                            free(data_buf);
+                            data_buf = new_data;
+                            data_len = len;
+                            data_buf_size = len;
+                        }
+                    } else {
+                        char* new_data = (char*) malloc(data_real_len);
+                        memcpy(new_data, data_buf + data_real_index, data_real_len);
+                        free(data_buf);
+                        data_buf = new_data;
+                        data_len = data_real_len;
+                    }
                 }
             }
         }
@@ -583,7 +603,7 @@ namespace plan9 {
             return headers;
         };
         std::string get_body_string() {
-            return std::string(data_buf + data_real_index, data_real_len);
+            return std::string(data_buf, data_len);
         }
 
         std::string to_string() {
@@ -605,8 +625,6 @@ namespace plan9 {
         char* data_buf;
         int data_buf_size;
         int data_len;
-        int data_real_index;
-        int data_real_len;
         int block_num;
         std::string http_version;
         int status;

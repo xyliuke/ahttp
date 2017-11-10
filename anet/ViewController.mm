@@ -16,6 +16,7 @@
 #include "common_callback.hpp"
 #import "ahttp.hpp"
 #import "string_parser.hpp"
+#import "zlib_wrap.hpp"
 #include <chrono>
 #import <fstream>
 
@@ -82,9 +83,17 @@
 //        auto tp = std::chrono::system_clock::now();
 //        std::cout << " timer " << tp.time_since_epoch().count() / 1000 << std::endl;
 //    }, 5000, 0);
-    int d = plan9::string_parser::dex_to_dec("12", 2);
-    d = plan9::string_parser::dex_to_dec("1A", 2);
-    d = plan9::string_parser::dex_to_dec("DA", 2);
+//    int d = plan9::string_parser::dex_to_dec("12", 2);
+//    d = plan9::string_parser::dex_to_dec("1A", 2);
+//    d = plan9::string_parser::dex_to_dec("DA", 2);
+    std::string data = "aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccc";
+//    data = "hello";
+    char *buf = (char*)malloc(100);
+    unsigned long ret = plan9::zlib_wrap::gzip((char*)data.c_str(), data.length(), buf, 100);
+    char buf1[100];
+    unsigned long r = plan9::zlib_wrap::ungzip(buf, ret, buf1, 100);
+    unsigned long len = 0;
+    char* rr = plan9::zlib_wrap::ungzip(buf, ret, &len);
 }
 - (IBAction)click_send:(id)sender {
 
@@ -179,8 +188,10 @@
 //        });
         
         std::shared_ptr<std::map<std::string, std::string>> h(new std::map<std::string, std::string>);
-//        (*h)["Accept-Encoding"] = "gzip, deflate";
-        ah->get("http://api.chesupai.cn", h, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
+        (*h)["Accept-Encoding"] = "gzip, deflate";
+        std::string url = "http://api.chesupai.cn/customer/detail/info?id=1429449&idfa=11BFBC7A-98EF-4B37-A216-E8DAF0ABAB8B&osv=iOS8.1&net=wifi&screenWH=750%252C1334&deviceId=3200A4C2-C469-469D-A42A-920B1A5A0216&deviceModel=iPhoneSimulator&platform=1&dpi=326&versionId=2.7.3&model=x86_64&pushTYpe=0&sign=9102c932d5e96cd5129b1c35f9baee28";
+        ah->get(url, h, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
+//            std::cout << response->to_string() << std::endl;
             std::cout << response->get_body_string() << std::endl;
         });
 //        ah->download("http://cn.bing.com/az/hprichbg/rb/Forest_ZH-CN16430313748_1920x1080.jpg", "/Users/keliu/Downloads/a.jpg", nullptr, [=](long current, long total){

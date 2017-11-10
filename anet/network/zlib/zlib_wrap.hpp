@@ -14,11 +14,14 @@
 
 namespace plan9 {
     class zlib_wrap {
-        static unsigned long zip(char* data, unsigned long len, char* dst_data);
-        static unsigned long unzip(char* data, unsigned long len, char* dst_data);
-//    private:
-//        class zlib_wrap_impl;
-//        std::shared_ptr<zlib_wrap_impl> impl_;
+    public:
+        static unsigned long zip(char* data, unsigned long len, char* dst_data, unsigned long dst_len);
+        static unsigned long unzip(char* data, unsigned long len, char* dst_data, unsigned long dst_len);
+        static char* unzip(char* data, unsigned long len, unsigned long* dst_len);
+
+        static unsigned long gzip(char* data, unsigned long len, char* dst_data, unsigned long dst_len);
+        static unsigned long ungzip(char* data, unsigned long len, char* dst_data, unsigned long dst_len);
+        static char* ungzip(char* data, unsigned long len, unsigned long* dst_len);
     };
 }
 

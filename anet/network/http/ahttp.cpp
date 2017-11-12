@@ -323,7 +323,7 @@ namespace plan9 {
         ahttp_response_impl() : header_buf((char*)malloc(65536)), header_buf_size(65536), header_len(0), block_num(0), status(-1),
                                 data_buf(nullptr), data_buf_size(0), data_len(0), content_length(0), http_header_end_position(0),
                                 http_status_end_position(0), headers(new std::map<std::string, std::string>),
-                                transfer_encoding_chunked(tri_undefined) {
+                                transfer_encoding_chunked(tri_undefined), total_len(0) {
         }
 
         ~ahttp_response_impl() {
@@ -411,6 +411,7 @@ namespace plan9 {
         }
 
         bool append_response_data(char* data, int len) {
+            total_len += len;
             block_num ++;
             int new_pos = 0;
             if (fill_header_buf(data, len, &new_pos)) {
@@ -546,7 +547,7 @@ namespace plan9 {
         }
 
         long get_len() {
-            return header_len + data_len;
+            return total_len;
         }
 
         long get_content_length() {
@@ -575,7 +576,7 @@ namespace plan9 {
         }
 
         long get_body_len() {
-            return data_len;
+            return total_len - header_len;
         }
 
         long get_header_len() {
@@ -618,7 +619,7 @@ namespace plan9 {
         }
 
     private:
-
+        long total_len;
         char* header_buf;
         int header_buf_size;
         int header_len;

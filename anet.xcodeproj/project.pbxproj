@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6135E0F4A833755B2BCAA7A3 /* case_insensitive_map.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135EE020116A5AAD26F3533 /* case_insensitive_map.cpp */; };
 		6135E635DFA9CE3FE898B8D4 /* uv_wrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135E2A0832EA6891E99CE15 /* uv_wrapper.cpp */; };
 		E342FD561FB33CEE00BA7AC1 /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = E342FD421FB33CED00BA7AC1 /* inflate.c */; };
 		E342FD571FB33CEE00BA7AC1 /* zlib.3.pdf in Resources */ = {isa = PBXBuildFile; fileRef = E342FD431FB33CED00BA7AC1 /* zlib.3.pdf */; };
@@ -35,7 +36,9 @@
 
 /* Begin PBXFileReference section */
 		6135E2A0832EA6891E99CE15 /* uv_wrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = uv_wrapper.cpp; sourceTree = "<group>"; };
+		6135ED990020EBC50E9A141E /* case_insensitive_map.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = case_insensitive_map.h; sourceTree = "<group>"; };
 		6135EDBBFE73664E8A225FBF /* uv_wrapper.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = uv_wrapper.hpp; sourceTree = "<group>"; };
+		6135EE020116A5AAD26F3533 /* case_insensitive_map.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = case_insensitive_map.cpp; sourceTree = "<group>"; };
 		6135EE2631038C7B62738550 /* tri_bool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tri_bool.h; sourceTree = "<group>"; };
 		E342FD401FB33CED00BA7AC1 /* zutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zutil.h; sourceTree = "<group>"; };
 		E342FD411FB33CED00BA7AC1 /* inftrees.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = inftrees.h; sourceTree = "<group>"; };
@@ -184,6 +187,8 @@
 				E39A09D71F9CE60900962656 /* string_parser.cpp */,
 				E39A09D81F9CE60900962656 /* string_parser.hpp */,
 				6135EE2631038C7B62738550 /* tri_bool.h */,
+				6135EE020116A5AAD26F3533 /* case_insensitive_map.cpp */,
+				6135ED990020EBC50E9A141E /* case_insensitive_map.h */,
 			);
 			path = common;
 			sourceTree = "<group>";
@@ -484,6 +489,7 @@
 				E342FD5F1FB33CEE00BA7AC1 /* trees.c in Sources */,
 				E342FD581FB33CEE00BA7AC1 /* compress.c in Sources */,
 				E342FD601FB33CEE00BA7AC1 /* inffast.c in Sources */,
+				6135E0F4A833755B2BCAA7A3 /* case_insensitive_map.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

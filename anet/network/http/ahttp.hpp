@@ -77,6 +77,9 @@ namespace plan9 {
         void set_timeout(int seconds);
         int get_timeout();
 
+        void set_keep_alive(bool keep_alive);
+        bool is_keep_alive();
+
         /**
          * 将对象转化为字符串
          * @return
@@ -90,6 +93,9 @@ namespace plan9 {
 
         std::string get_domain();
         int get_port();
+        static inline int get_default_timeout() {
+            return 30;
+        }
     private:
         class ahttp_request_impl;
         std::shared_ptr<ahttp_request_impl> impl;
@@ -180,6 +186,7 @@ namespace plan9 {
          * @param callback 回调
          */
         void get(std::string url, std::shared_ptr<std::map<std::string, std::string>>header, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
+        void get(std::string url, int timeout, std::shared_ptr<std::map<std::string, std::string>>header, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
         /**
          * 封装POST请求
          * @param url url字符串
@@ -188,6 +195,7 @@ namespace plan9 {
          * @param callback 回调
          */
         void post(std::string url, std::shared_ptr<std::map<std::string, std::string>>header, std::shared_ptr<std::map<std::string, std::string>> data, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
+        void post(std::string url, int timeout, std::shared_ptr<std::map<std::string, std::string>>header, std::shared_ptr<std::map<std::string, std::string>> data, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
         /**
          * 封装下载请求
          * @param url url字符串
@@ -197,6 +205,9 @@ namespace plan9 {
          * @param callback
          */
         void download(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
+
+        void upload(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
+
 
         //各个时间段事件回调
         //解析DNS后事件

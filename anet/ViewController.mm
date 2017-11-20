@@ -19,6 +19,7 @@
 #import "zlib_wrap.hpp"
 #include <chrono>
 #import <fstream>
+#include "case_insensitive_map.h"
 
 
 @implementation ViewController
@@ -47,17 +48,25 @@
     });
 }
 - (IBAction)click_connect:(id)sender {
-    plan9::uv_wrapper::connect("127.0.0.1", 8800, [=](std::shared_ptr<plan9::common_callback> ccb, int tcp_id){
-        std::cout << tcp_id << " connected\n";
-//        plan9::uv_thread_wrap::close(tcp_id);
-        plan9::uv_wrapper::write(tcp_id, "hello world", 11, [=](std::shared_ptr<plan9::common_callback> ccb){
-            std::cout << "write " << ccb->success << std::endl;
-        });
-    }, [=](int tcp_id, char* data, int len) {
-        std::cout << "read : " << std::string(data, len) << std::endl;
-    }, [=](std::shared_ptr<plan9::common_callback> ccb, int tcp_id){
-        std::cout << tcp_id << " disconnected\n";
-    });
+
+    using namespace plan9;
+    case_insensitive_map map;
+    map.add("a", "b");
+    map.add("A", "bb");
+    bool find;
+    std::string ret = map.get("a", &find);
+    ret = map.get("A", &find);
+
+//    plan9::uv_wrapper::connect("127.0.0.1", 8800, [=](std::shared_ptr<plan9::common_callback> ccb, int tcp_id){
+//        std::cout << tcp_id << " connected\n";
+//        plan9::uv_wrapper::write(tcp_id, "hello world", 11, [=](std::shared_ptr<plan9::common_callback> ccb){
+//            std::cout << "write " << ccb->success << std::endl;
+//        });
+//    }, [=](int tcp_id, char* data, int len) {
+//        std::cout << "read : " << std::string(data, len) << std::endl;
+//    }, [=](std::shared_ptr<plan9::common_callback> ccb, int tcp_id){
+//        std::cout << tcp_id << " disconnected\n";
+//    });
 }
 - (IBAction)click_ssl:(id)sender {
 //    plan9::ahttp_request model;
@@ -189,7 +198,8 @@
         
         std::shared_ptr<std::map<std::string, std::string>> h(new std::map<std::string, std::string>);
         (*h)["Accept-Encoding"] = "gzip, deflate";
-        std::string url = "http://api.chesupai.cn/customer/detail/info?id=1429449&idfa=11BFBC7A-98EF-4B37-A216-E8DAF0ABAB8B&osv=iOS8.1&net=wifi&screenWH=750%252C1334&deviceId=3200A4C2-C469-469D-A42A-920B1A5A0216&deviceModel=iPhoneSimulator&platform=1&dpi=326&versionId=2.7.3&model=x86_64&pushTYpe=0&sign=9102c932d5e96cd5129b1c35f9baee28";
+        std::string url = "http://api.chesupai.cn";
+//        std::string url = "http://api.chesupai.cn/customer/detail/info?id=1429449&idfa=11BFBC7A-98EF-4B37-A216-E8DAF0ABAB8B&osv=iOS8.1&net=wifi&screenWH=750%252C1334&deviceId=3200A4C2-C469-469D-A42A-920B1A5A0216&deviceModel=iPhoneSimulator&platform=1&dpi=326&versionId=2.7.3&model=x86_64&pushTYpe=0&sign=9102c932d5e96cd5129b1c35f9baee28";
         ah->get(url, h, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
             std::cout << response->get_response_length() << std::endl;
             std::cout << response->get_body_string() << std::endl;

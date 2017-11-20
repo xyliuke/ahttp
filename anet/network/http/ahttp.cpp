@@ -15,6 +15,7 @@
 #include "string_parser.hpp"
 #include "tri_bool.h"
 #include "zlib_wrap.hpp"
+#include "case_insensitive_map.h"
 
 namespace plan9 {
 
@@ -41,11 +42,11 @@ namespace plan9 {
 
     class ahttp_request::ahttp_request_impl {
     public:
-        ahttp_request_impl() : header(new std::map<std::string, std::string>), method("GET"), version("1.1"), port(80), path("/"),
+        ahttp_request_impl() : header(new case_insensitive_map), method("GET"), version("1.1"), port(80), path("/"),
                             timeout(30), reused_tcp(true) {
         }
         void append_header(std::string key, std::string value) {
-            (*header)[key] = value;
+            header->add(key, value);
         }
         void append_header(std::string key, int value) {
             std::stringstream ss;
@@ -110,7 +111,7 @@ namespace plan9 {
             if (data && data->size() > 0) {
                 if (boundary == "") {
                     boundary = get_boundary_string();
-                    (*header)["Content-Type"] = "Content-Type:multipart/form-data;boundary=" + boundary;
+                    header->add("Content-Type", "Content-Type:multipart/form-data;boundary=" + boundary);
                 }
                 if (!this->data) {
                     this->data.reset(new std::map<std::string, std::string>);
@@ -130,7 +131,7 @@ namespace plan9 {
             }
             if (boundary == "") {
                 boundary = get_boundary_string();
-                (*header)["Content-Type"] = "multipart/form-data;boundary=" + boundary;
+                header->add("Content-Type", "multipart/form-data;boundary=" + boundary);
             }
             (*data)[key] = value;
         }
@@ -151,6 +152,17 @@ namespace plan9 {
             return timeout;
         }
 
+        std::string get_header(std::string key, bool* find) {
+            return header->get(key, find);
+        }
+
+        void set_keep_alive(bool keep_alive) {
+            append_header("Connection", "Keep-Alive");
+        }
+        bool is_keep_alive() {
+            return true;
+        }
+
         std::string get_http_method_string() {
             std::stringstream ss;
             ss << method;
@@ -163,18 +175,17 @@ namespace plan9 {
         }
 
         std::string get_http_header_string() {
-            std::stringstream ss;
+            std::shared_ptr<std::stringstream> ss(new std::stringstream);
             if (header != nullptr) {
-                std::map<std::string, std::string>::const_iterator it = header->begin();
-                while (it != header->end()) {
-                    ss << it->first;
-                    ss << ":";
-                    ss << it->second;
-                    ss << "\r\n";
-                    it ++;
-                }
+                header->const_iteration([=](std::string key, std::string value) -> bool {
+                    *ss << key;
+                    *ss << ":";
+                    *ss << value;
+                    *ss << "\r\n";
+                    return true;
+                });
             }
-            return ss.str();
+            return ss->str();
         }
 
         std::string get_http_body_string(){
@@ -220,13 +231,15 @@ namespace plan9 {
         }
 
         static std::string get_boundary_string() {
+            auto tp = std::chrono::system_clock::now();
             std::stringstream ss;
             ss << "--------------------------";
-            ss << "AA0xadsds";
+            ss << "Boundary";
+            ss << tp.time_since_epoch().count();
             return ss.str();
         }
     private:
-        std::shared_ptr<std::map<std::string, std::string>> header;
+        std::shared_ptr<case_insensitive_map> header;
         std::shared_ptr<std::map<std::string, std::string>> data;
         std::string method;
         std::string version;
@@ -293,6 +306,14 @@ namespace plan9 {
         return impl->get_timeout();
     }
 
+    void ahttp_request::set_keep_alive(bool keep_alive) {
+        impl->set_keep_alive(keep_alive);
+    }
+
+    bool ahttp_request::is_keep_alive() {
+        return impl->is_keep_alive();
+    }
+
     std::string ahttp_request::get_http_method_string() {
         return impl->get_http_method_string();
     }
@@ -322,7 +343,7 @@ namespace plan9 {
 
         ahttp_response_impl() : header_buf((char*)malloc(65536)), header_buf_size(65536), header_len(0), block_num(0), status(-1),
                                 data_buf(nullptr), data_buf_size(0), data_len(0), content_length(0), http_header_end_position(0),
-                                http_status_end_position(0), headers(new std::map<std::string, std::string>),
+                                http_status_end_position(0), headers(new case_insensitive_map),
                                 transfer_encoding_chunked(tri_undefined), total_len(0) {
         }
 
@@ -483,8 +504,7 @@ namespace plan9 {
                         if (parse_key_value(pre_header_item_end_pos + 1, i - 1, &key_begin, &key_end, &value_begin, &value_end)) {
                             std::string k = string_parser::trim(std::string(header_buf, key_begin, key_end - key_begin + 1));
                             std::string v = string_parser::trim(std::string(header_buf, value_begin, value_end - value_begin + 1));
-                            std::string lower_k = string_parser::to_lower(k);
-                            (*headers)[lower_k] = v;
+                            headers->add(k, v);
                         }
 
                         if ('\r' == header_buf[i + 2] && '\n' == header_buf[i + 3]) {
@@ -593,15 +613,16 @@ namespace plan9 {
         }
 
         std::string get_header_string(std::string key) {
-            std::string lower_k = string_parser::to_lower(key);
-            if (headers->find(lower_k) != headers->end()) {
-                return (*headers)[lower_k];
+            bool find;
+            std::string ret = headers->get(key, &find);
+            if (find) {
+                return ret;
             }
             return "";
         }
 
         std::shared_ptr<std::map<std::string, std::string>> get_headers() {
-            return headers;
+            return headers->get();
         };
         std::string get_body_string() {
             return std::string(data_buf, data_len);
@@ -631,7 +652,7 @@ namespace plan9 {
         int status;
         int http_status_end_position;
         int http_header_end_position;
-        std::shared_ptr<std::map<std::string, std::string>> headers;
+        std::shared_ptr<case_insensitive_map> headers;
         std::string file;
         std::shared_ptr<std::ofstream> ofstream;
         long content_length;
@@ -854,7 +875,7 @@ namespace plan9 {
             std::shared_ptr<ahttp_impl> self(this);
             request = model;
             this->callback = callback;
-            if (model->get_timeout() >= 0) {
+            if (model->get_timeout() > 0) {
                 timer_id = uv_wrapper::post_timer([=](){
                     std::map<int, std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>>>::const_iterator it = tcp_http_map.begin();
                     bool find = false;
@@ -875,6 +896,9 @@ namespace plan9 {
                     }
                     if (find && self->callback) {
                         std::shared_ptr<common_callback> ccb(new common_callback(false, -1, "timeout"));
+                        if (!self->response) {
+                            self->response.reset(new ahttp_response);
+                        }
                         self->callback(ccb, self->request, self->response);
                     }
                 }, model->get_timeout() * 1000, 0);
@@ -937,20 +961,22 @@ namespace plan9 {
             disconnect_callback = callback;
         }
 
-        void get(std::string url, std::shared_ptr<std::map<std::string, std::string>>header, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
+        void get(std::string url, int timeout, std::shared_ptr<std::map<std::string, std::string>>header, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
             std::shared_ptr<ahttp_request> request(new ahttp_request);
             request->set_method("GET");
             request->set_url(url);
             request->append_header(header);
+            request->set_timeout(timeout);
             exec2(request, callback);
         }
 
-        void post(std::string url, std::shared_ptr<std::map<std::string, std::string>>header, std::shared_ptr<std::map<std::string, std::string>> data, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
+        void post(std::string url, int timeout, std::shared_ptr<std::map<std::string, std::string>>header, std::shared_ptr<std::map<std::string, std::string>> data, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
             std::shared_ptr<ahttp_request> request(new ahttp_request);
             request->set_method("POST");
             request->set_url(url);
             request->append_header(header);
             request->append_data(data);
+            request->set_timeout(timeout);
             exec2(request, callback);
         }
 
@@ -970,6 +996,11 @@ namespace plan9 {
                 });
             }
             exec2(request, callback);
+        }
+
+        void upload(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
+            //TODO 上传文件
+
         }
 
     private:
@@ -1020,7 +1051,7 @@ namespace plan9 {
             std::shared_ptr<common_callback> ccb(new common_callback);
             send_read_event(ccb, len);
             if (isEnd) {
-                send_read_end_event(nullptr, response->get_response_data_length());
+                send_read_end_event(nullptr, response->get_response_length());
             }
             return isEnd;
         }
@@ -1085,15 +1116,27 @@ namespace plan9 {
     }
 
     void ahttp::get(std::string url, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
-        impl->get(url, header, callback);
+        impl->get(url, ahttp_request::get_default_timeout(), header, callback);
+    }
+
+    void ahttp::get(std::string url, int timeout, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
+        impl->get(url, timeout, header, callback);
     }
 
     void ahttp::post(std::string url, std::shared_ptr<std::map<std::string, std::string>> header, std::shared_ptr<std::map<std::string, std::string>> data, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
-        impl->post(url, header, data, callback);
+        impl->post(url, ahttp_request::get_default_timeout(), header, data, callback);
+    }
+
+    void ahttp::post(std::string url, int timeout, std::shared_ptr<std::map<std::string, std::string>> header, std::shared_ptr<std::map<std::string, std::string>> data, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
+        impl->post(url, timeout, header, data, callback);
     }
 
     void ahttp::download(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
         impl->download(url, file, header, process_callback, callback);
+    }
+
+    void ahttp::upload(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
+        impl->upload(url, file, header, process_callback, callback);
     }
 
 }

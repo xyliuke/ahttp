@@ -22,19 +22,19 @@ namespace plan9 {
         ahttp_request();
         /**
          * 向header中添加数据
-         * @param key
-         * @param value
+         * @param key header中key
+         * @param value header中value
          */
         void append_header(std::string key, std::string value);
         /**
          * 向header中添加数据
-         * @param key
-         * @param value
+         * @param key header中key
+         * @param value header中value
          */
         void append_header(std::string key, int value);
         /**
          * 向header中添加一组数据
-         * @param headers
+         * @param headers header集合
          */
         void append_header(std::shared_ptr<std::map<std::string, std::string>> headers);
         /**
@@ -44,12 +44,12 @@ namespace plan9 {
         void set_method(std::string method);
         /**
          * 设置HTTP版本号，目前只支持1.1，默认为1.1
-         * @param version
+         * @param version 版本号
          */
         void set_http_version(std::string version);
         /**
          * 设置请求的url
-         * @param url
+         * @param url 请求链接
          */
         void set_url(std::string url);
         /**
@@ -82,7 +82,7 @@ namespace plan9 {
 
         /**
          * 将对象转化为字符串
-         * @return
+         * @return 字符串结果
          */
         std::string to_string();
 
@@ -108,19 +108,19 @@ namespace plan9 {
         /**
          * 通过key值获取header中数据，可以指定返回值转换的类型
          * @param key header中的key值，不区分大小写
-         * @return
+         * @return header中key对应的值
          */
         template <typename T>
         T get_header(std::string key);
         /**
          * 获取header中的数据，返回字符串格式
          * @param key header中的key值，不区分大小写
-         * @return
+         * @return header中key对应的值
          */
         std::string get_header(std::string key);
         /**
          * 获取所有header中的值
-         * @return
+         * @return header集合
          */
         std::shared_ptr<std::map<std::string, std::string>> get_headers();
 
@@ -131,41 +131,41 @@ namespace plan9 {
         void set_response_data_file(std::string file);
         /**
          * 获取HTTP 状态值
-         * @return
+         * @return 状态值
          */
         int get_response_code();
         /**
          * 获取数据的body部分数据长度
-         * @return
+         * @return body部分长度
          */
         long get_response_data_length();
         /**
          * 获取数据的header部分长度
-         * @return
+         * @return header长度
          */
         long get_response_header_length();
         /**
          * 获取数据的总长度
-         * @return
+         * @return 报文长度
          */
         long get_response_length();
         /**
          * 获取数据长度，通过header中的Content-Length来获取
-         * @return
+         * @return 字节长度
          */
         long get_content_length();
         /**
          * 获取body的字符串
-         * @return
+         * @return body部分的字符串
          */
         std::string get_body_string();
         /**
          * 将对象转化为字符串
-         * @return
+         * @return 字符串
          */
         std::string to_string();
         //内部使用
-        bool append_response_data(char* data, int len);
+        bool append_response_data(std::shared_ptr<char> data, int len);
     private:
         class ahttp_response_impl;
         std::shared_ptr<ahttp_response_impl> impl;
@@ -174,6 +174,7 @@ namespace plan9 {
     class ahttp {
     public:
         ahttp();
+        ~ahttp();
         /**
          * HTTP请求最基本的方法
          * @param request 请求参数的对象
@@ -202,19 +203,17 @@ namespace plan9 {
          * @param url url字符串
          * @param file 本地的文件
          * @param header 请求头
-         * @param process_callback
-         * @param callback
+         * @param process_callback 下载进度回调
+         * @param callback 完成回调
          */
         void download(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
 
         void upload(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
         /**
          * 设置dns解析的替换方案，默认使用libuv解析
-         * @param url
-         * @param port
-         * @param callback
+         * @param callback 结果回调
          */
-        void set_dns_resolve(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)> callback);
+        void set_dns_resolve(std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> callback);
         //各个时间段事件回调
         //解析DNS后事件
         void set_dns_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);

@@ -382,7 +382,7 @@ namespace plan9 {
 
     static std::map<int, uv_tcp_t*> tcp_array;
     static std::map<int, std::function<void(std::shared_ptr<common_callback>, int tcp_id)>> tcp_close_callback_map;
-    static std::map<int, std::function<void(int, char*, int len)>> tcp_read_callback_map;
+    static std::map<int, std::function<void(int, std::shared_ptr<char>, int len)>> tcp_read_callback_map;
     static std::map<int, char*> tcp_read_buf_map;
 
     static void read_callback(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf) {
@@ -391,7 +391,8 @@ namespace plan9 {
                 auto func = (function_wrap<std::function<void(std::shared_ptr<common_callback>, int)>> *) (handle->data);
                 if (tcp_read_callback_map.find(func->id) != tcp_read_callback_map.end()) {
                     auto callback = tcp_read_callback_map[func->id];
-                    callback(func->id, buf->base, nread);
+                    std::shared_ptr<char> data(buf->base);
+                    callback(func->id, data, nread);
                 }
             }
         } else {
@@ -438,7 +439,7 @@ namespace plan9 {
     }
 
     void uv_wrapper::connect(std::string ip, int port, std::function<void(std::shared_ptr<common_callback>, int tcp_id)> connect_callback,
-            std::function<void(int, char*, int len)> read_callback,
+            std::function<void(int, std::shared_ptr<char>, int len)> read_callback,
             std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback) {
         if (loop == nullptr) {
             if (connect_callback) {

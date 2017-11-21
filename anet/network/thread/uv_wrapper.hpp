@@ -42,7 +42,7 @@ namespace plan9 {
 
         //TCP 相关
         static void connect(std::string ip, int port, std::function<void(std::shared_ptr<common_callback>, int tcp_id)> connect_callback,
-                            std::function<void(int tcp_id, char* data, int len)> read_callback,
+                            std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,
                             std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback);
 
         static void reconnect(int tcp_id);

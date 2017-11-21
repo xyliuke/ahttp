@@ -21,6 +21,7 @@
 #import <fstream>
 #include "case_insensitive_map.h"
 
+std::shared_ptr<plan9::ahttp> ah;
 
 @implementation ViewController
 
@@ -106,6 +107,8 @@
 }
 - (IBAction)click_send:(id)sender {
 
+    std::cout << "click send \n";
+
 //    std::string http = plan9::ahttp::http("GET", "/", "HTTP/1.1");
 //    std::shared_ptr<std::map<std::string, std::string>> h(new std::map<std::string, std::string>);
 //    (*h)["Host"] = "api.chesupai.cn";
@@ -155,13 +158,22 @@
 //    ofstream.flush();
 //    ofstream.close();
 //    req->set_timeout(5);
-
-    for (int i = 0; i < 1; ++i) {
-        static std::vector<std::shared_ptr<ahttp>> list;
-        std::shared_ptr<ahttp> ah;
+    int i = 0;
+//    for (int i = 0; i < 1; ++i) {
+//        static std::vector<std::shared_ptr<ahttp>> list;
+//        std::shared_ptr<ahttp> ah;
         ah.reset(new ahttp);
 
-        list.push_back(ah);
+    if (ah) {
+        std::cout << "ok\n";
+    }
+//    ah.reset();
+
+    if (ah) {
+        std::cout << "ok\n";
+    }
+
+//        list.push_back(ah);
 
         ah->set_dns_event_callback([=](std::shared_ptr<common_callback>) {
             auto tp = std::chrono::system_clock::now();
@@ -201,18 +213,18 @@
         std::string url = "http://api.chesupai.cn";
 //        std::string url = "http://api.chesupai.cn/customer/detail/info?id=1429449&idfa=11BFBC7A-98EF-4B37-A216-E8DAF0ABAB8B&osv=iOS8.1&net=wifi&screenWH=750%252C1334&deviceId=3200A4C2-C469-469D-A42A-920B1A5A0216&deviceModel=iPhoneSimulator&platform=1&dpi=326&versionId=2.7.3&model=x86_64&pushTYpe=0&sign=9102c932d5e96cd5129b1c35f9baee28";
         ah->get(url, h, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
-            std::cout << response->get_response_length() << std::endl;
-            std::cout << response->get_body_string() << std::endl;
+//            std::cout << response->get_response_length() << std::endl;
+//            std::cout << response->get_body_string() << std::endl;
         });
 //        ah->download("http://cn.bing.com/az/hprichbg/rb/Forest_ZH-CN16430313748_1920x1080.jpg", "/Users/keliu/Downloads/a.jpg", nullptr, [=](long current, long total){
 //            std::cout << current << "/" << total << std::endl;
 //        }, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response){
 //            std::cout << response->to_string() << std::endl;
 //        });
-        if (i == 0) {
-            sleep(3);
-        }
-    }
+//        if (i == 0) {
+//            sleep(3);
+//        }
+//    }
 }
 
 

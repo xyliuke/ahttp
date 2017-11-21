@@ -235,7 +235,9 @@ namespace plan9 {
             if (callback) {
                 static const int buf_size = 1024;
                 std::string http = get_http_string();
-                std::shared_ptr<char> ret(new char(http.length()));
+                std::shared_ptr<char> ret;
+                char* ch = (char*) malloc(http.length());
+                ret.reset(ch);
                 memcpy(ret.get(), http.c_str(), http.length());
                 callback(ret, http.length(), 0, http.length());
             }
@@ -380,7 +382,7 @@ namespace plan9 {
             }
         }
 
-        bool fill_header_buf(char* data, int len, int* new_data_begin) {
+        bool fill_header_buf(std::shared_ptr<char> data, int len, int* new_data_begin) {
             *new_data_begin = 0;
             if (http_header_end_position > 0) {
                 return true;
@@ -400,15 +402,15 @@ namespace plan9 {
                 header_buf = (char*)realloc(header_buf, real_len * 2 + header_buf_size);
                 header_buf_size += real_len * 2;
             }
-            memcpy(header_buf + this->header_len, data, real_len);
+            memcpy(header_buf + this->header_len, data.get(), real_len);
             this->header_len += real_len;
             return pos >= 0;
         }
 
-        int find_header_end_position(char* data, int len) {
+        int find_header_end_position(std::shared_ptr<char> data, int len) {
             for (int i = 0; i < len; ++i) {
-                char c = data[i];
-                if (c == '\r' && i < (len - 3) && '\n' == data[i + 1] && '\r' == data[i + 2] && '\n' == data[i + 3]) {
+                char c = *(data.get() + i);
+                if (c == '\r' && i < (len - 3) && '\n' == *(data.get() + i + 1) && '\r' == *(data.get() + i + 2) && '\n' == *(data.get() + i + 3)) {
                     return i + 3;
                 }
             }
@@ -450,7 +452,7 @@ namespace plan9 {
             return over;
         }
 
-        bool append_response_data(char* data, int len) {
+        bool append_response_data(std::shared_ptr<char> data, int len) {
             total_len += len;
             block_num ++;
             int new_pos = 0;
@@ -459,9 +461,9 @@ namespace plan9 {
                 if (new_pos < len) {
                     if (file != "") {
                         //保存到文件
-                        return fill_body_to_file(data + new_pos, len - new_pos);
+                        return fill_body_to_file(data.get() + new_pos, len - new_pos);
                     } else {
-                        return fill_body_buf(data + new_pos, len - new_pos);
+                        return fill_body_buf(data.get() + new_pos, len - new_pos);
                     }
                 }
             }
@@ -695,7 +697,7 @@ namespace plan9 {
         return impl->get_headers();
     }
 
-    bool ahttp_response::append_response_data(char *data, int len) {
+    bool ahttp_response::append_response_data(std::shared_ptr<char> data, int len) {
         return impl->append_response_data(data, len);
     }
 
@@ -730,8 +732,48 @@ namespace plan9 {
     class ahttp::ahttp_impl {
     public:
 
-        ahttp_impl() : timer_id(-1), read_begin(false) {
+        ahttp_impl() : timer_id(-1), read_begin(false), dns_resolve_callback(std::bind(&uv_wrapper::resolve, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)) {
 
+        }
+
+        ~ahttp_impl() {
+            mutex.lock();
+            std::map<int, std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>>>::const_iterator it = tcp_http_map.begin();
+            bool find = false;
+            while (it != tcp_http_map.end()) {
+                std::vector<std::shared_ptr<ahttp_impl>>::iterator itt = it->second->begin();
+                while (itt != it->second->end()) {
+                    if ((*itt).get() == this) {
+                        find = true;
+                        it->second->erase(itt);
+                        break;
+                    }
+                    itt ++;
+                }
+                if (find) {
+                    break;
+                }
+                it++;
+            }
+
+            it = tcp_http_disconnected_map.begin();
+            find = false;
+            while (it != tcp_http_disconnected_map.end()) {
+                std::vector<std::shared_ptr<ahttp_impl>>::iterator itt = it->second->begin();
+                while (itt != it->second->end()) {
+                    if ((*itt).get() == this) {
+                        find = true;
+                        it->second->erase(itt);
+                        break;
+                    }
+                    itt ++;
+                }
+                if (find) {
+                    break;
+                }
+                it++;
+            }
+            mutex.unlock();
         }
 
         static void exec_reused_connect(int tcp_id) {
@@ -802,7 +844,7 @@ namespace plan9 {
                 } else {
                     uv_wrapper::close(tcp_id);
                 }
-            }, [=](int tcp_id, char *data, int len) {
+            }, [=](int tcp_id, std::shared_ptr<char>data, int len) {
                 if (tcp_http_map.find(tcp_id) != tcp_http_map.end()) {
                     auto http_list = tcp_http_map[tcp_id];
                     if (http_list->size() > 0) {
@@ -824,7 +866,6 @@ namespace plan9 {
                         }
                     }
                 }
-                delete (data);
             }, [=](std::shared_ptr<common_callback> disconnect_ccb, int tcp_id) {
                 mutex.lock();
                 std::map<std::string, int>::const_iterator it = url_tcp_map.begin();
@@ -844,7 +885,10 @@ namespace plan9 {
                     tcp_http_disconnected_map.erase(tcp_id);
                     std::vector<std::shared_ptr<ahttp_impl>>::const_iterator itt = http_list->begin();
                     while (itt != http_list->end()) {
-                        (*itt)->send_disconnected_event(disconnect_ccb);
+                        auto ahttp_i = *itt;
+                        if (ahttp_i) {
+                            ahttp_i->send_disconnected_event(disconnect_ccb);
+                        }
                         itt ++;
                     }
                 }
@@ -881,7 +925,7 @@ namespace plan9 {
                     }
                 }
                 if (!reused_connect) {
-                    uv_wrapper::resolve(http->request->get_domain(), http->request->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips){
+                    http->dns_resolve_callback(http->request->get_domain(), http->request->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips){
                         http->send_dns_event(ccb);
                         if (ccb->success) {
                             if (ips->size() > 0) {
@@ -928,37 +972,9 @@ namespace plan9 {
             ahttp_impl::exec(self);
         }
 
-        void exec(std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
-            if (model != nullptr && "" != model->get_domain()) {
-                uv_wrapper::resolve(model->get_domain(), model->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips){
-                    send_dns_event(ccb);
-                    if (ccb->success) {
-                        if (ips->size() > 0) {
-                            std::string ip = (*ips)[0];
-                            uv_wrapper::connect(ip, model->get_port(), [=](std::shared_ptr<common_callback> ccb1, int tcp_id) {
-                                send_connected_event(ccb1);
-                                if (ccb->success) {
-                                    std::string str = model->get_http_string();
-                                    uv_wrapper::write(tcp_id, (char *) str.c_str(), (int) str.size(), [=](std::shared_ptr<common_callback> write_callback) {
-                                        send_send_event(write_callback, (int) str.size(), (int)str.size());
-                                    });
-                                } else {
-                                    uv_wrapper::close(tcp_id);
-                                }
-                            }, [=](int tcp_id, char *data, int len) {
-                                if (append(data, len)) {
-                                    if (callback != nullptr) {
-                                        callback(model, response);
-                                    }
-                                }
-                                delete (data);
-                            }, [=](std::shared_ptr<common_callback> disconnect_ccb, int tcp_id) {
-                                send_disconnected_event(disconnect_ccb);
-                            });
-                        }
-                    }
-                });
-            }
+
+        void set_dns_resolve(std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> callback) {
+            this->dns_resolve_callback = callback;
         }
 
         void set_dns_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback) {
@@ -1070,7 +1086,7 @@ namespace plan9 {
             }
         }
 
-        bool append(char* data, int len) {
+        bool append(std::shared_ptr<char> data, int len) {
             if (!response) {
                 response.reset(new ahttp_response);
             }
@@ -1098,6 +1114,7 @@ namespace plan9 {
         std::function<void(std::shared_ptr<common_callback>)> read_begin_callback;
         std::function<void(std::shared_ptr<common_callback>, long)> read_end_callback;
         std::function<void(std::shared_ptr<common_callback>)> disconnect_callback;
+        std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> dns_resolve_callback;
         int timer_id;
         bool read_begin;
     };
@@ -1111,8 +1128,15 @@ namespace plan9 {
 
     }
 
+    ahttp::~ahttp() {
+    }
+
     void ahttp::exec(std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<common_callback>ccb, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
         impl->exec2(model, callback);
+    }
+
+    void ahttp::set_dns_resolve(std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> callback) {
+        impl->set_dns_resolve(callback);
     }
 
     void ahttp::set_dns_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback) {

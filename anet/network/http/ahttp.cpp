@@ -230,6 +230,21 @@ namespace plan9 {
             return ss.str();
         }
 
+
+        void get_http_data(std::function<void(std::shared_ptr<char> data, long len, long sent, long total)> callback) {
+            if (callback) {
+                static const int buf_size = 1024;
+                std::string http = get_http_string();
+                std::shared_ptr<char> ret(new char(http.length()));
+                memcpy(ret.get(), http.c_str(), http.length());
+                callback(ret, http.length(), 0, http.length());
+            }
+        }
+
+        bool is_send_from_file() {
+            return false;
+        }
+
         static std::string get_boundary_string() {
             auto tp = std::chrono::system_clock::now();
             std::stringstream ss;
@@ -324,6 +339,10 @@ namespace plan9 {
 
     std::string ahttp_request::get_http_string() {
         return impl->get_http_string();
+    }
+
+    void ahttp_request::get_http_data(std::function<void(std::shared_ptr<char> data, long len, long sent, long total)> callback) {
+        return impl->get_http_data(callback);
     }
 
     std::string ahttp_request::to_string() {
@@ -732,8 +751,10 @@ namespace plan9 {
 
                     std::shared_ptr<common_callback> ccb(new common_callback);
                     http->send_dns_event(ccb);
-                    uv_wrapper::write(tcp_id, (char*)(http->request->get_http_string().c_str()), (int)http->request->get_http_string().size(), [=](std::shared_ptr<common_callback> write_callback){
-                        http->send_send_event(write_callback, (int) http->request->get_http_string().size());
+                    http->request->get_http_data([=](std::shared_ptr<char> data, long len, long sent, long total){
+                        uv_wrapper::write(tcp_id, data.get(), len, [=](std::shared_ptr<common_callback> write_callback){
+                            http->send_send_event(write_callback, sent + len, total);
+                        });
                     });
                 }
             }
@@ -773,9 +794,10 @@ namespace plan9 {
                     mutex.unlock();
 
                     http->send_connected_event(ccb);
-                    std::string str = http->request->get_http_string();
-                    uv_wrapper::write(tcp_id, (char *) str.c_str(), (int) str.size(), [=](std::shared_ptr<common_callback> write_callback) {
-                        http->send_send_event(write_callback, (int) str.size());
+                    http->request->get_http_data([=](std::shared_ptr<char> data, long len, long sent, long total){
+                        uv_wrapper::write(tcp_id, data.get(), len, [=](std::shared_ptr<common_callback> write_callback){
+                            http->send_send_event(write_callback, sent + len, total);
+                        });
                     });
                 } else {
                     uv_wrapper::close(tcp_id);
@@ -918,7 +940,7 @@ namespace plan9 {
                                 if (ccb->success) {
                                     std::string str = model->get_http_string();
                                     uv_wrapper::write(tcp_id, (char *) str.c_str(), (int) str.size(), [=](std::shared_ptr<common_callback> write_callback) {
-                                        send_send_event(write_callback, (int) str.size());
+                                        send_send_event(write_callback, (int) str.size(), (int)str.size());
                                     });
                                 } else {
                                     uv_wrapper::close(tcp_id);
@@ -948,7 +970,7 @@ namespace plan9 {
         void set_read_event_callback(std::function<void(std::shared_ptr<common_callback>, long size)> callback) {
             read_callback = callback;
         }
-        void set_send_event_callback(std::function<void(std::shared_ptr<common_callback>, int bytes)> callback) {
+        void set_send_event_callback(std::function<void(std::shared_ptr<common_callback>, long sent, long total)> callback) {
             send_callback = callback;
         }
         void set_read_begin_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback) {
@@ -1000,6 +1022,11 @@ namespace plan9 {
 
         void upload(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
             //TODO 上传文件
+            std::shared_ptr<ahttp_request> request(new ahttp_request);
+            request->set_method("POST");
+            request->set_url(url);
+            request->append_header(header);
+            request->set_timeout(0);
 
         }
 
@@ -1014,9 +1041,9 @@ namespace plan9 {
                 connect_callback(callback);
             }
         }
-        void send_send_event(std::shared_ptr<common_callback> callback, int bytes) {
+        void send_send_event(std::shared_ptr<common_callback> callback, long bytes, long total) {
             if (send_callback) {
-                send_callback(callback, bytes);
+                send_callback(callback, bytes, total);
             }
         }
         void send_read_event(std::shared_ptr<common_callback> callback, int bytes) {
@@ -1066,7 +1093,7 @@ namespace plan9 {
         std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback;
         std::function<void(std::shared_ptr<common_callback>)> dns_callback;
         std::function<void(std::shared_ptr<common_callback>)> connect_callback;
-        std::function<void(std::shared_ptr<common_callback>, int)> send_callback;
+        std::function<void(std::shared_ptr<common_callback>, long, long)> send_callback;
         std::function<void(std::shared_ptr<common_callback>, long)> read_callback;
         std::function<void(std::shared_ptr<common_callback>)> read_begin_callback;
         std::function<void(std::shared_ptr<common_callback>, long)> read_end_callback;
@@ -1099,7 +1126,7 @@ namespace plan9 {
         impl->set_read_event_callback(callback);
     }
 
-    void ahttp::set_send_event_callback(std::function<void(std::shared_ptr<common_callback>, int)> callback) {
+    void ahttp::set_send_event_callback(std::function<void(std::shared_ptr<common_callback>, long, long)> callback) {
         impl->set_send_event_callback(callback);
     }
 

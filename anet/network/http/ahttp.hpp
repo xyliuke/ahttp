@@ -90,6 +90,7 @@ namespace plan9 {
         std::string get_http_method_string();
         std::string get_http_header_string();
         std::string get_http_string();
+        void get_http_data(std::function<void(std::shared_ptr<char> data, long len, long sent, long total)>);
 
         std::string get_domain();
         int get_port();
@@ -207,15 +208,20 @@ namespace plan9 {
         void download(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
 
         void upload(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
-
-
+        /**
+         * 设置dns解析的替换方案，默认使用libuv解析
+         * @param url
+         * @param port
+         * @param callback
+         */
+        void set_dns_resolve(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)> callback);
         //各个时间段事件回调
         //解析DNS后事件
         void set_dns_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);
         //连接服务器后事件
         void set_connected_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);
         //客户端发送数据后事件
-        void set_send_event_callback(std::function<void(std::shared_ptr<common_callback>, int)> callback);
+        void set_send_event_callback(std::function<void(std::shared_ptr<common_callback>, long sent, long total)> callback);
         //读取数据事件，每次读取数据都会触发，调用download函数时不要使用这个事件
         void set_read_event_callback(std::function<void(std::shared_ptr<common_callback>, long size)> callback);
         //第一次读到数据的事件

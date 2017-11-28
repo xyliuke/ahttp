@@ -251,6 +251,11 @@ namespace plan9 {
                 char* ret = (char*) malloc(http.length());
                 memcpy(ret, (char*)http.c_str(), http.length());
                 callback(ret, http.length(), 0, http.length());
+
+                if (data_from_file && data_from_file->size() > 0) {
+                    //TODO 存在上传文件
+
+                }
             }
         }
 

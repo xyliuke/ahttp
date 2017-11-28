@@ -22,9 +22,10 @@ namespace plan9 {
         char* get_data();
         std::string to_string();
     private:
-        char* data;
+        std::shared_ptr<char> data;
         int len;
         int cap;
+        void re_data();
     };
 
 }

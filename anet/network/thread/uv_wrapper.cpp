@@ -485,8 +485,8 @@ namespace plan9 {
     void uv_wrapper::close(int tcp_id) {
         if (tcp_array.find(tcp_id) != tcp_array.end()) {
             auto tcp = tcp_array[tcp_id];
-            uv_close((uv_handle_t*)tcp, nullptr);
             tcp_array.erase(tcp_id);
+            uv_close((uv_handle_t*)tcp, nullptr);
             if (tcp_close_callback_map.find(tcp_id) != tcp_close_callback_map.end()) {
                 auto callback = tcp_close_callback_map[tcp_id];
                 std::shared_ptr<common_callback> ccb(new common_callback);
@@ -524,7 +524,10 @@ namespace plan9 {
 
     bool uv_wrapper::tcp_alive(int tcp_id) {
         if (tcp_array.find(tcp_id) != tcp_array.end()) {
-            return true;
+            auto tcp = tcp_array[tcp_id];
+            if (uv_is_closing((uv_handle_t*)tcp) == 0) {
+                return true;
+            }
         }
         return false;
     }

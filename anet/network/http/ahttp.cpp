@@ -244,12 +244,12 @@ namespace plan9 {
         }
 
 
-        void get_http_data(std::function<void(std::shared_ptr<char_array> data, long len, long sent, long total)> callback) {
+        void get_http_data(std::function<void(char* data, long len, long sent, long total)> callback) {
             if (callback) {
                 static const int buf_size = 1024;
                 std::string http = get_http_string();
-                std::shared_ptr<char_array> ret(new char_array(http.length()));
-                ret->append((char*)http.c_str(), http.length());
+                char* ret = (char*) malloc(http.length());
+                memcpy(ret, (char*)http.c_str(), http.length());
                 callback(ret, http.length(), 0, http.length());
             }
         }
@@ -355,7 +355,7 @@ namespace plan9 {
         return impl->get_http_string();
     }
 
-    void ahttp_request::get_http_data(std::function<void(std::shared_ptr<char_array> data, long len, long sent, long total)> callback) {
+    void ahttp_request::get_http_data(std::function<void(char* data, long len, long sent, long total)> callback) {
         return impl->get_http_data(callback);
     }
 
@@ -769,9 +769,12 @@ namespace plan9 {
 
                     std::shared_ptr<common_callback> ccb(new common_callback);
                     http->send_dns_event(ccb);
-                    http->request->get_http_data([=](std::shared_ptr<char_array> data, long len, long sent, long total){
-                        uv_wrapper::write(tcp_id, data->get_data(), len, [=](std::shared_ptr<common_callback> write_callback){
+                    http->request->get_http_data([=](char* data, long len, long sent, long total){
+                        uv_wrapper::write(tcp_id, data, len, [=](std::shared_ptr<common_callback> write_callback){
                             http->send_send_event(write_callback, sent + len, total);
+                            if (data != nullptr) {
+                                delete (data);
+                            }
                         });
                     });
                 }
@@ -812,9 +815,12 @@ namespace plan9 {
                     mutex.unlock();
 
                     http->send_connected_event(ccb);
-                    http->request->get_http_data([=](std::shared_ptr<char_array> data, long len, long sent, long total){
-                        uv_wrapper::write(tcp_id, data->get_data(), len, [=](std::shared_ptr<common_callback> write_callback){
+                    http->request->get_http_data([=](char* data, long len, long sent, long total){
+                        uv_wrapper::write(tcp_id, data, len, [=](std::shared_ptr<common_callback> write_callback){
                             http->send_send_event(write_callback, sent + len, total);
+                            if (data != nullptr) {
+                                delete (data);
+                            }
                         });
                     });
                 } else {

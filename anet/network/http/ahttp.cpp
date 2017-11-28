@@ -737,43 +737,7 @@ namespace plan9 {
         }
 
         ~ahttp_impl() {
-            mutex.lock();
-            std::map<int, std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>>>::const_iterator it = tcp_http_map.begin();
-            bool find = false;
-            while (it != tcp_http_map.end()) {
-                std::vector<std::shared_ptr<ahttp_impl>>::iterator itt = it->second->begin();
-                while (itt != it->second->end()) {
-                    if ((*itt).get() == this) {
-                        find = true;
-                        it->second->erase(itt);
-                        break;
-                    }
-                    itt ++;
-                }
-                if (find) {
-                    break;
-                }
-                it++;
-            }
-
-            it = tcp_http_disconnected_map.begin();
-            find = false;
-            while (it != tcp_http_disconnected_map.end()) {
-                std::vector<std::shared_ptr<ahttp_impl>>::iterator itt = it->second->begin();
-                while (itt != it->second->end()) {
-                    if ((*itt).get() == this) {
-                        find = true;
-                        it->second->erase(itt);
-                        break;
-                    }
-                    itt ++;
-                }
-                if (find) {
-                    break;
-                }
-                it++;
-            }
-            mutex.unlock();
+            cancel();
         }
 
         static void exec_reused_connect(int tcp_id) {
@@ -972,6 +936,46 @@ namespace plan9 {
             ahttp_impl::exec(self);
         }
 
+        void cancel() {
+            mutex.lock();
+            std::map<int, std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>>>::const_iterator it = tcp_http_map.begin();
+            bool find = false;
+            while (it != tcp_http_map.end()) {
+                std::vector<std::shared_ptr<ahttp_impl>>::iterator itt = it->second->begin();
+                while (itt != it->second->end()) {
+                    if ((*itt).get() == this) {
+                        find = true;
+                        it->second->erase(itt);
+                        break;
+                    }
+                    itt ++;
+                }
+                if (find) {
+                    break;
+                }
+                it++;
+            }
+
+            it = tcp_http_disconnected_map.begin();
+            find = false;
+            while (it != tcp_http_disconnected_map.end()) {
+                std::vector<std::shared_ptr<ahttp_impl>>::iterator itt = it->second->begin();
+                while (itt != it->second->end()) {
+                    if ((*itt).get() == this) {
+                        find = true;
+                        it->second->erase(itt);
+                        break;
+                    }
+                    itt ++;
+                }
+                if (find) {
+                    break;
+                }
+                it++;
+            }
+            mutex.unlock();
+        }
+
 
         void set_dns_resolve(std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> callback) {
             this->dns_resolve_callback = callback;
@@ -1129,6 +1133,10 @@ namespace plan9 {
     }
 
     ahttp::~ahttp() {
+    }
+
+    void ahttp::cancel() {
+        impl->cancel();
     }
 
     void ahttp::exec(std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<common_callback>ccb, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {

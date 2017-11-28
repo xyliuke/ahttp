@@ -175,6 +175,11 @@ namespace plan9 {
     public:
         ahttp();
         ~ahttp();
+
+        /**
+         * 取消请求
+         */
+        void cancel();
         /**
          * HTTP请求最基本的方法
          * @param request 请求参数的对象

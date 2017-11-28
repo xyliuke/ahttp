@@ -16,6 +16,7 @@
 #include "tri_bool.h"
 #include "zlib_wrap.hpp"
 #include "case_insensitive_map.h"
+#include "char_array.h"
 
 namespace plan9 {
 
@@ -107,7 +108,7 @@ namespace plan9 {
         }
 
 
-        void append_data(std::shared_ptr<std::map<std::string, std::string>> data) {
+        void append_body_data(std::shared_ptr<std::map<std::string, std::string>> data) {
             if (data && data->size() > 0) {
                 if (boundary == "") {
                     boundary = get_boundary_string();
@@ -125,7 +126,19 @@ namespace plan9 {
             }
         }
 
-        void append_data(std::string key, std::string value) {
+        void append_body_data_from_file(std::string key, std::string file) {
+            if (!data_from_file) {
+                data_from_file.reset(new std::map<std::string, std::string>);
+            }
+
+            if (boundary == "") {
+                boundary = get_boundary_string();
+                header->add("Content-Type", "multipart/form-data;boundary=" + boundary);
+            }
+            (*data)[key] = file;
+        }
+
+        void append_body_data(std::string key, std::string value) {
             if (!this->data) {
                 this->data.reset(new std::map<std::string, std::string>);
             }
@@ -231,20 +244,14 @@ namespace plan9 {
         }
 
 
-        void get_http_data(std::function<void(std::shared_ptr<char> data, long len, long sent, long total)> callback) {
+        void get_http_data(std::function<void(std::shared_ptr<char_array> data, long len, long sent, long total)> callback) {
             if (callback) {
                 static const int buf_size = 1024;
                 std::string http = get_http_string();
-                std::shared_ptr<char> ret;
-                char* ch = (char*) malloc(http.length());
-                ret.reset(ch);
-                memcpy(ret.get(), http.c_str(), http.length());
+                std::shared_ptr<char_array> ret(new char_array(http.length()));
+                ret->append((char*)http.c_str(), http.length());
                 callback(ret, http.length(), 0, http.length());
             }
-        }
-
-        bool is_send_from_file() {
-            return false;
         }
 
         static std::string get_boundary_string() {
@@ -258,6 +265,7 @@ namespace plan9 {
     private:
         std::shared_ptr<case_insensitive_map> header;
         std::shared_ptr<std::map<std::string, std::string>> data;
+        std::shared_ptr<std::map<std::string, std::string>> data_from_file;
         std::string method;
         std::string version;
         std::string url;
@@ -299,12 +307,16 @@ namespace plan9 {
         impl->set_url(url);
     }
 
-    void ahttp_request::append_data(std::shared_ptr<std::map<std::string, std::string>> data) {
-        impl->append_data(data);
+    void ahttp_request::append_body_data(std::shared_ptr<std::map<std::string, std::string>> data) {
+        impl->append_body_data(data);
     }
 
-    void ahttp_request::append_data(std::string key, std::string value) {
-        impl->append_data(key, value);
+    void ahttp_request::append_body_data(std::string key, std::string value) {
+        impl->append_body_data(key, value);
+    }
+
+    void ahttp_request::append_body_data_from_file(std::string key, std::string file) {
+
     }
 
     void ahttp_request::set_reused_tcp(bool reused) {
@@ -343,7 +355,7 @@ namespace plan9 {
         return impl->get_http_string();
     }
 
-    void ahttp_request::get_http_data(std::function<void(std::shared_ptr<char> data, long len, long sent, long total)> callback) {
+    void ahttp_request::get_http_data(std::function<void(std::shared_ptr<char_array> data, long len, long sent, long total)> callback) {
         return impl->get_http_data(callback);
     }
 
@@ -757,8 +769,8 @@ namespace plan9 {
 
                     std::shared_ptr<common_callback> ccb(new common_callback);
                     http->send_dns_event(ccb);
-                    http->request->get_http_data([=](std::shared_ptr<char> data, long len, long sent, long total){
-                        uv_wrapper::write(tcp_id, data.get(), len, [=](std::shared_ptr<common_callback> write_callback){
+                    http->request->get_http_data([=](std::shared_ptr<char_array> data, long len, long sent, long total){
+                        uv_wrapper::write(tcp_id, data->get_data(), len, [=](std::shared_ptr<common_callback> write_callback){
                             http->send_send_event(write_callback, sent + len, total);
                         });
                     });
@@ -800,8 +812,8 @@ namespace plan9 {
                     mutex.unlock();
 
                     http->send_connected_event(ccb);
-                    http->request->get_http_data([=](std::shared_ptr<char> data, long len, long sent, long total){
-                        uv_wrapper::write(tcp_id, data.get(), len, [=](std::shared_ptr<common_callback> write_callback){
+                    http->request->get_http_data([=](std::shared_ptr<char_array> data, long len, long sent, long total){
+                        uv_wrapper::write(tcp_id, data->get_data(), len, [=](std::shared_ptr<common_callback> write_callback){
                             http->send_send_event(write_callback, sent + len, total);
                         });
                     });
@@ -1017,7 +1029,7 @@ namespace plan9 {
             request->set_method("POST");
             request->set_url(url);
             request->append_header(header);
-            request->append_data(data);
+            request->append_body_data(data);
             request->set_timeout(timeout);
             exec2(request, callback);
         }

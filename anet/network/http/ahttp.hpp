@@ -14,6 +14,7 @@
 #include <map>
 #include <functional>
 #include "common_callback.hpp"
+#include "char_array.h"
 
 namespace plan9 {
 
@@ -56,13 +57,15 @@ namespace plan9 {
          * 向body中添加数据，主要用于POST请求时
          * @param data 一组数据
          */
-        void append_data(std::shared_ptr<std::map<std::string, std::string>> data);
+        void append_body_data(std::shared_ptr<std::map<std::string, std::string>> data);
         /**
          * 向body中添加数据，主要用于POST请求时
          * @param key key值
          * @param value value值
          */
-        void append_data(std::string key, std::string value);
+        void append_body_data(std::string key, std::string value);
+
+        void append_body_data_from_file(std::string key, std::string file);
 
         /**
          * 设置是否复用TCP，如果能复用的话
@@ -90,7 +93,7 @@ namespace plan9 {
         std::string get_http_method_string();
         std::string get_http_header_string();
         std::string get_http_string();
-        void get_http_data(std::function<void(std::shared_ptr<char> data, long len, long sent, long total)>);
+        void get_http_data(std::function<void(std::shared_ptr<char_array> data, long len, long sent, long total)>);
 
         std::string get_domain();
         int get_port();

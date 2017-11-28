@@ -20,6 +20,7 @@
 #include <chrono>
 #import <fstream>
 #include "case_insensitive_map.h"
+#import "char_array.h"
 
 std::shared_ptr<plan9::ahttp> ah;
 
@@ -51,12 +52,22 @@ std::shared_ptr<plan9::ahttp> ah;
 - (IBAction)click_connect:(id)sender {
 
     using namespace plan9;
-    case_insensitive_map map;
-    map.add("a", "b");
-    map.add("A", "bb");
-    bool find;
-    std::string ret = map.get("a", &find);
-    ret = map.get("A", &find);
+//    case_insensitive_map map;
+//    map.add("a", "b");
+//    map.add("A", "bb");
+//    bool find;
+//    std::string ret = map.get("a", &find);
+//    ret = map.get("A", &find);
+
+    char_array array(10);
+    array.append("hello world", 11);
+    std::cout << array.to_string() << std::endl;
+    array.append("abcdefg", 7);
+    std::cout << array.to_string() << std::endl;
+    array.insert("123", 3, 5);
+    std::cout << array.to_string() << std::endl;
+    array.erase(2, 4);
+    std::cout << array.to_string() << std::endl;
 
 //    plan9::uv_wrapper::connect("127.0.0.1", 8800, [=](std::shared_ptr<plan9::common_callback> ccb, int tcp_id){
 //        std::cout << tcp_id << " connected\n";
@@ -84,7 +95,7 @@ std::shared_ptr<plan9::ahttp> ah;
 //    std::shared_ptr<std::map<std::string, std::string>> data(new std::map<std::string, std::string>);
 //    (*data)["a"] = "b";
 //    (*data)["c"] = "d";
-//    request.append_data(data);
+//    request.append_body_data(data);
 //    std::string d = request.get_http_string();
 
 //    auto tp = std::chrono::system_clock::now();
@@ -151,7 +162,7 @@ std::shared_ptr<plan9::ahttp> ah;
     req->append_header("Accept", "*/*");
     req->append_header("Accept-Encoding", "gzip, deflate");
     req->append_header("Accept-Language", "en-Us,en;q=0.9");
-//    req->append_data("a", "b");
+//    req->append_body_data("a", "b");
 //    std::ofstream ofstream;
 //    ofstream.open("/Users/keliu/Downloads/a.txt", std::ios::app | std::ios::in);
 //    ofstream.write("123", 3);

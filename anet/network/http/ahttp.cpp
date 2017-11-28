@@ -1133,6 +1133,7 @@ namespace plan9 {
     }
 
     ahttp::~ahttp() {
+        cancel();
     }
 
     void ahttp::cancel() {

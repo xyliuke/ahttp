@@ -135,7 +135,7 @@ namespace plan9 {
                 boundary = get_boundary_string();
                 header->add("Content-Type", "multipart/form-data;boundary=" + boundary);
             }
-            (*data)[key] = file;
+            (*data_from_file)[key] = file;
         }
 
         void append_body_data(std::string key, std::string value) {
@@ -252,9 +252,50 @@ namespace plan9 {
                 memcpy(ret, (char*)http.c_str(), http.length());
                 callback(ret, http.length(), 0, http.length());
 
-                if (data_from_file && data_from_file->size() > 0) {
-                    //TODO 存在上传文件
+                //上传文件
+                get_http_data_from_file(http.length(), callback);
+            }
+        }
 
+        void get_http_data_from_file(long send, std::function<void(char* data, long len, long sent, long total)> callback) {
+            if (callback && data_from_file && data_from_file->size() > 0) {
+                using namespace std;
+
+                std::function<void(char*, long, long)> func = bind(callback, placeholders::_1, placeholders::_2, placeholders::_3, 10);
+
+                std::map<std::string, std::string>::const_iterator it = data_from_file->begin();
+                long send_bytes = send;
+                while (it != data_from_file->end()) {
+                    stringstream ss;
+                    ss << boundary;
+                    ss << "\r\nContent-Disposition: form-data;name=\"";
+                    ss << it->first;
+                    ss << "\"\r\n";
+                    char* buf1 = (char*)malloc(ss.str().length());
+                    memcpy(buf1, (char*)(ss.str().c_str()), ss.str().length());
+                    func(buf1, ss.str().length(), send_bytes);
+                    send_bytes += ss.str().length();
+
+                    string file = it->second;
+                    ifstream ifs(file, ios::binary | ios::in);
+                    if (ifs.is_open()) {
+                        while (!ifs.eof()) {
+                            char* buf = (char*) malloc(1024);
+                            ifs.read(buf, 1024);
+                            func(buf, ifs.gcount(), send_bytes);
+                            send_bytes += ifs.gcount();
+                        }
+                    }
+
+                    stringstream sss;
+                    sss << "\r\n";
+                    sss << boundary;
+                    char* buf2 = (char*)malloc(ss.str().length());
+                    memcpy(buf2, (char*)(sss.str().c_str()), sss.str().length());
+                    func(buf2, sss.str().length(), send_bytes);
+                    send_bytes += sss.str().length();
+
+                    it ++;
                 }
             }
         }
@@ -321,7 +362,7 @@ namespace plan9 {
     }
 
     void ahttp_request::append_body_data_from_file(std::string key, std::string file) {
-
+        impl->append_body_data_from_file(key, file);
     }
 
     void ahttp_request::set_reused_tcp(bool reused) {
@@ -1064,13 +1105,20 @@ namespace plan9 {
         }
 
         void upload(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
-            //TODO 上传文件
             std::shared_ptr<ahttp_request> request(new ahttp_request);
             request->set_method("POST");
             request->set_url(url);
             request->append_header(header);
             request->set_timeout(0);
-
+            request->append_body_data_from_file("file", file);
+            this->response.reset(new ahttp_response);
+            if (process_callback) {
+                this->set_read_event_callback([=](std::shared_ptr<common_callback> ccb, int size){
+                    long total = response->get_content_length();
+                    process_callback(response->get_response_data_length(), total);
+                });
+            }
+            exec2(request, callback);
         }
 
     private:

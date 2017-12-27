@@ -10,6 +10,7 @@
 		6135E0F4A833755B2BCAA7A3 /* case_insensitive_map.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135EE020116A5AAD26F3533 /* case_insensitive_map.cpp */; };
 		6135E438D3BD009B06FAD4FE /* char_array.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135EE04C9CD540286C2F288 /* char_array.cpp */; };
 		6135E635DFA9CE3FE898B8D4 /* uv_wrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135E2A0832EA6891E99CE15 /* uv_wrapper.cpp */; };
+		6135EF0C82C54E698B5C34C8 /* ssl_shake.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135EA899F938C6BEC03B292 /* ssl_shake.cpp */; };
 		E342FD561FB33CEE00BA7AC1 /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = E342FD421FB33CED00BA7AC1 /* inflate.c */; };
 		E342FD571FB33CEE00BA7AC1 /* zlib.3.pdf in Resources */ = {isa = PBXBuildFile; fileRef = E342FD431FB33CED00BA7AC1 /* zlib.3.pdf */; };
 		E342FD581FB33CEE00BA7AC1 /* compress.c in Sources */ = {isa = PBXBuildFile; fileRef = E342FD441FB33CED00BA7AC1 /* compress.c */; };
@@ -23,6 +24,43 @@
 		E342FD601FB33CEE00BA7AC1 /* inffast.c in Sources */ = {isa = PBXBuildFile; fileRef = E342FD531FB33CED00BA7AC1 /* inffast.c */; };
 		E342FD611FB33CEE00BA7AC1 /* adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = E342FD541FB33CED00BA7AC1 /* adler32.c */; };
 		E342FD641FB33D2500BA7AC1 /* zlib_wrap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E342FD621FB33D2500BA7AC1 /* zlib_wrap.cpp */; };
+		E37546791FE152BE00CEA11C /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546771FE152BE00CEA11C /* libcrypto.a */; };
+		E375467A1FE152BE00CEA11C /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546781FE152BE00CEA11C /* libssl.a */; };
+		E375467C1FE152F100CEA11C /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E375467B1FE152F100CEA11C /* libboost_system.a */; };
+		E375469F1FE1555800CEA11C /* libboost_wserialization.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E375467D1FE1555700CEA11C /* libboost_wserialization.a */; };
+		E37546A01FE1555800CEA11C /* libboost_math_c99.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E375467E1FE1555700CEA11C /* libboost_math_c99.a */; };
+		E37546A11FE1555800CEA11C /* libboost_container.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E375467F1FE1555700CEA11C /* libboost_container.a */; };
+		E37546A21FE1555800CEA11C /* libboost_filesystem.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546801FE1555800CEA11C /* libboost_filesystem.a */; };
+		E37546A31FE1555800CEA11C /* libboost_math_c99f.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546811FE1555800CEA11C /* libboost_math_c99f.a */; };
+		E37546A41FE1555800CEA11C /* libboost_signals.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546821FE1555800CEA11C /* libboost_signals.a */; };
+		E37546A51FE1555800CEA11C /* libboost_math_c99l.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546831FE1555800CEA11C /* libboost_math_c99l.a */; };
+		E37546A61FE1555800CEA11C /* libboost_atomic.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546841FE1555800CEA11C /* libboost_atomic.a */; };
+		E37546A71FE1555800CEA11C /* libboost_graph.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546851FE1555800CEA11C /* libboost_graph.a */; };
+		E37546A81FE1555800CEA11C /* libboost_numpy.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546861FE1555800CEA11C /* libboost_numpy.a */; };
+		E37546A91FE1555900CEA11C /* libboost_prg_exec_monitor.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546871FE1555800CEA11C /* libboost_prg_exec_monitor.a */; };
+		E37546AA1FE1555900CEA11C /* libboost_wave.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546881FE1555800CEA11C /* libboost_wave.a */; };
+		E37546AB1FE1555900CEA11C /* libboost_math_tr1.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546891FE1555800CEA11C /* libboost_math_tr1.a */; };
+		E37546AC1FE1555900CEA11C /* libboost_serialization.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E375468A1FE1555800CEA11C /* libboost_serialization.a */; };
+		E37546AD1FE1555900CEA11C /* libboost_timer.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E375468B1FE1555800CEA11C /* libboost_timer.a */; };
+		E37546AE1FE1555900CEA11C /* libboost_log_setup.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E375468C1FE1555800CEA11C /* libboost_log_setup.a */; };
+		E37546AF1FE1555900CEA11C /* libboost_coroutine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E375468D1FE1555800CEA11C /* libboost_coroutine.a */; };
+		E37546B01FE1555900CEA11C /* libboost_exception.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E375468E1FE1555800CEA11C /* libboost_exception.a */; };
+		E37546B11FE1555900CEA11C /* libboost_math_tr1l.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E375468F1FE1555800CEA11C /* libboost_math_tr1l.a */; };
+		E37546B21FE1555900CEA11C /* libboost_test_exec_monitor.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546901FE1555800CEA11C /* libboost_test_exec_monitor.a */; };
+		E37546B31FE1555900CEA11C /* libboost_unit_test_framework.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546911FE1555800CEA11C /* libboost_unit_test_framework.a */; };
+		E37546B41FE1555900CEA11C /* libboost_chrono.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546921FE1555800CEA11C /* libboost_chrono.a */; };
+		E37546B51FE1555900CEA11C /* libboost_date_time.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546931FE1555800CEA11C /* libboost_date_time.a */; };
+		E37546B61FE1555900CEA11C /* libboost_python.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546941FE1555800CEA11C /* libboost_python.a */; };
+		E37546B71FE1555900CEA11C /* libboost_random.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546951FE1555800CEA11C /* libboost_random.a */; };
+		E37546B81FE1555900CEA11C /* libboost_iostreams.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546961FE1555800CEA11C /* libboost_iostreams.a */; };
+		E37546B91FE1555900CEA11C /* libboost_program_options.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546971FE1555800CEA11C /* libboost_program_options.a */; };
+		E37546BA1FE1555900CEA11C /* libboost_regex.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546981FE1555800CEA11C /* libboost_regex.a */; };
+		E37546BB1FE1555900CEA11C /* libboost_log.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E37546991FE1555800CEA11C /* libboost_log.a */; };
+		E37546BC1FE1555900CEA11C /* libboost_thread.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E375469A1FE1555800CEA11C /* libboost_thread.a */; };
+		E37546BD1FE1555900CEA11C /* libboost_math_tr1f.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E375469B1FE1555800CEA11C /* libboost_math_tr1f.a */; };
+		E37546BE1FE1555900CEA11C /* libboost_type_erasure.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E375469C1FE1555800CEA11C /* libboost_type_erasure.a */; };
+		E37546BF1FE1555900CEA11C /* libboost_context.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E375469D1FE1555800CEA11C /* libboost_context.a */; };
+		E37546C01FE1555900CEA11C /* libboost_locale.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E375469E1FE1555800CEA11C /* libboost_locale.a */; };
 		E3786C741F98A13A00AD5C88 /* common_callback.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3786C721F98A13A00AD5C88 /* common_callback.cpp */; };
 		E385F3FC1F973D5B00E26281 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = E385F3FB1F973D5B00E26281 /* AppDelegate.m */; };
 		E385F3FF1F973D5B00E26281 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = E385F3FE1F973D5B00E26281 /* ViewController.mm */; };
@@ -30,14 +68,17 @@
 		E385F4041F973D5B00E26281 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E385F4021F973D5B00E26281 /* Main.storyboard */; };
 		E385F4071F973D5B00E26281 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E385F4061F973D5B00E26281 /* main.m */; };
 		E385F50E1F97408700E26281 /* libuv.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E385F4F81F97407200E26281 /* libuv.a */; };
-		E385F5111F9740DC00E26281 /* atcp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E385F50F1F9740DC00E26281 /* atcp.cpp */; };
 		E39A09D91F9CE60900962656 /* string_parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E39A09D71F9CE60900962656 /* string_parser.cpp */; };
+		E3CB49E61FD4579E001EAE67 /* libcpprest.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E3CB49E51FD4579E001EAE67 /* libcpprest.dylib */; };
+		E3CB4A141FD457F4001EAE67 /* http_constants.dat in Resources */ = {isa = PBXBuildFile; fileRef = E3CB49F21FD457F4001EAE67 /* http_constants.dat */; };
 		E3FA31351F9C61FD00DC851D /* ahttp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3FA31331F9C61FD00DC851D /* ahttp.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		6135E2A0832EA6891E99CE15 /* uv_wrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = uv_wrapper.cpp; sourceTree = "<group>"; };
 		6135E6B9D46676ED51DB9239 /* char_array.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = char_array.h; sourceTree = "<group>"; };
+		6135E704B9E6706E0E22DE95 /* ssl_shake.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ssl_shake.h; sourceTree = "<group>"; };
+		6135EA899F938C6BEC03B292 /* ssl_shake.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ssl_shake.cpp; sourceTree = "<group>"; };
 		6135ED990020EBC50E9A141E /* case_insensitive_map.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = case_insensitive_map.h; sourceTree = "<group>"; };
 		6135EDBBFE73664E8A225FBF /* uv_wrapper.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = uv_wrapper.hpp; sourceTree = "<group>"; };
 		6135EE020116A5AAD26F3533 /* case_insensitive_map.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = case_insensitive_map.cpp; sourceTree = "<group>"; };
@@ -67,6 +108,43 @@
 		E342FD551FB33CED00BA7AC1 /* zconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zconf.h; sourceTree = "<group>"; };
 		E342FD621FB33D2500BA7AC1 /* zlib_wrap.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = zlib_wrap.cpp; sourceTree = "<group>"; };
 		E342FD631FB33D2500BA7AC1 /* zlib_wrap.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = zlib_wrap.hpp; sourceTree = "<group>"; };
+		E37546771FE152BE00CEA11C /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = ../../../../../usr/local/Cellar/openssl/1.0.2m/lib/libcrypto.a; sourceTree = "<group>"; };
+		E37546781FE152BE00CEA11C /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = ../../../../../usr/local/Cellar/openssl/1.0.2m/lib/libssl.a; sourceTree = "<group>"; };
+		E375467B1FE152F100CEA11C /* libboost_system.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_system.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_system.a; sourceTree = "<group>"; };
+		E375467D1FE1555700CEA11C /* libboost_wserialization.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_wserialization.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_wserialization.a; sourceTree = "<group>"; };
+		E375467E1FE1555700CEA11C /* libboost_math_c99.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_math_c99.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_math_c99.a; sourceTree = "<group>"; };
+		E375467F1FE1555700CEA11C /* libboost_container.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_container.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_container.a; sourceTree = "<group>"; };
+		E37546801FE1555800CEA11C /* libboost_filesystem.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_filesystem.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_filesystem.a; sourceTree = "<group>"; };
+		E37546811FE1555800CEA11C /* libboost_math_c99f.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_math_c99f.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_math_c99f.a; sourceTree = "<group>"; };
+		E37546821FE1555800CEA11C /* libboost_signals.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_signals.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_signals.a; sourceTree = "<group>"; };
+		E37546831FE1555800CEA11C /* libboost_math_c99l.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_math_c99l.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_math_c99l.a; sourceTree = "<group>"; };
+		E37546841FE1555800CEA11C /* libboost_atomic.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_atomic.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_atomic.a; sourceTree = "<group>"; };
+		E37546851FE1555800CEA11C /* libboost_graph.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_graph.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_graph.a; sourceTree = "<group>"; };
+		E37546861FE1555800CEA11C /* libboost_numpy.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_numpy.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_numpy.a; sourceTree = "<group>"; };
+		E37546871FE1555800CEA11C /* libboost_prg_exec_monitor.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_prg_exec_monitor.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_prg_exec_monitor.a; sourceTree = "<group>"; };
+		E37546881FE1555800CEA11C /* libboost_wave.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_wave.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_wave.a; sourceTree = "<group>"; };
+		E37546891FE1555800CEA11C /* libboost_math_tr1.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_math_tr1.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_math_tr1.a; sourceTree = "<group>"; };
+		E375468A1FE1555800CEA11C /* libboost_serialization.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_serialization.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_serialization.a; sourceTree = "<group>"; };
+		E375468B1FE1555800CEA11C /* libboost_timer.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_timer.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_timer.a; sourceTree = "<group>"; };
+		E375468C1FE1555800CEA11C /* libboost_log_setup.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_log_setup.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_log_setup.a; sourceTree = "<group>"; };
+		E375468D1FE1555800CEA11C /* libboost_coroutine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_coroutine.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_coroutine.a; sourceTree = "<group>"; };
+		E375468E1FE1555800CEA11C /* libboost_exception.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_exception.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_exception.a; sourceTree = "<group>"; };
+		E375468F1FE1555800CEA11C /* libboost_math_tr1l.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_math_tr1l.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_math_tr1l.a; sourceTree = "<group>"; };
+		E37546901FE1555800CEA11C /* libboost_test_exec_monitor.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_test_exec_monitor.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_test_exec_monitor.a; sourceTree = "<group>"; };
+		E37546911FE1555800CEA11C /* libboost_unit_test_framework.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_unit_test_framework.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_unit_test_framework.a; sourceTree = "<group>"; };
+		E37546921FE1555800CEA11C /* libboost_chrono.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_chrono.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_chrono.a; sourceTree = "<group>"; };
+		E37546931FE1555800CEA11C /* libboost_date_time.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_date_time.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_date_time.a; sourceTree = "<group>"; };
+		E37546941FE1555800CEA11C /* libboost_python.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_python.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_python.a; sourceTree = "<group>"; };
+		E37546951FE1555800CEA11C /* libboost_random.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_random.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_random.a; sourceTree = "<group>"; };
+		E37546961FE1555800CEA11C /* libboost_iostreams.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_iostreams.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_iostreams.a; sourceTree = "<group>"; };
+		E37546971FE1555800CEA11C /* libboost_program_options.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_program_options.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_program_options.a; sourceTree = "<group>"; };
+		E37546981FE1555800CEA11C /* libboost_regex.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_regex.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_regex.a; sourceTree = "<group>"; };
+		E37546991FE1555800CEA11C /* libboost_log.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_log.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_log.a; sourceTree = "<group>"; };
+		E375469A1FE1555800CEA11C /* libboost_thread.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_thread.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_thread.a; sourceTree = "<group>"; };
+		E375469B1FE1555800CEA11C /* libboost_math_tr1f.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_math_tr1f.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_math_tr1f.a; sourceTree = "<group>"; };
+		E375469C1FE1555800CEA11C /* libboost_type_erasure.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_type_erasure.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_type_erasure.a; sourceTree = "<group>"; };
+		E375469D1FE1555800CEA11C /* libboost_context.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_context.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_context.a; sourceTree = "<group>"; };
+		E375469E1FE1555800CEA11C /* libboost_locale.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_locale.a; path = ../../plan9/3rd/boost_1_63_0/lib/libboost_locale.a; sourceTree = "<group>"; };
 		E3786C721F98A13A00AD5C88 /* common_callback.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = common_callback.cpp; sourceTree = "<group>"; };
 		E3786C731F98A13A00AD5C88 /* common_callback.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = common_callback.hpp; sourceTree = "<group>"; };
 		E385F3F71F973D5B00E26281 /* anet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = anet.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -131,10 +209,52 @@
 		E385F5091F97407200E26281 /* stdint-msvc2008.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "stdint-msvc2008.h"; sourceTree = "<group>"; };
 		E385F50A1F97407200E26281 /* uv-linux.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uv-linux.h"; sourceTree = "<group>"; };
 		E385F50B1F97407200E26281 /* pthread-barrier.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "pthread-barrier.h"; sourceTree = "<group>"; };
-		E385F50F1F9740DC00E26281 /* atcp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = atcp.cpp; sourceTree = "<group>"; };
-		E385F5101F9740DC00E26281 /* atcp.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = atcp.hpp; sourceTree = "<group>"; };
 		E39A09D71F9CE60900962656 /* string_parser.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = string_parser.cpp; sourceTree = "<group>"; };
 		E39A09D81F9CE60900962656 /* string_parser.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = string_parser.hpp; sourceTree = "<group>"; };
+		E3CB49E31FD45743001EAE67 /* libcpprest.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libcpprest.dylib; path = anet/cpprest/lib/libcpprest.dylib; sourceTree = "<group>"; };
+		E3CB49E51FD4579E001EAE67 /* libcpprest.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libcpprest.dylib; path = anet/lib/libcpprest.dylib; sourceTree = "<group>"; };
+		E3CB49E81FD457F4001EAE67 /* http_client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = http_client.h; sourceTree = "<group>"; };
+		E3CB49E91FD457F4001EAE67 /* http_headers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = http_headers.h; sourceTree = "<group>"; };
+		E3CB49EA1FD457F4001EAE67 /* http_msg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = http_msg.h; sourceTree = "<group>"; };
+		E3CB49EB1FD457F4001EAE67 /* producerconsumerstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = producerconsumerstream.h; sourceTree = "<group>"; };
+		E3CB49EC1FD457F4001EAE67 /* version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = version.h; sourceTree = "<group>"; };
+		E3CB49ED1FD457F4001EAE67 /* streams.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = streams.h; sourceTree = "<group>"; };
+		E3CB49EE1FD457F4001EAE67 /* ws_msg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ws_msg.h; sourceTree = "<group>"; };
+		E3CB49EF1FD457F4001EAE67 /* uri.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = uri.h; sourceTree = "<group>"; };
+		E3CB49F11FD457F4001EAE67 /* web_utilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = web_utilities.h; sourceTree = "<group>"; };
+		E3CB49F21FD457F4001EAE67 /* http_constants.dat */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = http_constants.dat; sourceTree = "<group>"; };
+		E3CB49F31FD457F4001EAE67 /* SafeInt3.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = SafeInt3.hpp; sourceTree = "<group>"; };
+		E3CB49F41FD457F4001EAE67 /* cpprest_compat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cpprest_compat.h; sourceTree = "<group>"; };
+		E3CB49F51FD457F4001EAE67 /* x509_cert_utilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x509_cert_utilities.h; sourceTree = "<group>"; };
+		E3CB49F61FD457F4001EAE67 /* http_server_api.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = http_server_api.h; sourceTree = "<group>"; };
+		E3CB49F71FD457F4001EAE67 /* http_helpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = http_helpers.h; sourceTree = "<group>"; };
+		E3CB49F81FD457F4001EAE67 /* resource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = resource.h; sourceTree = "<group>"; };
+		E3CB49F91FD457F4001EAE67 /* fileio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fileio.h; sourceTree = "<group>"; };
+		E3CB49FA1FD457F4001EAE67 /* basic_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = basic_types.h; sourceTree = "<group>"; };
+		E3CB49FB1FD457F4001EAE67 /* uri_parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = uri_parser.h; sourceTree = "<group>"; };
+		E3CB49FC1FD457F4001EAE67 /* nosal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = nosal.h; sourceTree = "<group>"; };
+		E3CB49FD1FD457F4001EAE67 /* http_server.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = http_server.h; sourceTree = "<group>"; };
+		E3CB49FE1FD457F4001EAE67 /* rawptrstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rawptrstream.h; sourceTree = "<group>"; };
+		E3CB49FF1FD457F4001EAE67 /* astreambuf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = astreambuf.h; sourceTree = "<group>"; };
+		E3CB4A001FD457F4001EAE67 /* ws_client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ws_client.h; sourceTree = "<group>"; };
+		E3CB4A011FD457F4001EAE67 /* http_listener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = http_listener.h; sourceTree = "<group>"; };
+		E3CB4A021FD457F4001EAE67 /* json.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = json.h; sourceTree = "<group>"; };
+		E3CB4A031FD457F4001EAE67 /* filestream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = filestream.h; sourceTree = "<group>"; };
+		E3CB4A041FD457F4001EAE67 /* uri_builder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = uri_builder.h; sourceTree = "<group>"; };
+		E3CB4A051FD457F4001EAE67 /* interopstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = interopstream.h; sourceTree = "<group>"; };
+		E3CB4A061FD457F4001EAE67 /* oauth1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = oauth1.h; sourceTree = "<group>"; };
+		E3CB4A071FD457F4001EAE67 /* asyncrt_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = asyncrt_utils.h; sourceTree = "<group>"; };
+		E3CB4A081FD457F4001EAE67 /* oauth2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = oauth2.h; sourceTree = "<group>"; };
+		E3CB4A091FD457F4001EAE67 /* base_uri.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = base_uri.h; sourceTree = "<group>"; };
+		E3CB4A0A1FD457F4001EAE67 /* containerstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = containerstream.h; sourceTree = "<group>"; };
+		E3CB4A0C1FD457F4001EAE67 /* pplxlinux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pplxlinux.h; sourceTree = "<group>"; };
+		E3CB4A0D1FD457F4001EAE67 /* pplxwin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pplxwin.h; sourceTree = "<group>"; };
+		E3CB4A0E1FD457F4001EAE67 /* pplxtasks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pplxtasks.h; sourceTree = "<group>"; };
+		E3CB4A0F1FD457F4001EAE67 /* threadpool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = threadpool.h; sourceTree = "<group>"; };
+		E3CB4A101FD457F4001EAE67 /* pplxconv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pplxconv.h; sourceTree = "<group>"; };
+		E3CB4A111FD457F4001EAE67 /* pplxinterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pplxinterface.h; sourceTree = "<group>"; };
+		E3CB4A121FD457F4001EAE67 /* pplx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pplx.h; sourceTree = "<group>"; };
+		E3CB4A131FD457F4001EAE67 /* pplxcancellation_token.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pplxcancellation_token.h; sourceTree = "<group>"; };
 		E3FA31331F9C61FD00DC851D /* ahttp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ahttp.cpp; sourceTree = "<group>"; };
 		E3FA31341F9C61FD00DC851D /* ahttp.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ahttp.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -144,6 +264,44 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E375469F1FE1555800CEA11C /* libboost_wserialization.a in Frameworks */,
+				E37546A01FE1555800CEA11C /* libboost_math_c99.a in Frameworks */,
+				E37546A11FE1555800CEA11C /* libboost_container.a in Frameworks */,
+				E37546A21FE1555800CEA11C /* libboost_filesystem.a in Frameworks */,
+				E37546A31FE1555800CEA11C /* libboost_math_c99f.a in Frameworks */,
+				E37546A41FE1555800CEA11C /* libboost_signals.a in Frameworks */,
+				E37546A51FE1555800CEA11C /* libboost_math_c99l.a in Frameworks */,
+				E37546A61FE1555800CEA11C /* libboost_atomic.a in Frameworks */,
+				E37546A71FE1555800CEA11C /* libboost_graph.a in Frameworks */,
+				E37546A81FE1555800CEA11C /* libboost_numpy.a in Frameworks */,
+				E37546A91FE1555900CEA11C /* libboost_prg_exec_monitor.a in Frameworks */,
+				E37546AA1FE1555900CEA11C /* libboost_wave.a in Frameworks */,
+				E37546AB1FE1555900CEA11C /* libboost_math_tr1.a in Frameworks */,
+				E37546AC1FE1555900CEA11C /* libboost_serialization.a in Frameworks */,
+				E37546AD1FE1555900CEA11C /* libboost_timer.a in Frameworks */,
+				E37546AE1FE1555900CEA11C /* libboost_log_setup.a in Frameworks */,
+				E37546AF1FE1555900CEA11C /* libboost_coroutine.a in Frameworks */,
+				E37546B01FE1555900CEA11C /* libboost_exception.a in Frameworks */,
+				E37546B11FE1555900CEA11C /* libboost_math_tr1l.a in Frameworks */,
+				E37546B21FE1555900CEA11C /* libboost_test_exec_monitor.a in Frameworks */,
+				E37546B31FE1555900CEA11C /* libboost_unit_test_framework.a in Frameworks */,
+				E37546B41FE1555900CEA11C /* libboost_chrono.a in Frameworks */,
+				E37546B51FE1555900CEA11C /* libboost_date_time.a in Frameworks */,
+				E37546B61FE1555900CEA11C /* libboost_python.a in Frameworks */,
+				E37546B71FE1555900CEA11C /* libboost_random.a in Frameworks */,
+				E37546B81FE1555900CEA11C /* libboost_iostreams.a in Frameworks */,
+				E37546B91FE1555900CEA11C /* libboost_program_options.a in Frameworks */,
+				E37546BA1FE1555900CEA11C /* libboost_regex.a in Frameworks */,
+				E37546BB1FE1555900CEA11C /* libboost_log.a in Frameworks */,
+				E37546BC1FE1555900CEA11C /* libboost_thread.a in Frameworks */,
+				E37546BD1FE1555900CEA11C /* libboost_math_tr1f.a in Frameworks */,
+				E37546BE1FE1555900CEA11C /* libboost_type_erasure.a in Frameworks */,
+				E37546BF1FE1555900CEA11C /* libboost_context.a in Frameworks */,
+				E37546C01FE1555900CEA11C /* libboost_locale.a in Frameworks */,
+				E375467C1FE152F100CEA11C /* libboost_system.a in Frameworks */,
+				E37546791FE152BE00CEA11C /* libcrypto.a in Frameworks */,
+				E375467A1FE152BE00CEA11C /* libssl.a in Frameworks */,
+				E3CB49E61FD4579E001EAE67 /* libcpprest.dylib in Frameworks */,
 				E385F50E1F97408700E26281 /* libuv.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -151,6 +309,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6135E6D8F874B4EDBB928686 /* ssl */ = {
+			isa = PBXGroup;
+			children = (
+				6135EA899F938C6BEC03B292 /* ssl_shake.cpp */,
+				6135E704B9E6706E0E22DE95 /* ssl_shake.h */,
+			);
+			path = ssl;
+			sourceTree = "<group>";
+		};
 		E342FD3F1FB33CED00BA7AC1 /* zlib */ = {
 			isa = PBXGroup;
 			children = (
@@ -218,6 +385,8 @@
 		E385F3F91F973D5B00E26281 /* anet */ = {
 			isa = PBXGroup;
 			children = (
+				E3CB49E71FD457F4001EAE67 /* cpprest */,
+				E3CB4A0B1FD457F4001EAE67 /* pplx */,
 				E385F40F1F973D8800E26281 /* network */,
 				E385F3FA1F973D5B00E26281 /* AppDelegate.h */,
 				E385F3FB1F973D5B00E26281 /* AppDelegate.m */,
@@ -240,18 +409,9 @@
 				E385F4D01F973FC200E26281 /* libuv */,
 				E385F4131F973DE900E26281 /* thread */,
 				E385F4111F973DAC00E26281 /* http */,
-				E385F4101F973D9F00E26281 /* tcp */,
+				6135E6D8F874B4EDBB928686 /* ssl */,
 			);
 			path = network;
-			sourceTree = "<group>";
-		};
-		E385F4101F973D9F00E26281 /* tcp */ = {
-			isa = PBXGroup;
-			children = (
-				E385F50F1F9740DC00E26281 /* atcp.cpp */,
-				E385F5101F9740DC00E26281 /* atcp.hpp */,
-			);
-			path = tcp;
 			sourceTree = "<group>";
 		};
 		E385F4111F973DAC00E26281 /* http */ = {
@@ -307,6 +467,45 @@
 		E385F4E31F97407200E26281 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				E37546841FE1555800CEA11C /* libboost_atomic.a */,
+				E37546921FE1555800CEA11C /* libboost_chrono.a */,
+				E375467F1FE1555700CEA11C /* libboost_container.a */,
+				E375469D1FE1555800CEA11C /* libboost_context.a */,
+				E375468D1FE1555800CEA11C /* libboost_coroutine.a */,
+				E37546931FE1555800CEA11C /* libboost_date_time.a */,
+				E375468E1FE1555800CEA11C /* libboost_exception.a */,
+				E37546801FE1555800CEA11C /* libboost_filesystem.a */,
+				E37546851FE1555800CEA11C /* libboost_graph.a */,
+				E37546961FE1555800CEA11C /* libboost_iostreams.a */,
+				E375469E1FE1555800CEA11C /* libboost_locale.a */,
+				E375468C1FE1555800CEA11C /* libboost_log_setup.a */,
+				E37546991FE1555800CEA11C /* libboost_log.a */,
+				E375467E1FE1555700CEA11C /* libboost_math_c99.a */,
+				E37546811FE1555800CEA11C /* libboost_math_c99f.a */,
+				E37546831FE1555800CEA11C /* libboost_math_c99l.a */,
+				E37546891FE1555800CEA11C /* libboost_math_tr1.a */,
+				E375469B1FE1555800CEA11C /* libboost_math_tr1f.a */,
+				E375468F1FE1555800CEA11C /* libboost_math_tr1l.a */,
+				E37546861FE1555800CEA11C /* libboost_numpy.a */,
+				E37546871FE1555800CEA11C /* libboost_prg_exec_monitor.a */,
+				E37546971FE1555800CEA11C /* libboost_program_options.a */,
+				E37546941FE1555800CEA11C /* libboost_python.a */,
+				E37546951FE1555800CEA11C /* libboost_random.a */,
+				E37546981FE1555800CEA11C /* libboost_regex.a */,
+				E375468A1FE1555800CEA11C /* libboost_serialization.a */,
+				E37546821FE1555800CEA11C /* libboost_signals.a */,
+				E37546901FE1555800CEA11C /* libboost_test_exec_monitor.a */,
+				E375469A1FE1555800CEA11C /* libboost_thread.a */,
+				E375468B1FE1555800CEA11C /* libboost_timer.a */,
+				E375469C1FE1555800CEA11C /* libboost_type_erasure.a */,
+				E37546911FE1555800CEA11C /* libboost_unit_test_framework.a */,
+				E37546881FE1555800CEA11C /* libboost_wave.a */,
+				E375467D1FE1555700CEA11C /* libboost_wserialization.a */,
+				E375467B1FE152F100CEA11C /* libboost_system.a */,
+				E37546771FE152BE00CEA11C /* libcrypto.a */,
+				E37546781FE152BE00CEA11C /* libssl.a */,
+				E3CB49E31FD45743001EAE67 /* libcpprest.dylib */,
+				E3CB49E51FD4579E001EAE67 /* libcpprest.dylib */,
 				E385F4E41F97407200E26281 /* network */,
 			);
 			name = Frameworks;
@@ -403,6 +602,70 @@
 			path = thread;
 			sourceTree = "<group>";
 		};
+		E3CB49E71FD457F4001EAE67 /* cpprest */ = {
+			isa = PBXGroup;
+			children = (
+				E3CB49E81FD457F4001EAE67 /* http_client.h */,
+				E3CB49E91FD457F4001EAE67 /* http_headers.h */,
+				E3CB49EA1FD457F4001EAE67 /* http_msg.h */,
+				E3CB49EB1FD457F4001EAE67 /* producerconsumerstream.h */,
+				E3CB49EC1FD457F4001EAE67 /* version.h */,
+				E3CB49ED1FD457F4001EAE67 /* streams.h */,
+				E3CB49EE1FD457F4001EAE67 /* ws_msg.h */,
+				E3CB49EF1FD457F4001EAE67 /* uri.h */,
+				E3CB49F01FD457F4001EAE67 /* details */,
+				E3CB49FE1FD457F4001EAE67 /* rawptrstream.h */,
+				E3CB49FF1FD457F4001EAE67 /* astreambuf.h */,
+				E3CB4A001FD457F4001EAE67 /* ws_client.h */,
+				E3CB4A011FD457F4001EAE67 /* http_listener.h */,
+				E3CB4A021FD457F4001EAE67 /* json.h */,
+				E3CB4A031FD457F4001EAE67 /* filestream.h */,
+				E3CB4A041FD457F4001EAE67 /* uri_builder.h */,
+				E3CB4A051FD457F4001EAE67 /* interopstream.h */,
+				E3CB4A061FD457F4001EAE67 /* oauth1.h */,
+				E3CB4A071FD457F4001EAE67 /* asyncrt_utils.h */,
+				E3CB4A081FD457F4001EAE67 /* oauth2.h */,
+				E3CB4A091FD457F4001EAE67 /* base_uri.h */,
+				E3CB4A0A1FD457F4001EAE67 /* containerstream.h */,
+			);
+			path = cpprest;
+			sourceTree = "<group>";
+		};
+		E3CB49F01FD457F4001EAE67 /* details */ = {
+			isa = PBXGroup;
+			children = (
+				E3CB49F11FD457F4001EAE67 /* web_utilities.h */,
+				E3CB49F21FD457F4001EAE67 /* http_constants.dat */,
+				E3CB49F31FD457F4001EAE67 /* SafeInt3.hpp */,
+				E3CB49F41FD457F4001EAE67 /* cpprest_compat.h */,
+				E3CB49F51FD457F4001EAE67 /* x509_cert_utilities.h */,
+				E3CB49F61FD457F4001EAE67 /* http_server_api.h */,
+				E3CB49F71FD457F4001EAE67 /* http_helpers.h */,
+				E3CB49F81FD457F4001EAE67 /* resource.h */,
+				E3CB49F91FD457F4001EAE67 /* fileio.h */,
+				E3CB49FA1FD457F4001EAE67 /* basic_types.h */,
+				E3CB49FB1FD457F4001EAE67 /* uri_parser.h */,
+				E3CB49FC1FD457F4001EAE67 /* nosal.h */,
+				E3CB49FD1FD457F4001EAE67 /* http_server.h */,
+			);
+			path = details;
+			sourceTree = "<group>";
+		};
+		E3CB4A0B1FD457F4001EAE67 /* pplx */ = {
+			isa = PBXGroup;
+			children = (
+				E3CB4A0C1FD457F4001EAE67 /* pplxlinux.h */,
+				E3CB4A0D1FD457F4001EAE67 /* pplxwin.h */,
+				E3CB4A0E1FD457F4001EAE67 /* pplxtasks.h */,
+				E3CB4A0F1FD457F4001EAE67 /* threadpool.h */,
+				E3CB4A101FD457F4001EAE67 /* pplxconv.h */,
+				E3CB4A111FD457F4001EAE67 /* pplxinterface.h */,
+				E3CB4A121FD457F4001EAE67 /* pplx.h */,
+				E3CB4A131FD457F4001EAE67 /* pplxcancellation_token.h */,
+			);
+			path = pplx;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -462,6 +725,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E385F4011F973D5B00E26281 /* Assets.xcassets in Resources */,
+				E3CB4A141FD457F4001EAE67 /* http_constants.dat in Resources */,
 				E385F4041F973D5B00E26281 /* Main.storyboard in Resources */,
 				E342FD571FB33CEE00BA7AC1 /* zlib.3.pdf in Resources */,
 			);
@@ -482,7 +746,6 @@
 				E385F3FF1F973D5B00E26281 /* ViewController.mm in Sources */,
 				E3786C741F98A13A00AD5C88 /* common_callback.cpp in Sources */,
 				E342FD591FB33CEE00BA7AC1 /* deflate.c in Sources */,
-				E385F5111F9740DC00E26281 /* atcp.cpp in Sources */,
 				E385F4071F973D5B00E26281 /* main.m in Sources */,
 				E39A09D91F9CE60900962656 /* string_parser.cpp in Sources */,
 				E385F3FC1F973D5B00E26281 /* AppDelegate.m in Sources */,
@@ -496,6 +759,7 @@
 				E342FD601FB33CEE00BA7AC1 /* inffast.c in Sources */,
 				6135E0F4A833755B2BCAA7A3 /* case_insensitive_map.cpp in Sources */,
 				6135E438D3BD009B06FAD4FE /* char_array.cpp in Sources */,
+				6135EF0C82C54E698B5C34C8 /* ssl_shake.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -623,11 +887,21 @@
 				CODE_SIGN_ENTITLEMENTS = anet/anet.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				HEADER_SEARCH_PATHS = (
+					/Users/keliu/workspace/plan9/3rd/boost_1_63_0,
+					"$(PROJECT_DIR)/anet/",
+					/usr/local/opt/openssl/include,
+				);
 				INFOPLIST_FILE = anet/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/anet/network/libuv",
+					"$(PROJECT_DIR)/anet/cpprest/lib",
+					"$(PROJECT_DIR)/anet/lib",
+					/Users/keliu/workspace/plan9/3rd/boost_1_63_0/lib,
+					/usr/local/opt/openssl/lib,
+					/usr/local/Cellar/openssl/1.0.2m/lib,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = GZ.anet;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -641,11 +915,21 @@
 				CODE_SIGN_ENTITLEMENTS = anet/anet.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				HEADER_SEARCH_PATHS = (
+					/Users/keliu/workspace/plan9/3rd/boost_1_63_0,
+					"$(PROJECT_DIR)/anet/",
+					/usr/local/opt/openssl/include,
+				);
 				INFOPLIST_FILE = anet/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/anet/network/libuv",
+					"$(PROJECT_DIR)/anet/cpprest/lib",
+					"$(PROJECT_DIR)/anet/lib",
+					/Users/keliu/workspace/plan9/3rd/boost_1_63_0/lib,
+					/usr/local/opt/openssl/lib,
+					/usr/local/Cellar/openssl/1.0.2m/lib,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = GZ.anet;
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -83,6 +83,8 @@ namespace plan9 {
         void set_keep_alive(bool keep_alive);
         bool is_keep_alive();
 
+        bool is_use_ssl();
+
         /**
          * 将对象转化为字符串
          * @return 字符串结果

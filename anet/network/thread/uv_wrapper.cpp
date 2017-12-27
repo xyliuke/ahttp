@@ -22,14 +22,15 @@ namespace plan9 {
     static std::list<uv_work_t *> reuse_concurrent_array;
     static std::list<uv_idle_t *> reuse_idle_array;
     static std::list<uv_timer_t *> reuse_timer_array;
+    static std::function<std::shared_ptr<ssl_interface>()> ssl_callback = nullptr;
 
     template<typename T>
     class function_wrap {
     public:
-        function_wrap(T func) : function(func) {
+        function_wrap(T func) : function(func), ssl(false) {
         }
 
-        function_wrap(T func, int times) : function(func) {
+        function_wrap(T func, int times) : function(func), ssl(false) {
             if (times > 0 || times == TIMER_EVER_LOOP) {
                 max_times = times;
                 current_times = times;
@@ -53,7 +54,8 @@ namespace plan9 {
         int id;
         bool is_canceled;
         T function;
-
+        bool ssl;
+        std::shared_ptr<ssl_interface> ssl_impl;
     private:
         int max_times;
         int current_times;
@@ -190,6 +192,10 @@ namespace plan9 {
 
     void uv_wrapper::init(std::function<void(void)> callback) {
         init_loop(callback);
+    }
+
+    void uv_wrapper::set_ssl_impl(std::function<std::shared_ptr<ssl_interface>()> callback) {
+        ssl_callback = callback;
     }
 
     int uv_wrapper::post_serial_queue(std::function<void()> callback) {
@@ -386,19 +392,42 @@ namespace plan9 {
     static std::map<int, char*> tcp_read_buf_map;
 
     static void read_callback(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf) {
-        if (nread > 0) {
-            if (handle != nullptr && handle->data != nullptr) {
-                auto func = (function_wrap<std::function<void(std::shared_ptr<common_callback>, int)>> *) (handle->data);
-                if (tcp_read_callback_map.find(func->id) != tcp_read_callback_map.end()) {
-                    auto callback = tcp_read_callback_map[func->id];
-                    std::shared_ptr<char> data(buf->base);
-                    callback(func->id, data, nread);
+        if (handle != nullptr && handle->data != nullptr) {
+            auto func = (function_wrap<std::function<void(std::shared_ptr<common_callback>, int)>> *) (handle->data);
+            if (func->ssl && func->ssl_impl) {
+                if (nread > 0) {
+                    func->ssl_impl->on_read(func->id, buf->base, nread, [=](std::shared_ptr<plan9::common_callback> ccb, std::shared_ptr<char> data, long len){
+                        if (ccb->success) {
+                            if (len <= 0) {
+                                //connected
+                                if (func->function != nullptr) {
+                                    std::shared_ptr<common_callback> ccb(new common_callback);
+                                    func->function(ccb, func->id);
+                                }
+                            } else {
+                                if (tcp_read_callback_map.find(func->id) != tcp_read_callback_map.end()) {
+                                    auto callback = tcp_read_callback_map[func->id];
+                                    std::shared_ptr<char> data(buf->base);
+                                    callback(func->id, data, nread);
+                                }
+                            }
+                        } else {
+
+                        }
+                    });
+                } else {
+                    uv_wrapper::close(func->id);
                 }
-            }
-        } else {
-            if (handle != nullptr && handle->data != nullptr) {
-                auto func = (function_wrap<std::function<void(std::shared_ptr<common_callback>, int)>> *) (handle->data);
-                uv_wrapper::close(func->id);
+            } else {
+                if (nread > 0) {
+                    if (tcp_read_callback_map.find(func->id) != tcp_read_callback_map.end()) {
+                        auto callback = tcp_read_callback_map[func->id];
+                        std::shared_ptr<char> data(buf->base);
+                        callback(func->id, data, nread);
+                    }
+                } else {
+                    uv_wrapper::close(func->id);
+                }
             }
         }
     }
@@ -415,9 +444,18 @@ namespace plan9 {
                 if (status >= 0) {
                     auto tcp_handle = tcp_array[func->id];
                     uv_read_start((uv_stream_t*)tcp_handle, alloc_callback, read_callback);
-                    if (func->function != nullptr) {
-                        std::shared_ptr<common_callback> ccb(new common_callback);
-                        func->function(ccb, func->id);
+                    auto b = [=]() {
+                        if (func->function != nullptr) {
+                            std::shared_ptr<common_callback> ccb(new common_callback);
+                            func->function(ccb, func->id);
+                        }
+                    };
+                    if (func->ssl && func->ssl_impl) {
+                        func->ssl_impl->on_connect(func->id, [=](std::shared_ptr<common_callback> ccb) {
+//                            b();
+                        });
+                    } else {
+                        b();
                     }
                 } else {
                     std::string reason = std::string(uv_err_name(status));
@@ -441,6 +479,13 @@ namespace plan9 {
     void uv_wrapper::connect(std::string ip, int port, std::function<void(std::shared_ptr<common_callback>, int tcp_id)> connect_callback,
             std::function<void(int, std::shared_ptr<char>, int len)> read_callback,
             std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback) {
+        connect(ip, port, false, connect_callback, read_callback, close_callback);
+    }
+
+    void uv_wrapper::connect(std::string ip, int port, bool ssl_enable,
+            std::function<void(std::shared_ptr<common_callback>, int tcp_id)> connect_callback,
+            std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,
+            std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback) {
         if (loop == nullptr) {
             if (connect_callback) {
                 std::shared_ptr<common_callback> cb(new common_callback(false, -1, "loop must be init"));
@@ -453,8 +498,12 @@ namespace plan9 {
 
         uv_connect_t* req = new uv_connect_t;
         auto func = new function_wrap<std::function<void(std::shared_ptr<common_callback>, int)>>(connect_callback);
+        func->ssl = ssl_enable;
         func->id = count;
         req->data = func;
+        if (ssl_callback) {
+            func->ssl_impl = ssl_callback();
+        }
 
         if (close_callback != nullptr) {
             tcp_close_callback_map[count] = close_callback;
@@ -475,6 +524,12 @@ namespace plan9 {
         uv_tcp_connect(req, tcp, (struct sockaddr*)addr, connect_event_callback);
 
         count ++;
+    }
+
+    void uv_wrapper::connect_ssl(std::string ip, int port, std::function<void(std::shared_ptr<common_callback>, int tcp_id)> connect_callback,
+            std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,
+            std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback) {
+        connect(ip, port, true, connect_callback, read_callback, close_callback);
     }
 
     void uv_wrapper::reconnect(int tcp_id) {
@@ -530,6 +585,18 @@ namespace plan9 {
             }
         }
         return false;
+    }
+
+    int uv_wrapper::get_fd(int tcp_id) {
+        if (tcp_alive(tcp_id)) {
+            if (tcp_array.find(tcp_id) != tcp_array.end()) {
+                auto tcp = tcp_array[tcp_id];
+                uv_os_fd_t fd;
+                uv_fileno((uv_handle_t*)tcp, &fd);
+                return fd;
+            }
+        }
+        return -1;
     }
 }
 

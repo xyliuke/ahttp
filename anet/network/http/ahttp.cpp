@@ -65,7 +65,7 @@ namespace plan9 {
             }
         }
 
-        void set_mothod(std::string method) {
+        void set_method(std::string method) {
             this->method = method;
         }
         void set_http_version(std::string protocol) {
@@ -176,6 +176,10 @@ namespace plan9 {
             return true;
         }
 
+        bool is_use_ssl() {
+            return string_parser::to_lower(protocol) == "https";
+        }
+
         std::string get_http_method_string() {
             std::stringstream ss;
             ss << method;
@@ -246,7 +250,6 @@ namespace plan9 {
 
         void get_http_data(std::function<void(char* data, long len, long sent, long total)> callback) {
             if (callback) {
-                static const int buf_size = 1024;
                 std::string http = get_http_string();
                 char* ret = (char*) malloc(http.length());
                 memcpy(ret, (char*)http.c_str(), http.length());
@@ -342,7 +345,7 @@ namespace plan9 {
     }
 
     void ahttp_request::set_method(std::string method) {
-        impl->set_mothod(method);
+        impl->set_method(method);
     }
 
     void ahttp_request::set_http_version(std::string version) {
@@ -387,6 +390,10 @@ namespace plan9 {
 
     bool ahttp_request::is_keep_alive() {
         return impl->is_keep_alive();
+    }
+
+    bool ahttp_request::is_use_ssl() {
+        return impl->is_use_ssl();
     }
 
     std::string ahttp_request::get_http_method_string() {

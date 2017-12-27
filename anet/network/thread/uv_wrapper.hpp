@@ -16,9 +16,16 @@
 
 namespace plan9 {
 
+    struct ssl_interface {
+        virtual void on_connect(int tcp_id, std::function<void(std::shared_ptr<common_callback>)> callback) = 0;
+        virtual void on_read(int tcp_id, char* data, long len, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<char>, long)> callback) = 0;
+    };
+
     class uv_wrapper {
     public:
         static void init(std::function<void(void)> callback);
+
+        static void set_ssl_impl(std::function<std::shared_ptr<ssl_interface>()> callback);
 
         static void set_concurrent_pool_size(int size);
 
@@ -45,6 +52,14 @@ namespace plan9 {
                             std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,
                             std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback);
 
+        static void connect(std::string ip, int port, bool ssl_enable, std::function<void(std::shared_ptr<common_callback>, int tcp_id)> connect_callback,
+                std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,
+                std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback);
+
+        static void connect_ssl(std::string ip, int port, std::function<void(std::shared_ptr<common_callback>, int tcp_id)> connect_callback,
+                std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,
+                std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback);
+
         static void reconnect(int tcp_id);
 
         static void close(int tcp_id);
@@ -52,6 +67,8 @@ namespace plan9 {
         static void write(int tcp_id, char* data, int len, std::function<void(std::shared_ptr<common_callback>)> callback);
 
         static bool tcp_alive(int tcp_id);
+
+        static int get_fd(int tcp_id);
     };
 
 }

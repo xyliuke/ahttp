@@ -49,46 +49,24 @@ namespace plan9
             SSL_set_bio(ssl, read_bio, write_bio);
         }
 
-        void do_shake(int fd, std::function<void(std::shared_ptr<ssl_shake>)> callback) {
-            ssl = SSL_new(get_ssl_ctx());
-//            SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
-//            SSL_set_connect_state(ssl);
-//            read_bio = BIO_new(BIO_s_mem());
-//            write_bio = BIO_new(BIO_s_mem());
-//            SSL_set_bio(ssl, read_bio, write_bio);
-            SSL_set_fd(ssl, fd);
-//            int ret = SSL_do_handshake(ssl);
-            int ret = SSL_connect(ssl);
-//            SSL_do_handshake(ssl);
-            int error = SSL_get_error(ssl, ret);
-//
-//            char buf[100];
-//            ERR_error_string(error, buf);
-            const char* e = ERR_reason_error_string(error);
-//            std::string ee = std::string(e, 1000);
-            std::cout << "do handshake " << e << std::endl;
-
-//            BIO* bio = BIO_new_ssl_connect(get_ssl_ctx());
-//            BIO* bio = BIO_new_socket(fd, BIO_NOCLOSE);
-//            BIO* bio = BIO_new_fd(fd, BIO_NOCLOSE);
-//            BIO_set_ssl(bio, ssl, )
-//            BIO_get_ssl(bio, &ssl);
-//            BIO_set_ssl(bio, ssl, BIO_NOCLOSE);
-//            BIO_set_conn_hostname(bio, "api.chesupai.cn:443");
-//            long ret = BIO_do_handshake(bio);
-//            if(ret <= 0) {
-                /* Handle failed connection */
-//                int error = SSL_get_error(ssl, ret);
-//                std::cout << "do handshake " << ERR_reason_error_string(error) << std::endl;
-//            }
-        }
-
-        void read(char *data, long len, std::function<void(char *data, long len)> callback) {
-
-        }
-
-        void write(char *data, long len, std::function<void(char *data, long len)> callback) {
-
+        void write(char *data, long len, std::function<void(std::shared_ptr<common_callback>, char *data, long len)> callback) {
+            if (callback) {
+                if (ssl && write_bio) {
+                    int ret = SSL_write(ssl, data, len);
+                    if (ret > 0) {
+                        static int buf_len = 10240;
+                        char* buf = (char*)malloc(buf_len);
+                        int bytes_read = 0;
+                        while((bytes_read = BIO_read(write_bio, buf, buf_len)) > 0) {
+                            std::shared_ptr<common_callback> ccb(new common_callback);
+                            callback(ccb, buf, bytes_read);
+                        }
+                        return;
+                    }
+                }
+                std::shared_ptr<common_callback> ccb(new common_callback(false, -1, "ssl write error"));
+                callback(ccb, nullptr, -1);
+            }
         }
 
         void on_connect(int tcp_id, std::function<void(std::shared_ptr<common_callback>)> callback) {
@@ -102,15 +80,28 @@ namespace plan9
                     callback(ccb);
                 }
             }
-//            on_event();
         }
 
         void on_read(int tcp_id, char* data, long len, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<char>, long)> callback) {
-            char *buf =  (char*)malloc(len);
-            memcpy(buf, data, len);
             if (SSL_is_init_finished(ssl)) {
-
+                if (callback) {
+                    int ret = BIO_write(read_bio, data, len);
+                    if (ret >= 0) {
+                        static int num = 10240;
+                        std::shared_ptr<char> buf((char*) malloc(num));
+                        ret = SSL_read(ssl, buf.get(), num);
+                        std::shared_ptr<common_callback> ccb(new common_callback);
+                        if (ret < 0) {
+                            ccb->success = false;
+                            ccb->error_code = -1;
+                            ccb->reason = "ssl read error";
+                        }
+                        callback(ccb, buf, ret);
+                    }
+                }
             } else {
+                char *buf =  (char*)malloc(len);
+                memcpy(buf, data, len);
                 int written = BIO_write(read_bio, buf, len);
                 if (do_shake_finish(tcp_id)) {
                     if (callback) {
@@ -122,75 +113,6 @@ namespace plan9
         }
 
     private:
-
-        void on_event() { // is called after each socket event
-            char buf[1024 * 10];
-            int bytes_read = 0;
-
-            if(!SSL_is_init_finished(ssl)) {
-                int r = SSL_connect(ssl);
-                if(r < 0) {
-                    handle_error(r);
-                }
-                check_outgoing_application_data();
-            }
-            else {
-                // connect, check if there is encrypted data, or we need to send app data
-                int r = SSL_read(ssl, buf, sizeof(buf));
-                if(r < 0) {
-                    handle_error(r);
-                }
-                else if(r > 0) {
-//                    std::copy(buf, buf+r, std::back_inserter(c->buffer_in));
-//                    std::copy(c->buffer_in.begin(), c->buffer_in.end(), std::ostream_iterator<char>(std::cout));
-//                    c->buffer_in.clear();
-                }
-                check_outgoing_application_data();
-            }
-        }
-
-        void check_outgoing_application_data() {
-//            if(SSL_is_init_finished(ssl)) {
-//                if(c->buffer_out.size() > 0) {
-//                    std::copy(c->buffer_out.begin(), c->buffer_out.end(), std::ostream_iterator<char>(std::cout,""));
-//                    int r = SSL_write(c->ssl, &c->buffer_out[0], c->buffer_out.size());
-//                    c->buffer_out.clear();
-//                    handle_error(c, r);
-//                    flush_read_bio(c);
-//                }
-//            }
-        }
-
-        void handle_error(int result) {
-            int error = SSL_get_error(ssl, result);
-            if(error == SSL_ERROR_WANT_READ) { // wants to read from bio
-                flush_read_bio();
-            }
-        }
-
-        void flush_read_bio() {
-            char buf[1024*16];
-            int bytes_read = 0;
-            while((bytes_read = BIO_read(write_bio, buf, sizeof(buf))) > 0) {
-                write_to_socket(buf, bytes_read);
-            }
-        }
-
-        void write_to_socket(char* buf, size_t len) {
-            if(len <= 0) {
-                return;
-            }
-            uv_wrapper::write(tcp_id, buf, len, nullptr);
-//            uv_buf_t uvbuf;
-//            uvbuf.base = buf;
-//            uvbuf.len = len;
-//            int r = uv_write(&c->write_req, (uv_stream_t*)&c->socket, &uvbuf, 1, on_written_callback);
-//            if(r < 0) {
-//                printf("ERROR: write_to_socket error: %s\n", uv_err_name(uv_last_error(c->socket.loop)));
-//            }
-        }
-
-
         bool do_shake_finish(int tcp_id) {
             if (!SSL_is_init_finished(ssl)) {
                 int ret = SSL_connect(ssl);     // 开始握手。这个
@@ -202,9 +124,6 @@ namespace plan9
                     } else if (err == SSL_ERROR_WANT_WRITE) {
                     }
                 } else {
-//                    char*
-//                    int ret = SSL_write(ssl, , data_len);   // data中存放了要发送的数据
-
                     return true;
                 }
                 return false;
@@ -217,7 +136,7 @@ namespace plan9
             char* buf = (char*)malloc(buf_len);
             int bytes_read = 0;
             while((bytes_read = BIO_read(write_bio, buf, buf_len)) > 0) {
-                uv_wrapper::write(tcp_id, buf, bytes_read, nullptr);
+                uv_wrapper::write_uv(tcp_id, buf, bytes_read, nullptr);
             }
         };
 
@@ -248,15 +167,7 @@ namespace plan9
 
     }
 
-    void ssl_shake::do_shake(int fd, std::function<void(std::shared_ptr<ssl_shake>)> callback) {
-        impl->do_shake(fd, callback);
-    }
-
-    void ssl_shake::read(char *data, long len, std::function<void(char *data, long len)> callback) {
-        impl->read(data, len, callback);
-    }
-
-    void ssl_shake::write(char *data, long len, std::function<void(char *data, long len)> callback) {
+    void ssl_shake::write(char *data, long len, std::function<void(std::shared_ptr<common_callback>, char *data, long len)> callback) {
         impl->write(data, len, callback);
     }
 

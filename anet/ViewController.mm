@@ -33,6 +33,10 @@ pplx::task<void> task;
 - (void)viewDidLoad {
     [super viewDidLoad];
     plan9::uv_wrapper::init(nullptr);
+    plan9::uv_wrapper::set_ssl_impl([=] () -> std::shared_ptr<plan9::ssl_interface> {
+        std::shared_ptr<plan9::ssl_interface> ret(new plan9::ssl_shake);
+        return ret;
+    });
     // Do any additional setup after loading the view.
 }
 
@@ -117,14 +121,10 @@ pplx::task<void> task;
 }
 - (IBAction)click_connect:(id)sender {
 
-    plan9::uv_wrapper::set_ssl_impl([=] () -> std::shared_ptr<plan9::ssl_interface> {
-        std::shared_ptr<plan9::ssl_interface> ret(new plan9::ssl_shake);
-        return ret;
-    });
-
-
-    plan9::uv_wrapper::connect_ssl("10.16.8.115", 443, [=](std::shared_ptr<plan9::common_callback> ccb, int tcp_id){
+    plan9::uv_wrapper::connect("10.16.8.115", 443, true, [](std::shared_ptr<plan9::common_callback> ccb, int tcp_id){
         std::cout << "connected\n";
+    }, [=](std::shared_ptr<plan9::common_callback> ccb, int tcp_id){
+        std::cout << "ssl connected\n";
 //        std::cout << tcp_id << " connected\n";
 //        plan9::uv_wrapper::write(tcp_id, "hello world", 11, [=](std::shared_ptr<plan9::common_callback> ccb){
 //            std::cout << "write " << ccb->success << std::endl;
@@ -275,7 +275,7 @@ pplx::task<void> task;
 //        std::string url = "http://api.chesupai.cn/customer/detail/info?id=1429449&idfa=11BFBC7A-98EF-4B37-A216-E8DAF0ABAB8B&osv=iOS8.1&net=wifi&screenWH=750%252C1334&deviceId=3200A4C2-C469-469D-A42A-920B1A5A0216&deviceModel=iPhoneSimulator&platform=1&dpi=326&versionId=2.7.3&model=x86_64&pushTYpe=0&sign=9102c932d5e96cd5129b1c35f9baee28";
         ah->get(url, nullptr, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
 //            std::cout << response->get_response_length() << std::endl;
-//            std::cout << response->get_body_string() << std::endl;
+            std::cout << response->get_body_string() << std::endl;
         });
 //        ah->download("http://cn.bing.com/az/hprichbg/rb/Forest_ZH-CN16430313748_1920x1080.jpg", "/Users/keliu/Downloads/a.jpg", nullptr, [=](long current, long total){
 //            std::cout << current << "/" << total << std::endl;

@@ -835,12 +835,13 @@ namespace plan9 {
         }
 
         static void exec_new_connect(std::shared_ptr<ahttp::ahttp_impl> http, std::string ip, int port) {
-            uv_wrapper::connect(ip, port, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
+            auto connected_callback = [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
                 if (ccb->success) {
                     mutex.lock();
                     if (http->request) {
                         url_tcp_map[http->request->get_domain()] = tcp_id;
                     }
+                    //TODO 复用TCP，需要把IP和端口号联合使用
                     url_tcp_map[ip] = tcp_id;
 
                     std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>> list_disconnected;
@@ -878,6 +879,19 @@ namespace plan9 {
                     });
                 } else {
                     uv_wrapper::close(tcp_id);
+                }
+            };
+            uv_wrapper::connect(ip, port, http->request->is_use_ssl(), [=](std::shared_ptr<common_callback> ccb, int tcp_id){
+                //tcp connected
+                if (http->request->is_use_ssl()) {
+
+                } else {
+                    connected_callback(ccb, tcp_id);
+                }
+            }, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
+                //ssl connected
+                if (http->request->is_use_ssl()) {
+                    connected_callback(ccb, tcp_id);
                 }
             }, [=](int tcp_id, std::shared_ptr<char>data, int len) {
                 if (tcp_http_map.find(tcp_id) != tcp_http_map.end()) {

@@ -243,6 +243,10 @@ pplx::task<void> task;
             auto tp = std::chrono::system_clock::now();
             std::cout << i << " connected " << tp.time_since_epoch().count() / 1000 << std::endl;
         });
+        ah->set_ssl_connected_event_callback([=](std::shared_ptr<common_callback>) {
+            auto tp = std::chrono::system_clock::now();
+            std::cout << i << " ssl connected " << tp.time_since_epoch().count() / 1000 << std::endl;
+        });
         ah->set_send_event_callback([=](std::shared_ptr<common_callback>, int bytes, long total) {
             auto tp = std::chrono::system_clock::now();
             std::cout << i << " send " << tp.time_since_epoch().count() / 1000 << "\tsize : " << bytes << std::endl;

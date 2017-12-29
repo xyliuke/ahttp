@@ -229,6 +229,8 @@ namespace plan9 {
         void set_dns_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);
         //连接服务器后事件
         void set_connected_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);
+        //ssl握手成功后的事件
+        void set_ssl_connected_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);
         //客户端发送数据后事件
         void set_send_event_callback(std::function<void(std::shared_ptr<common_callback>, long sent, long total)> callback);
         //读取数据事件，每次读取数据都会触发，调用download函数时不要使用这个事件

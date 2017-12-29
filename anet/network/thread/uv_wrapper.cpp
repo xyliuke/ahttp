@@ -399,7 +399,10 @@ namespace plan9 {
                 if (nread > 0) {
                     func->ssl_impl->on_read(func->id, buf->base, nread, [=](std::shared_ptr<plan9::common_callback> ccb, std::shared_ptr<char> data, long len){
                         if (ccb->success) {
-                            if (len <= 0) {
+                            if (len == 0) {
+                                //disconnected
+
+                            } else if (len < 0) {
                                 //ssl connected
                                 if (tcp_ssl_connect_callback_map.find(func->id) != tcp_ssl_connect_callback_map.end()) {
                                     auto cb = tcp_ssl_connect_callback_map[func->id];

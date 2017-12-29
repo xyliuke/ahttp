@@ -811,6 +811,17 @@ namespace plan9 {
                 if (list->size() > 0) {
                     auto http = list->at(0);
 
+                    std::shared_ptr<common_callback> ccb(new common_callback);
+                    http->send_dns_event(ccb);
+
+                    std::shared_ptr<common_callback> ccb1(new common_callback);
+                    http->send_connected_event(ccb1);
+
+                    if (http->request->is_use_ssl()) {
+                        std::shared_ptr<common_callback> ccb2(new common_callback);
+                        http->send_ssl_connected_event(ccb2);
+                    }
+
                     std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>> list_disconnected;
                     if (tcp_http_disconnected_map.find(tcp_id) != tcp_http_disconnected_map.end()) {
                         list_disconnected = tcp_http_disconnected_map[tcp_id];
@@ -820,8 +831,6 @@ namespace plan9 {
                     }
                     list_disconnected->push_back(http);
 
-                    std::shared_ptr<common_callback> ccb(new common_callback);
-                    http->send_dns_event(ccb);
                     http->request->get_http_data([=](char* data, long len, long sent, long total){
                         uv_wrapper::write(tcp_id, data, len, [=](std::shared_ptr<common_callback> write_callback){
                             http->send_send_event(write_callback, sent + len, total);
@@ -868,7 +877,6 @@ namespace plan9 {
                     list->push_back(http);
                     mutex.unlock();
 
-                    http->send_connected_event(ccb);
                     http->request->get_http_data([=](char* data, long len, long sent, long total){
                         uv_wrapper::write(tcp_id, data, len, [=](std::shared_ptr<common_callback> write_callback){
                             http->send_send_event(write_callback, sent + len, total);
@@ -883,6 +891,7 @@ namespace plan9 {
             };
             uv_wrapper::connect(ip, port, http->request->is_use_ssl(), [=](std::shared_ptr<common_callback> ccb, int tcp_id){
                 //tcp connected
+                http->send_connected_event(ccb);
                 if (http->request->is_use_ssl()) {
 
                 } else {
@@ -890,6 +899,7 @@ namespace plan9 {
                 }
             }, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
                 //ssl connected
+                http->send_ssl_connected_event(ccb);
                 if (http->request->is_use_ssl()) {
                     connected_callback(ccb, tcp_id);
                 }
@@ -1072,6 +1082,9 @@ namespace plan9 {
         void set_connected_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback) {
             connect_callback = callback;
         }
+        void set_ssl_connected_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback) {
+            ssl_connect_callback = callback;
+        }
         void set_read_event_callback(std::function<void(std::shared_ptr<common_callback>, long size)> callback) {
             read_callback = callback;
         }
@@ -1153,6 +1166,11 @@ namespace plan9 {
                 connect_callback(callback);
             }
         }
+        void send_ssl_connected_event(std::shared_ptr<common_callback> callback) {
+            if (ssl_connect_callback) {
+                ssl_connect_callback(callback);
+            }
+        }
         void send_send_event(std::shared_ptr<common_callback> callback, long bytes, long total) {
             if (send_callback) {
                 send_callback(callback, bytes, total);
@@ -1205,6 +1223,7 @@ namespace plan9 {
         std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback;
         std::function<void(std::shared_ptr<common_callback>)> dns_callback;
         std::function<void(std::shared_ptr<common_callback>)> connect_callback;
+        std::function<void(std::shared_ptr<common_callback>)> ssl_connect_callback;
         std::function<void(std::shared_ptr<common_callback>, long, long)> send_callback;
         std::function<void(std::shared_ptr<common_callback>, long)> read_callback;
         std::function<void(std::shared_ptr<common_callback>)> read_begin_callback;
@@ -1245,6 +1264,10 @@ namespace plan9 {
     }
     void ahttp::set_connected_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback) {
         impl->set_connected_event_callback(callback);
+    }
+
+    void ahttp::set_ssl_connected_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback) {
+        impl->set_ssl_connected_event_callback(callback);
     }
 
     void ahttp::set_read_event_callback(std::function<void(std::shared_ptr<common_callback>, long size)> callback) {

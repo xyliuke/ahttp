@@ -95,6 +95,10 @@ namespace plan9
                             ccb->success = false;
                             ccb->error_code = -1;
                             ccb->reason = "ssl read error";
+                        } else if (ret == 0){
+                            ccb->success = false;
+                            ccb->error_code = -2;
+                            ccb->reason = "ssl close";
                         }
                         callback(ccb, buf, ret);
                     }
@@ -103,7 +107,7 @@ namespace plan9
                 char *buf =  (char*)malloc(len);
                 memcpy(buf, data, len);
                 int written = BIO_write(read_bio, buf, len);
-                if (do_shake_finish(tcp_id)) {
+                if (written > 0 && do_shake_finish(tcp_id)) {
                     if (callback) {
                         std::shared_ptr<common_callback> ccb(new common_callback);
                         callback(ccb, nullptr, -1);

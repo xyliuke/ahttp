@@ -40,6 +40,7 @@ namespace plan9
 //        std::cout << "\tMessage callback " << std::string((char*)buf, len);
     }
 
+    //TODO 需要解决内存泄露问题，将各个接口传递char*的方面进行修改
     class ssl_shake::ssl_shake_impl {
     public:
         ssl_shake_impl() {
@@ -116,6 +117,15 @@ namespace plan9
             }
         }
 
+        void validate_domain(std::function<bool()> callback) {
+            validate_domain_cb = callback;
+        }
+
+        void allow_invalid_cert(std::function<bool()> callback) {
+            allow_invalid_cert_cb = callback;
+        }
+
+
     private:
         bool do_shake_finish(int tcp_id) {
             if (!SSL_is_init_finished(ssl)) {
@@ -165,6 +175,8 @@ namespace plan9
         BIO* read_bio;
         BIO* write_bio;
         int tcp_id;
+        std::function<bool()> validate_domain_cb;
+        std::function<bool()> allow_invalid_cert_cb;
     };
 
     ssl_shake::ssl_shake( ) : impl(new ssl_shake_impl) {
@@ -181,5 +193,13 @@ namespace plan9
 
     void ssl_shake::on_read(int tcp_id, char* data, long len, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<char>, long)> callback) {
         impl->on_read(tcp_id, data, len, callback);
+    }
+
+    void ssl_shake::validate_domain(std::function<bool()> callback) {
+        impl->validate_domain(callback);
+    }
+
+    void ssl_shake::allow_invalid_cert(std::function<bool()> callback) {
+        impl->allow_invalid_cert(callback);
     }
 }

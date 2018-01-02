@@ -176,6 +176,7 @@ namespace plan9 {
         std::shared_ptr<ahttp_response_impl> impl;
     };
 
+    //TODO 实现IP直连
     class ahttp {
     public:
         ahttp();

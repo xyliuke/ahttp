@@ -20,6 +20,8 @@ namespace plan9 {
         virtual void on_connect(int tcp_id, std::function<void(std::shared_ptr<common_callback>)> callback) = 0;
         virtual void on_read(int tcp_id, char* data, long len, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<char>, long)> callback) = 0;
         virtual void write(char* data, long len, std::function<void(std::shared_ptr<common_callback>, char* data, long len)> callback)= 0;
+        virtual void validate_domain(std::function<bool()> callback) = 0;
+        virtual void allow_invalid_cert(std::function<bool()> callback) = 0;
     };
 
     class uv_wrapper {

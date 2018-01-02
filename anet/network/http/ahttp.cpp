@@ -71,6 +71,7 @@ namespace plan9 {
         void set_http_version(std::string protocol) {
             this->version = protocol;
         }
+        //TODO 添加对IP的解析
         void set_url(std::string url) {
             this->url = string_parser::trim(url);
             size_t index_1 = url.find_first_of("://", 0);

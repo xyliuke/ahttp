@@ -43,7 +43,7 @@ namespace plan9
     //TODO 需要解决内存泄露问题，将各个接口传递char*的方面进行修改
     class ssl_shake::ssl_shake_impl {
     public:
-        ssl_shake_impl() {
+        ssl_shake_impl() : buf((char*)malloc(buf_len)) {
             ssl = SSL_new(get_ssl_ctx());
             read_bio = BIO_new(BIO_s_mem());
             write_bio = BIO_new(BIO_s_mem());
@@ -55,8 +55,6 @@ namespace plan9
                 if (ssl && write_bio) {
                     int ret = SSL_write(ssl, data, len);
                     if (ret > 0) {
-                        static int buf_len = 10240;
-                        char* buf = (char*)malloc(buf_len);
                         int bytes_read = 0;
                         while((bytes_read = BIO_read(write_bio, buf, buf_len)) > 0) {
                             std::shared_ptr<common_callback> ccb(new common_callback);
@@ -71,7 +69,6 @@ namespace plan9
         }
 
         void on_connect(int tcp_id, std::function<void(std::shared_ptr<common_callback>)> callback) {
-            this->tcp_id = tcp_id;
             SSL_set_connect_state(ssl);     // 这是个客户端连接
             SSL_do_handshake(ssl);
             bool finish = do_shake_finish(tcp_id);
@@ -146,8 +143,6 @@ namespace plan9
         }
 
         void write(int tcp_id) {
-            static int buf_len = 10240;
-            char* buf = (char*)malloc(buf_len);
             int bytes_read = 0;
             while((bytes_read = BIO_read(write_bio, buf, buf_len)) > 0) {
                 uv_wrapper::write_uv(tcp_id, buf, bytes_read, nullptr);
@@ -174,10 +169,12 @@ namespace plan9
         SSL* ssl;
         BIO* read_bio;
         BIO* write_bio;
-        int tcp_id;
+        char* buf;
+        static int buf_len;
         std::function<bool()> validate_domain_cb;
         std::function<bool()> allow_invalid_cert_cb;
     };
+    int ssl_shake::ssl_shake_impl::buf_len = 10240;
 
     ssl_shake::ssl_shake( ) : impl(new ssl_shake_impl) {
 

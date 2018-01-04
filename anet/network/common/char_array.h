@@ -16,16 +16,19 @@ namespace plan9 {
         char_array(int size);
         ~char_array();
         void append(char *data, int len);
+        void append(std::string data);
+        void append(char_array* data);
         void insert(char* data, int len, int pos);
         void erase(int pos, int len);
         int get_len();
-        char* get_data();
+        char* get_data_ptr();
+        std::shared_ptr<char> get_data();
         std::string to_string();
     private:
         std::shared_ptr<char> data;
         int len;
         int cap;
-        void re_data();
+        void re_data(int len);
     };
 
 }

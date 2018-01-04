@@ -191,39 +191,48 @@ namespace plan9 {
             ss << version;
             return ss.str();
         }
+        std::shared_ptr<char_array> get_http_method_char () {
+            std::shared_ptr<char_array> array(new char_array(20));
+            array->append(method);
+            array->append(" ");
+            array->append(path);
+            array->append(" ");
+            array->append("HTTP/");
+            array->append(version);
+            return array;
+        }
 
-        std::string get_http_header_string() {
-            std::shared_ptr<std::stringstream> ss(new std::stringstream);
+        std::shared_ptr<char_array> get_http_header_string() {
+            std::shared_ptr<char_array> ss(new char_array(200));
             if (header != nullptr) {
                 header->const_iteration([=](std::string key, std::string value) -> bool {
-                    *ss << key;
-                    *ss << ":";
-                    *ss << value;
-                    *ss << "\r\n";
+                    ss->append(key);
+                    ss->append(":");
+                    ss->append(value);
+                    ss->append("\r\n");
                     return true;
                 });
             }
-            return ss->str();
+            return ss;
         }
 
-        std::string get_http_body_string(){
+        std::shared_ptr<char_array> get_http_body_string(){
+            std::shared_ptr<char_array> ret;
             if (data && data->size() > 0) {
-                using namespace std;
-                stringstream ss;
-                ss << boundary;
+                ret.reset(new char_array);
+                ret->append(boundary);
                 std::map<std::string, std::string>::const_iterator it = data->begin();
                 while (it != data->end()) {
-                    ss << "\r\nContent-Disposition: form-data;name=\"";
-                    ss << it->first;
-                    ss << "\"\r\n";
-                    ss << it->second;
-                    ss << "\r\n";
-                    ss << boundary;
+                    ret->append("\r\nContent-Disposition: form-data;name=\"");
+                    ret->append(it->first);
+                    ret->append("\r\n");
+                    ret->append(it->second);
+                    ret->append("\r\n");
+                    ret->append(boundary);
                     it ++;
                 }
-                return ss.str();
             }
-            return "";
+            return ret;
         }
 
         std::string get_domain() {
@@ -234,30 +243,34 @@ namespace plan9 {
             return port;
         }
 
-        std::string get_http_string() {
-            std::stringstream ss;
-            ss << get_http_method_string();
-            ss << "\r\n";
-            std::string body = get_http_body_string();
-            if (body.length() > 0) {
-                append_header("Content-Length", (int)body.length());
+        std::shared_ptr<char_array> get_http_string() {
+            std::shared_ptr<char_array> method = get_http_method_char();
+            std::shared_ptr<char_array> body = get_http_body_string();
+
+            if (body && body->get_len() > 0) {
+                append_header("Content-Length", body->get_len());
             }
-            ss << get_http_header_string();
-            ss << "\r\n";
-            ss << body;
-            return ss.str();
+            std::shared_ptr<char_array> header = get_http_header_string();
+            method->append("\r\n");
+            if (header) {
+                method->append(header.get());
+                method->append("\r\n");
+            }
+            if (body) {
+                method->append(body.get());
+                method->append("\r\n");
+            }
+            return method;
         }
 
 
-        void get_http_data(std::function<void(char* data, long len, long sent, long total)> callback) {
+        void get_http_data(std::function<void(std::shared_ptr<char> data, int len, int sent, int total)> callback) {
             if (callback) {
-                std::string http = get_http_string();
-                char* ret = (char*) malloc(http.length());
-                memcpy(ret, (char*)http.c_str(), http.length());
-                callback(ret, http.length(), 0, http.length());
+                std::shared_ptr<char_array> http = get_http_string();
+                callback(http->get_data(), http->get_len(), 0, http->get_len());
 
                 //上传文件
-                get_http_data_from_file(http.length(), callback);
+//                get_http_data_from_file(http.length(), callback);
             }
         }
 
@@ -402,19 +415,19 @@ namespace plan9 {
     }
 
     std::string ahttp_request::get_http_header_string() {
-        return impl->get_http_header_string();
+        return impl->get_http_header_string()->to_string();
     }
 
     std::string ahttp_request::get_http_string() {
-        return impl->get_http_string();
+        return impl->get_http_string()->to_string();
     }
 
-    void ahttp_request::get_http_data(std::function<void(char* data, long len, long sent, long total)> callback) {
+    void ahttp_request::get_http_data(std::function<void(std::shared_ptr<char> data, int len, int sent, int total)> callback) {
         return impl->get_http_data(callback);
     }
 
     std::string ahttp_request::to_string() {
-        return impl->get_http_string();
+        return impl->get_http_string()->to_string();
     }
     std::string ahttp_request::get_domain() {
         return impl->get_domain();
@@ -832,12 +845,9 @@ namespace plan9 {
                     }
                     list_disconnected->push_back(http);
 
-                    http->request->get_http_data([=](char* data, long len, long sent, long total){
+                    http->request->get_http_data([=](std::shared_ptr<char> data, long len, long sent, long total){
                         uv_wrapper::write(tcp_id, data, len, [=](std::shared_ptr<common_callback> write_callback){
                             http->send_send_event(write_callback, sent + len, total);
-                            if (data != nullptr) {
-                                delete (data);
-                            }
                         });
                     });
                 }
@@ -878,12 +888,9 @@ namespace plan9 {
                     list->push_back(http);
                     mutex.unlock();
 
-                    http->request->get_http_data([=](char* data, long len, long sent, long total){
+                    http->request->get_http_data([=](std::shared_ptr<char> data, int len, int sent, int total){
                         uv_wrapper::write(tcp_id, data, len, [=](std::shared_ptr<common_callback> write_callback){
                             http->send_send_event(write_callback, sent + len, total);
-                            if (data != nullptr) {
-                                delete (data);
-                            }
                         });
                     });
                 } else {

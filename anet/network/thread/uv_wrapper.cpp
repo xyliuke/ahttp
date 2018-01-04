@@ -397,7 +397,7 @@ namespace plan9 {
             auto func = (function_wrap<std::function<void(std::shared_ptr<common_callback>, int)>> *) (handle->data);
             if (func->ssl && func->ssl_impl) {
                 if (nread > 0) {
-                    func->ssl_impl->on_read(func->id, buf->base, nread, [=](std::shared_ptr<plan9::common_callback> ccb, std::shared_ptr<char> data, long len){
+                    func->ssl_impl->on_read(func->id, buf->base, nread, [=](std::shared_ptr<plan9::common_callback> ccb, std::shared_ptr<char> data, long len) mutable {
                         if (ccb->success) {
                             if (len == 0) {
                                 //disconnected
@@ -559,17 +559,20 @@ namespace plan9 {
     }
 
     static void write_callback(uv_write_t* req, int status) {
-        if (req != nullptr && req->data != nullptr) {
-            auto func = (function_wrap<std::function<void(std::shared_ptr<common_callback>)>>*)(req->data);
-            if (func->function != nullptr) {
-                std::shared_ptr<common_callback> ccb;
-                if (status >= 0) {
-                    ccb.reset(new common_callback);
-                } else {
-                    ccb.reset(new common_callback(false, status, uv_err_name(status)));
+        if (req != nullptr) {
+            if (req->data != nullptr) {
+                auto func = (function_wrap<std::function<void(std::shared_ptr<common_callback>)>> *) (req->data);
+                if (func->function != nullptr) {
+                    std::shared_ptr<common_callback> ccb;
+                    if (status >= 0) {
+                        ccb.reset(new common_callback);
+                    } else {
+                        ccb.reset(new common_callback(false, status, uv_err_name(status)));
+                    }
+                    func->function(ccb);
                 }
-                func->function(ccb);
             }
+            free(req);
         }
     }
 
@@ -594,6 +597,34 @@ namespace plan9 {
                             op(new_data, new_len);
                         }
                     });
+                } else {
+                    op(data, len);
+                }
+            }
+        }
+    }
+
+    void uv_wrapper::write(int tcp_id, std::shared_ptr<char> data, int len, std::function<void(std::shared_ptr<common_callback>)> callback) {
+        if (tcp_array.find(tcp_id) != tcp_array.end()) {
+            auto tcp = tcp_array[tcp_id];
+            if (tcp->data != nullptr) {
+                auto op = [=](std::shared_ptr<char> d, int l){
+                    if (d != nullptr && l > 0) {
+                        auto func = new function_wrap<std::function<void(std::shared_ptr<common_callback>)>>(callback);
+                        uv_write_t* write = new uv_write_t;
+                        func->id = tcp_id;
+                        write->data = func;
+                        uv_buf_t buf = uv_buf_init(d.get(), l);
+                        uv_write(write, (uv_stream_t*)tcp, &buf, 1, write_callback);
+                    }
+                };
+                auto func = (function_wrap<std::function<void(std::shared_ptr<common_callback>, int)>>*)(tcp->data);
+                if (func->ssl && func->ssl_impl) {
+//                    func->ssl_impl->write(data, len, [=](std::shared_ptr<common_callback> ccb, char* new_data, long new_len){
+//                        if (ccb->success && new_len > 0) {
+//                            op(new_data, new_len);
+//                        }
+//                    });
                 } else {
                     op(data, len);
                 }

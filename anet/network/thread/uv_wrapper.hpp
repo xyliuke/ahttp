@@ -71,6 +71,7 @@ namespace plan9 {
         static void close(int tcp_id);
 
         static void write(int tcp_id, char* data, int len, std::function<void(std::shared_ptr<common_callback>)> callback);
+        static void write(int tcp_id, std::shared_ptr<char> data, int len, std::function<void(std::shared_ptr<common_callback>)> callback);
         static void write_uv(int tcp_id, char* data, int len, std::function<void(std::shared_ptr<common_callback>)> callback);
 
         static bool tcp_alive(int tcp_id);

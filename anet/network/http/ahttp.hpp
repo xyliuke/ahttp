@@ -95,7 +95,7 @@ namespace plan9 {
         std::string get_http_method_string();
         std::string get_http_header_string();
         std::string get_http_string();
-        void get_http_data(std::function<void(char* data, long len, long sent, long total)>);
+        void get_http_data(std::function<void(std::shared_ptr<char> data, int len, int sent, int total)>);
 
         std::string get_domain();
         int get_port();

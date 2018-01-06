@@ -113,9 +113,10 @@ namespace plan9
                     }
                 }
             } else {
-                char *buf =  (char*)malloc(len);
-                memcpy(buf, data, len);
-                int written = BIO_write(read_bio, buf, len);
+//                char *buf =  (char*)malloc(len);
+//                memcpy(buf, data, len);
+                int written = BIO_write(read_bio, data, len);
+
                 if (written > 0 && do_shake_finish(tcp_id)) {
                     if (callback) {
                         std::shared_ptr<common_callback> ccb(new common_callback);

@@ -554,6 +554,7 @@ namespace plan9 {
         std::shared_ptr<uv_content_s> content(new uv_content_s);
         content->tcp_id = count;
         content->tcp = tcp;
+        content->ssl_enable = ssl_enable;
 
         if (ssl_callback) {
             content->ssl_impl = ssl_callback();
@@ -650,22 +651,22 @@ namespace plan9 {
             auto content = tcp_id_2_content[tcp_id];
             if (content->tcp != nullptr) {
                 content->write_callback = callback;
-                auto op = [=](std::shared_ptr<char> d, int l){
+                auto op = [=](char* d, int l){
                     if (d != nullptr && l > 0) {
                         uv_write_t* write = new uv_write_t;
                         write->data = content.get();
-                        uv_buf_t buf = uv_buf_init(d.get(), l);
+                        uv_buf_t buf = uv_buf_init(d, l);
                         uv_write(write, (uv_stream_t*)(content->tcp), &buf, 1, write_callback);
                     }
                 };
                 if (content->ssl_enable && content->ssl_impl) {
-//                    func->ssl_impl->write(data, len, [=](std::shared_ptr<common_callback> ccb, char* new_data, long new_len){
-//                        if (ccb->success && new_len > 0) {
-//                            op(new_data, new_len);
-//                        }
-//                    });
+                    content->ssl_impl->write(data.get(), len, [=](std::shared_ptr<common_callback> ccb, char* new_data, long new_len){
+                        if (ccb->success && new_len > 0) {
+                            op(new_data, new_len);
+                        }
+                    });
                 } else {
-                    op(data, len);
+                    op(data.get(), len);
                 }
             } else {
                 close(tcp_id);

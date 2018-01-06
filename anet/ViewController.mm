@@ -276,7 +276,7 @@ pplx::task<void> task;
         
 //        std::shared_ptr<std::map<std::string, std::string>> h(new std::map<std::string, std::string>);
 //        (*h)["Accept-Encoding"] = "gzip, deflate";
-        std::string url = "http://api.chesupai.cn";
+        std::string url = "https://api.chesupai.cn";
 
 //        std::string url = "http://api.chesupai.cn/customer/detail/info?id=1429449&idfa=11BFBC7A-98EF-4B37-A216-E8DAF0ABAB8B&osv=iOS8.1&net=wifi&screenWH=750%252C1334&deviceId=3200A4C2-C469-469D-A42A-920B1A5A0216&deviceModel=iPhoneSimulator&platform=1&dpi=326&versionId=2.7.3&model=x86_64&pushTYpe=0&sign=9102c932d5e96cd5129b1c35f9baee28";
         ah->get(url, nullptr, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {

@@ -17,6 +17,7 @@
 namespace plan9 {
 
     struct ssl_interface {
+        virtual void set_host(std::string host) = 0;//支持SNI，必须ssl shake之前调用
         virtual void on_connect(int tcp_id, std::function<void(std::shared_ptr<common_callback>)> callback) = 0;
         virtual void on_read(int tcp_id, char* data, long len, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<char>, long)> callback) = 0;
         virtual void write(char* data, long len, std::function<void(std::shared_ptr<common_callback>, char* data, long len)> callback)= 0;
@@ -55,12 +56,12 @@ namespace plan9 {
                             std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,
                             std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback);
 
-        static void connect(std::string ip, int port, bool ssl_enable, std::function<void(std::shared_ptr<common_callback>, int)> connect_callback,
+        static void connect(std::string ip, int port, bool ssl_enable, std::string host, std::function<void(std::shared_ptr<common_callback>, int)> connect_callback,
                 std::function<void(std::shared_ptr<common_callback>, int tcp_id)> ssl_connect_callback,
                 std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,
                 std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback);
 
-        static void connect_ssl(std::string ip, int port,
+        static void connect_ssl(std::string ip, int port, std::string host,
                 std::function<void(std::shared_ptr<common_callback>, int)> connect_callback,
                 std::function<void(std::shared_ptr<common_callback>, int tcp_id)> ssl_connect_callback,
                 std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,

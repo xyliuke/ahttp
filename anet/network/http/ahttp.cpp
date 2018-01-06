@@ -844,7 +844,7 @@ namespace plan9 {
             }
         }
 
-        static void exec_new_connect(std::shared_ptr<ahttp::ahttp_impl> http, std::string ip, int port) {
+        static void exec_new_connect(std::shared_ptr<ahttp::ahttp_impl> http, std::string domain, std::string ip, int port) {
             auto connected_callback = [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
                 if (ccb->success) {
                     mutex.lock();
@@ -887,7 +887,7 @@ namespace plan9 {
                     uv_wrapper::close(tcp_id);
                 }
             };
-            uv_wrapper::connect(ip, port, http->request->is_use_ssl(), [=](std::shared_ptr<common_callback> ccb, int tcp_id){
+            uv_wrapper::connect(ip, port, http->request->is_use_ssl(), domain, [=](std::shared_ptr<common_callback> ccb, int tcp_id){
                 //tcp connected
                 http->send_connected_event(ccb);
                 if (http->request->is_use_ssl()) {
@@ -989,7 +989,7 @@ namespace plan9 {
                         if (ccb->success) {
                             if (ips->size() > 0) {
                                 std::string ip = (*ips)[0];
-                                exec_new_connect(http, ip, http->request->get_port());
+                                exec_new_connect(http, http->request->get_domain(), ip, http->request->get_port());
                             }
                         }
                     });

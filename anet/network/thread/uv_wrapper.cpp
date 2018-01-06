@@ -524,10 +524,10 @@ namespace plan9 {
     void uv_wrapper::connect(std::string ip, int port, std::function<void(std::shared_ptr<common_callback>, int tcp_id)> connect_callback,
             std::function<void(int, std::shared_ptr<char>, int len)> read_callback,
             std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback) {
-        connect(ip, port, false, connect_callback, nullptr, read_callback, close_callback);
+        connect(ip, port, false, "", connect_callback, nullptr, read_callback, close_callback);
     }
 
-    void uv_wrapper::connect(std::string ip, int port, bool ssl_enable,
+    void uv_wrapper::connect(std::string ip, int port, bool ssl_enable, std::string host,
             std::function<void(std::shared_ptr<common_callback>, int)> connect_callback,
             std::function<void(std::shared_ptr<common_callback>, int tcp_id)> ssl_connect_callback,
             std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,
@@ -558,6 +558,9 @@ namespace plan9 {
 
         if (ssl_callback) {
             content->ssl_impl = ssl_callback();
+            if (host != "") {
+                content->ssl_impl->set_host(host);
+            }
         }
 
         content->connect_callback = connect_callback;
@@ -575,12 +578,12 @@ namespace plan9 {
         count ++;
     }
 
-    void uv_wrapper::connect_ssl(std::string ip, int port,
+    void uv_wrapper::connect_ssl(std::string ip, int port, std::string host,
             std::function<void(std::shared_ptr<common_callback>, int)> connect_callback,
             std::function<void(std::shared_ptr<common_callback>, int tcp_id)> ssl_connect_callback,
             std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,
             std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback) {
-        connect(ip, port, true, connect_callback, ssl_connect_callback, read_callback, close_callback);
+        connect(ip, port, true, host, connect_callback, ssl_connect_callback, read_callback, close_callback);
     }
 
     void uv_wrapper::reconnect(int tcp_id) {

@@ -60,6 +60,9 @@ namespace plan9
                 ssl = nullptr;
             }
         }
+        void set_host(std::string host) {
+            SSL_set_tlsext_host_name(ssl, host.c_str());
+        }
 
         void write(char *data, long len, std::function<void(std::shared_ptr<common_callback>, char *data, long len)> callback) {
             if (callback) {
@@ -113,10 +116,7 @@ namespace plan9
                     }
                 }
             } else {
-//                char *buf =  (char*)malloc(len);
-//                memcpy(buf, data, len);
                 int written = BIO_write(read_bio, data, len);
-
                 if (written > 0 && do_shake_finish(tcp_id)) {
                     if (callback) {
                         std::shared_ptr<common_callback> ccb(new common_callback);
@@ -190,6 +190,10 @@ namespace plan9
 
     ssl_shake::ssl_shake( ) : impl(new ssl_shake_impl) {
 
+    }
+
+    void ssl_shake::set_host(std::string host) {
+        impl->set_host(host);
     }
 
     void ssl_shake::write(char *data, long len, std::function<void(std::shared_ptr<common_callback>, char *data, long len)> callback) {

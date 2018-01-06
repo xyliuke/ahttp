@@ -50,6 +50,17 @@ namespace plan9
             SSL_set_bio(ssl, read_bio, write_bio);
         }
 
+        ~ssl_shake_impl() {
+            if (buf != nullptr) {
+                delete buf;
+                buf = nullptr;
+            }
+            if (ssl != nullptr) {
+                SSL_free(ssl);
+                ssl = nullptr;
+            }
+        }
+
         void write(char *data, long len, std::function<void(std::shared_ptr<common_callback>, char *data, long len)> callback) {
             if (callback) {
                 if (ssl && write_bio) {

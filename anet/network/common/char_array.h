@@ -24,6 +24,7 @@ namespace plan9 {
         char* get_data_ptr();
         std::shared_ptr<char> get_data();
         std::string to_string();
+        void operator << (std::string data);
     private:
         std::shared_ptr<char> data;
         int len;

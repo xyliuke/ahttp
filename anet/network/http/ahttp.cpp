@@ -181,17 +181,7 @@ namespace plan9 {
             return string_parser::to_lower(protocol) == "https";
         }
 
-        std::string get_http_method_string() {
-            std::stringstream ss;
-            ss << method;
-            ss << " ";
-            ss << path;
-            ss << " ";
-            ss << "HTTP/";
-            ss << version;
-            return ss.str();
-        }
-        std::shared_ptr<char_array> get_http_method_char () {
+        std::shared_ptr<char_array> get_http_method_string () {
             std::shared_ptr<char_array> array(new char_array(20));
             array->append(method);
             array->append(" ");
@@ -244,7 +234,7 @@ namespace plan9 {
         }
 
         std::shared_ptr<char_array> get_http_string() {
-            std::shared_ptr<char_array> method = get_http_method_char();
+            std::shared_ptr<char_array> method = get_http_method_string();
             std::shared_ptr<char_array> body = get_http_body_string();
 
             if (body && body->get_len() > 0) {
@@ -411,7 +401,7 @@ namespace plan9 {
     }
 
     std::string ahttp_request::get_http_method_string() {
-        return impl->get_http_method_string();
+        return impl->get_http_method_string()->to_string();
     }
 
     std::string ahttp_request::get_http_header_string() {
@@ -622,8 +612,8 @@ namespace plan9 {
             if (!ofstream) {
                 //没有写文件
                 if (is_transfer_encoding_chunked()) {
-                    int data_real_index;
-                    int data_real_len;
+                    int data_real_index = 0;
+                    int data_real_len = 0;
                     for (int i = 0; i < data_len; ++i) {
                         char c = data_buf[i];
                         if (c == '\r' && data_buf[i + 1] == '\n') {
@@ -639,8 +629,8 @@ namespace plan9 {
                         if (len > 0) {
                             free(data_buf);
                             data_buf = new_data;
-                            data_len = len;
-                            data_buf_size = len;
+                            data_len = (int)len;
+                            data_buf_size = (int)len;
                         }
                     } else {
                         char* new_data = (char*) malloc(data_real_len);
@@ -845,7 +835,7 @@ namespace plan9 {
                     }
                     list_disconnected->push_back(http);
 
-                    http->request->get_http_data([=](std::shared_ptr<char> data, long len, long sent, long total){
+                    http->request->get_http_data([=](std::shared_ptr<char> data, int len, int sent, int total){
                         uv_wrapper::write(tcp_id, data, len, [=](std::shared_ptr<common_callback> write_callback){
                             http->send_send_event(write_callback, sent + len, total);
                         });
@@ -959,6 +949,8 @@ namespace plan9 {
                         itt ++;
                     }
                 }
+
+                tcp_http_map.erase(tcp_id);
             });
         }
 
@@ -1005,7 +997,9 @@ namespace plan9 {
             }
         }
         void exec2(std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
-            std::shared_ptr<ahttp_impl> self(this);
+            std::shared_ptr<ahttp_impl> self;
+            //TODO 可能存在内存泄露
+            self.reset(this);
             request = model;
             this->callback = callback;
             if (model->get_timeout() > 0) {

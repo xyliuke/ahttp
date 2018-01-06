@@ -30,6 +30,10 @@ namespace plan9
         append(data->get_data_ptr(), data->get_len());
     }
 
+    void char_array::operator<<(std::string data) {
+        append(data);
+    }
+
     void char_array::insert(char *data, int len, int pos) {
         re_data(len);
         memmove(this->data.get() + pos + len, this->data.get() + pos, this->len - pos);

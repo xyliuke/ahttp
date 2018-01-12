@@ -71,7 +71,7 @@ namespace plan9 {
         void set_http_version(std::string protocol) {
             this->version = protocol;
         }
-        //TODO 添加对IP的解析
+
         void set_url(std::string url) {
             this->url = string_parser::trim(url);
             size_t index_1 = url.find_first_of("://", 0);
@@ -101,11 +101,13 @@ namespace plan9 {
                     port = 80;
                 }
             }
-            std::stringstream ss;
-            ss << domain;
-            ss << ":";
-            ss << port;
-            append_header("Host", ss.str());
+            if (!is_ip_format(domain)) {
+                std::stringstream ss;
+                ss << domain;
+                ss << ":";
+                ss << port;
+                append_header("Host", ss.str());
+            }
         }
 
 
@@ -398,6 +400,10 @@ namespace plan9 {
 
     bool ahttp_request::is_use_ssl() {
         return impl->is_use_ssl();
+    }
+
+    bool ahttp_request::is_ip_format(std::string str) {
+        return uv_wrapper::is_ip4(str) || uv_wrapper::is_ip6(str);
     }
 
     std::string ahttp_request::get_http_method_string() {
@@ -991,15 +997,21 @@ namespace plan9 {
                     }
                 }
                 if (!reused_connect) {
-                    http->dns_resolve_callback(http->request->get_domain(), http->request->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips){
+                    if (http->request->is_ip_format(http->request->get_domain())) {
+                        std::shared_ptr<common_callback> ccb(new common_callback);
                         http->send_dns_event(ccb);
-                        if (ccb->success) {
-                            if (ips->size() > 0) {
-                                std::string ip = (*ips)[0];
-                                exec_new_connect(http, http->request->get_domain(), ip, http->request->get_port());
+                        exec_new_connect(http, http->request->get_domain(), http->request->get_domain(), http->request->get_port());
+                    } else {
+                        http->dns_resolve_callback(http->request->get_domain(), http->request->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips){
+                            http->send_dns_event(ccb);
+                            if (ccb->success) {
+                                if (ips->size() > 0) {
+                                    std::string ip = (*ips)[0];
+                                    exec_new_connect(http, http->request->get_domain(), ip, http->request->get_port());
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         }

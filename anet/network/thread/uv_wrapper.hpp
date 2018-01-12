@@ -80,6 +80,9 @@ namespace plan9 {
         static bool tcp_alive(int tcp_id);
 
         static int get_fd(int tcp_id);
+
+        static bool is_ip4(std::string ip);
+        static bool is_ip6(std::string ip);
     };
 
 }

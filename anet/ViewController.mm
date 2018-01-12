@@ -140,11 +140,16 @@ static int getNum() {
      */
     
 //    std::shared_ptr<char> c(new char[1024 * 1024 * 100]{});
-    plan9::log::instance().debug(getNum());
-    plan9::log::instance().debug(std::bind(getNum));
-    plan9::log::instance().debug(std::bind([]() -> int {
-        return 5 + 4;
-    }));
+//    plan9::log::instance().debug(getNum());
+//    plan9::log::instance().debug(std::bind(getNum));
+//    plan9::log::instance().debug(std::bind([]() -> int {
+//        return 5 + 4;
+//    }));
+
+    plan9::uv_wrapper::is_ip4("192.168.1.1");
+    plan9::uv_wrapper::is_ip4("1.1.1.1");
+    plan9::uv_wrapper::is_ip4("a.b.c.e");
+    plan9::uv_wrapper::is_ip4("abce");
 
 }
 - (IBAction)click_ssl:(id)sender {
@@ -281,22 +286,24 @@ static int getNum() {
 //            std::cout << response->to_string() << std::endl;
 //        });
         
-//        std::shared_ptr<std::map<std::string, std::string>> h(new std::map<std::string, std::string>);
+        std::shared_ptr<std::map<std::string, std::string>> h(new std::map<std::string, std::string>);
+    (*h)["host"] = "api.chesupai.cn";
 //        (*h)["Accept-Encoding"] = "gzip, deflate";
-        std::string url = "https://api.chesupai.cn";
-        ah->set_dns_resolve([=](std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)> callback) {
-            if (callback) {
-                std::shared_ptr<common_callback> ccb(new common_callback);
-                std::shared_ptr<std::vector<std::string>> list(new std::vector<std::string>);
-                list->push_back("10.16.8.115");
-                callback(ccb, list);
-            }
-        });
+        std::string url = "https://124.250.45.37";
+//    std::string url = "https://api.chesupai.cn";
+//        ah->set_dns_resolve([=](std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)> callback) {
+//            if (callback) {
+//                std::shared_ptr<common_callback> ccb(new common_callback);
+//                std::shared_ptr<std::vector<std::string>> list(new std::vector<std::string>);
+//                list->push_back("10.16.8.115");
+//                callback(ccb, list);
+//            }
+//        });
 //        std::string url = "http://api.chesupai.cn/customer/detail/info?id=1429449&idfa=11BFBC7A-98EF-4B37-A216-E8DAF0ABAB8B&osv=iOS8.1&net=wifi&screenWH=750%252C1334&deviceId=3200A4C2-C469-469D-A42A-920B1A5A0216&deviceModel=iPhoneSimulator&platform=1&dpi=326&versionId=2.7.3&model=x86_64&pushTYpe=0&sign=9102c932d5e96cd5129b1c35f9baee28";
 
-        ah->is_validate_domain(true);
-        ah->is_validate_cert(true);
-        ah->get(url, nullptr, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
+//        ah->is_validate_domain(true);
+//        ah->is_validate_cert(true);
+        ah->get(url, h, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
 //            std::cout << response->get_response_length() << std::endl;
             std::cout << response->get_body_string() << std::endl;
         });

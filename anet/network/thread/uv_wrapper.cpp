@@ -719,6 +719,18 @@ namespace plan9 {
         }
         return -1;
     }
+
+    bool uv_wrapper::is_ip4(std::string ip) {
+        struct sockaddr_in addr;
+        int ret = uv_ip4_addr(ip.c_str(), 80, &addr);
+        return ret == 0;
+    }
+
+    bool uv_wrapper::is_ip6(std::string ip) {
+        struct sockaddr_in6 addr;
+        int ret = uv_ip6_addr(ip.c_str(), 80, &addr);
+        return ret == 0;
+    }
 }
 
 

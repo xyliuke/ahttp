@@ -83,7 +83,18 @@ namespace plan9 {
         void set_keep_alive(bool keep_alive);
         bool is_keep_alive();
 
+        /**
+         * 是否为HTTPS协议
+         * @return
+         */
         bool is_use_ssl();
+
+        /**
+         * 给定的字符串是否为ip格式，包括ip4和ip6
+         * @param str
+         * @return
+         */
+        static bool is_ip_format(std::string str);
 
         /**
          * 将对象转化为字符串
@@ -176,7 +187,6 @@ namespace plan9 {
         std::shared_ptr<ahttp_response_impl> impl;
     };
 
-    //TODO 实现IP直连
     class ahttp {
     public:
         ahttp();

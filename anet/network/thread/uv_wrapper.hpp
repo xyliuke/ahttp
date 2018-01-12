@@ -21,8 +21,8 @@ namespace plan9 {
         virtual void on_connect(int tcp_id, std::function<void(std::shared_ptr<common_callback>)> callback) = 0;
         virtual void on_read(int tcp_id, char* data, long len, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<char>, long)> callback) = 0;
         virtual void write(char* data, long len, std::function<void(std::shared_ptr<common_callback>, char* data, long len)> callback)= 0;
-        virtual void validate_domain(std::function<bool()> callback) = 0;
-        virtual void allow_invalid_cert(std::function<bool()> callback) = 0;
+        virtual void validate_domain(bool validate) = 0;
+        virtual void validate_cert(bool validate) = 0;
     };
 
     class uv_wrapper {
@@ -30,6 +30,8 @@ namespace plan9 {
         static void init(std::function<void(void)> callback);
 
         static void set_ssl_impl(std::function<std::shared_ptr<ssl_interface>()> callback);
+
+        static std::shared_ptr<ssl_interface> get_ssl_impl_by_tcp_id(int tcp_id);
 
         static void set_concurrent_pool_size(int size);
 

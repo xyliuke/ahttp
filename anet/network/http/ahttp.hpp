@@ -181,6 +181,16 @@ namespace plan9 {
     public:
         ahttp();
         ~ahttp();
+        /**
+         * 是否验证域名
+         * @param validate true 验证 false 不验证
+         */
+        void is_validate_domain(bool validate);
+        /**
+         * 是否验证证书
+         * @param validate validate true 验证 false 不验证
+         */
+        void is_validate_cert(bool validate);
 
         /**
          * 取消请求

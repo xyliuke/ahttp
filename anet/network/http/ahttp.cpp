@@ -801,7 +801,9 @@ namespace plan9 {
     class ahttp::ahttp_impl {
     public:
 
-        ahttp_impl() : timer_id(-1), read_begin(false), dns_resolve_callback(std::bind(&uv_wrapper::resolve, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)) {
+        ahttp_impl() : timer_id(-1), read_begin(false),
+                       dns_resolve_callback(std::bind(&uv_wrapper::resolve, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
+                        validate_domain(false), validate_cert(false) {
 
         }
 
@@ -854,14 +856,6 @@ namespace plan9 {
                     //TODO 复用TCP，需要把IP和端口号联合使用
                     url_tcp_map[ip] = tcp_id;
 
-                    std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>> list_disconnected;
-                    if (tcp_http_disconnected_map.find(tcp_id) != tcp_http_disconnected_map.end()) {
-                        list_disconnected = tcp_http_disconnected_map[tcp_id];
-                    } else {
-                        list_disconnected.reset(new std::vector<std::shared_ptr<ahttp_impl>>);
-                        tcp_http_disconnected_map[tcp_id] = list_disconnected;
-                    }
-                    list_disconnected->push_back(http);
 
                     mutex.unlock();
 
@@ -889,11 +883,24 @@ namespace plan9 {
             };
             uv_wrapper::connect(ip, port, http->request->is_use_ssl(), domain, [=](std::shared_ptr<common_callback> ccb, int tcp_id){
                 //tcp connected
+                std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>> list_disconnected;
+                if (tcp_http_disconnected_map.find(tcp_id) != tcp_http_disconnected_map.end()) {
+                    list_disconnected = tcp_http_disconnected_map[tcp_id];
+                } else {
+                    list_disconnected.reset(new std::vector<std::shared_ptr<ahttp_impl>>);
+                    tcp_http_disconnected_map[tcp_id] = list_disconnected;
+                }
+                list_disconnected->push_back(http);
                 http->send_connected_event(ccb);
                 if (http->request->is_use_ssl()) {
 
                 } else {
                     connected_callback(ccb, tcp_id);
+                }
+                auto ssl = uv_wrapper::get_ssl_impl_by_tcp_id(tcp_id);
+                if (ssl) {
+                    ssl->validate_domain(http->validate_domain);
+                    ssl->validate_cert(http->validate_cert);
                 }
             }, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
                 //ssl connected
@@ -1073,6 +1080,13 @@ namespace plan9 {
             mutex.unlock();
         }
 
+        void is_validate_domain(bool validate) {
+            validate_domain = validate;
+        }
+
+        void is_validate_cert(bool validate) {
+            validate_cert = validate;
+        }
 
         void set_dns_resolve(std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> callback) {
             this->dns_resolve_callback = callback;
@@ -1234,6 +1248,8 @@ namespace plan9 {
         std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> dns_resolve_callback;
         int timer_id;
         bool read_begin;
+        bool validate_domain;
+        bool validate_cert;
     };
 
     std::map<std::string, int> ahttp::ahttp_impl::url_tcp_map;
@@ -1247,6 +1263,14 @@ namespace plan9 {
 
     ahttp::~ahttp() {
         cancel();
+    }
+
+    void ahttp::is_validate_domain(bool validate) {
+        impl->is_validate_domain(validate);
+    }
+
+    void ahttp::is_validate_cert(bool validate) {
+        impl->is_validate_cert(validate);
     }
 
     void ahttp::cancel() {

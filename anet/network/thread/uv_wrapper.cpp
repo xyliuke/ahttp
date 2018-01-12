@@ -42,6 +42,7 @@ namespace plan9 {
         uv_buf_t* read_buf;
     };
 
+    static std::map<int, std::shared_ptr<uv_content_s>> tcp_id_2_content;
     static uv_thread_t *thread = nullptr;
     static uv_loop_t *loop = nullptr;
     static std::map<int, uv_timer_t *> timer_map;
@@ -225,6 +226,14 @@ namespace plan9 {
 
     void uv_wrapper::set_ssl_impl(std::function<std::shared_ptr<ssl_interface>()> callback) {
         ssl_callback = callback;
+    }
+
+    std::shared_ptr<ssl_interface> uv_wrapper::get_ssl_impl_by_tcp_id(int tcp_id) {
+        if (tcp_id_2_content.find(tcp_id) != tcp_id_2_content.end()) {
+            return tcp_id_2_content[tcp_id]->ssl_impl;
+        }
+        std::shared_ptr<ssl_interface> ret;
+        return ret;
     }
 
     int uv_wrapper::post_serial_queue(std::function<void()> callback) {
@@ -425,7 +434,6 @@ namespace plan9 {
     }
 
 
-    static std::map<int, std::shared_ptr<uv_content_s>> tcp_id_2_content;
 
     static void read_callback(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf) {
         if (handle != nullptr && handle->data != nullptr) {

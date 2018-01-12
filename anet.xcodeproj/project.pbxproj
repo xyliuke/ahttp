@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		6135E0F4A833755B2BCAA7A3 /* case_insensitive_map.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135EE020116A5AAD26F3533 /* case_insensitive_map.cpp */; };
 		6135E438D3BD009B06FAD4FE /* char_array.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135EE04C9CD540286C2F288 /* char_array.cpp */; };
+		6135E548D2903E56BAE7863D /* log.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135E268039E3FF33F1CAC27 /* log.cpp */; };
 		6135E635DFA9CE3FE898B8D4 /* uv_wrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135E2A0832EA6891E99CE15 /* uv_wrapper.cpp */; };
 		6135EF0C82C54E698B5C34C8 /* ssl_shake.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135EA899F938C6BEC03B292 /* ssl_shake.cpp */; };
 		E342FD561FB33CEE00BA7AC1 /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = E342FD421FB33CED00BA7AC1 /* inflate.c */; };
@@ -75,6 +76,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		6135E11C7ED4983B3CCCE153 /* log.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = log.h; sourceTree = "<group>"; };
+		6135E268039E3FF33F1CAC27 /* log.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = log.cpp; sourceTree = "<group>"; };
 		6135E2A0832EA6891E99CE15 /* uv_wrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = uv_wrapper.cpp; sourceTree = "<group>"; };
 		6135E6B9D46676ED51DB9239 /* char_array.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = char_array.h; sourceTree = "<group>"; };
 		6135E704B9E6706E0E22DE95 /* ssl_shake.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ssl_shake.h; sourceTree = "<group>"; };
@@ -318,6 +321,15 @@
 			path = ssl;
 			sourceTree = "<group>";
 		};
+		6135EA93FC41F41A2D262031 /* log */ = {
+			isa = PBXGroup;
+			children = (
+				6135E268039E3FF33F1CAC27 /* log.cpp */,
+				6135E11C7ED4983B3CCCE153 /* log.h */,
+			);
+			path = log;
+			sourceTree = "<group>";
+		};
 		E342FD3F1FB33CED00BA7AC1 /* zlib */ = {
 			isa = PBXGroup;
 			children = (
@@ -361,6 +373,7 @@
 				6135ED990020EBC50E9A141E /* case_insensitive_map.h */,
 				6135EE04C9CD540286C2F288 /* char_array.cpp */,
 				6135E6B9D46676ED51DB9239 /* char_array.h */,
+				6135EA93FC41F41A2D262031 /* log */,
 			);
 			path = common;
 			sourceTree = "<group>";
@@ -760,6 +773,7 @@
 				6135E0F4A833755B2BCAA7A3 /* case_insensitive_map.cpp in Sources */,
 				6135E438D3BD009B06FAD4FE /* char_array.cpp in Sources */,
 				6135EF0C82C54E698B5C34C8 /* ssl_shake.cpp in Sources */,
+				6135E548D2903E56BAE7863D /* log.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

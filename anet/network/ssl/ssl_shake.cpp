@@ -8,6 +8,11 @@
 #include <assert.h>
 #include <iostream>
 #include <openssl/err.h>
+#include <openssl/x509_vfy.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#include <map>
+
 
 namespace plan9
 {
@@ -39,15 +44,203 @@ namespace plan9
         printf("\tMessage callback with length: %zu   write %d version %d contentType %d \n", len, writep, version, contentType);
 //        std::cout << "\tMessage callback " << std::string((char*)buf, len);
     }
+//    static std::map<ssl_shak
+
+
+//    static int verify_callback(int ok, X509_STORE_CTX* ctx) {
+////        X509 *cert = X509_STORE_CTX_get_current_cert(ctx);
+////        int cert_err = X509_verify_cert(ctx);
+////        const char* area = X509_get_default_cert_area();
+////        const char* dir = X509_get_default_cert_dir();
+////        const char* dir_env = X509_get_default_cert_dir_env();
+////        const char* file = X509_get_default_cert_file();
+////        const char* file_env = X509_get_default_cert_file_env();
+////        const char* pri_dir = X509_get_default_private_dir();
+//
+//        X509 *cert = X509_STORE_CTX_get_current_cert(ctx);
+//        BIO* bio = BIO_new(BIO_s_mem());
+//        X509_print(bio, cert);
+//        char buf[10240];
+//        int ret = BIO_read(bio, buf, 10240);
+//        printf("%s", buf);
+////        X509_NAME* name = X509_get_subject_name(cert);
+////        ASN1_BIT_STRING *bit_string = X509_get0_pubkey_bitstr(cert);
+////        X509_get0_signature(&bit_string, 0, cert);
+////        int count = X509_get_ext_count(cert);
+////        for (int i = 0; i < count; ++i) {
+////            X509_EXTENSION* extension = X509_get_ext(cert, i);
+////            printf("extentsion %s\n", extension->value->data);
+////        }
+////        X509_NAME* issuer = X509_get_issuer_name(cert);
+////        X509_NAME* sub = X509_get_subject_name(cert);
+////        ASN1_INTEGER* sn = X509_get_serialNumber(cert);
+////        EVP_PKEY* pub_key = X509_get_pubkey(cert);
+////        int nid = X509_get_signature_nid(cert);
+//
+//        SSL* ssl = (SSL*)X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
+////        if (ssl_shake::ssl_shake_impl::ssl_impl_map.find(ssl) != ssl_shake::ssl_shake_impl::ssl_impl_map::end()) {
+////
+////        }
+////        SSL_ex_data
+//
+//        int  err = X509_STORE_CTX_get_error(ctx);
+//        if (err == X509_V_ERR_HOSTNAME_MISMATCH) {
+//            return 0;
+//        }
+////        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY
+//        return 1;
+//
+////        char data[256];
+////            fprintf(stderr, "verify_callback\n{\n");
+////            X509 *cert = X509_STORE_CTX_get_current_cert(ctx);
+////            int  depth = X509_STORE_CTX_get_error_depth(ctx);
+////            int  err = X509_STORE_CTX_get_error(ctx);
+////
+//////        X509_NAME_ENTRY* common_name_entry = X509_NAME_get_entry(X509_get_subject_name((X509 *) cert), -1);
+////
+////        X509_NAME* name = X509_get_subject_name(cert);
+////        fprintf(stderr, "certificate at depth: %i\n", depth);
+////            memset(data, 0, sizeof(data));
+////            X509_NAME_oneline(X509_get_issuer_name(cert), data, 256);
+////            fprintf(stderr, "issuer = %s\n", data);
+////            X509_NAME_oneline(X509_get_subject_name(cert), data, 256);
+////            fprintf(stderr, "subject = %s\n", data);
+////            fprintf(stderr, "error status:  %i:%s\n}\n", err, X509_verify_cert_error_string(err));
+////        return 1;
+//
+////        char    buf[256];
+////        X509   *err_cert;
+////        int     err, depth;
+////        SSL    *ssl;
+//////        mydata_t *mydata;
+////
+////
+////        err_cert = X509_STORE_CTX_get_current_cert(ctx);
+////        auto name = X509_get_subject_name(err_cert);
+////        X509_VERIFY_PARAM_get0_peername(<#X509_VERIFY_PARAM*#>)
+////        err = X509_STORE_CTX_get_error(ctx);
+////        depth = X509_STORE_CTX_get_error_depth(ctx);
+////
+////        /*
+////         * Retrieve the pointer to the SSL of the connection currently treated
+////         * and the application specific data stored into the SSL object.
+////         */
+////        ssl = (SSL*)X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
+//////        mydata = SSL_get_ex_data(ssl, mydata_index);
+////
+////        X509_NAME_oneline(X509_get_subject_name(err_cert), buf, 256);
+////
+////        /*
+////         * Catch a too long certificate chain. The depth limit set using
+////         * SSL_CTX_set_verify_depth() is by purpose set to "limit+1" so
+////         * that whenever the "depth>verify_depth" condition is met, we
+////         * have violated the limit and want to log this error condition.
+////         * We must do it here, because the CHAIN_TOO_LONG error would not
+////         * be found explicitly; only errors introduced by cutting off the
+////         * additional certificates would be logged.
+////         */
+//////        if (depth > mydata->verify_depth) {
+//////            preverify_ok = 0;
+//////            err = X509_V_ERR_CERT_CHAIN_TOO_LONG;
+//////            X509_STORE_CTX_set_error(ctx, err);
+//////        }
+//////        if (!preverify_ok) {
+//////            printf("verify error:num=%d:%s:depth=%d:%s\n", err,
+//////                    X509_verify_cert_error_string(err), depth, buf);
+//////        } else if (mydata->verbose_mode) {
+//////            printf("depth=%d:%s\n", depth, buf);
+//////        }
+////
+////        /*
+////         * At this point, err contains the last verification error. We can use
+////         * it for something special
+////         */
+//////        if (!preverify_ok && (err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT)) {
+//////            X509_NAME_oneline(X509_get_issuer_name(err_cert), buf, 256);
+//////            printf("issuer= %s\n", buf);
+//////        }
+//////
+//////        if (mydata->always_continue)
+//////            return 1;
+//////        else
+////            return preverify_ok;
+//    }
+//    static int verify_cert_callback(X509_STORE_CTX* ctx, void* args) {
+////        auto list = SSL_get_client_CA_list((SSL*)args);
+////        auto tree = X509_STORE_CTX_get0_policy_tree(ctx);
+////        X509_
+////        auto chain = X509_STORE_CTX_get1_chain(ctx);
+////        X509* x509 = SSL_get_peer_certificate((SSL*)args);
+//
+////        X509 *cert = X509_STORE_CTX_get_current_cert(ctx);
+////        BIO* bio = BIO_new(BIO_s_mem());
+////        X509_print(bio, cert);
+////        char buf[10240];
+////        int ret = BIO_read(bio, buf, 10240);
+////        printf("%s", buf);
+////        X509_NAME* name = X509_get_subject_name(cert);
+////        ASN1_BIT_STRING *bit_string = X509_get0_pubkey_bitstr(cert);
+////        X509_get0_signature(&bit_string, 0, cert);
+////        int count = X509_get_ext_count(cert);
+////        for (int i = 0; i < count; ++i) {
+////            X509_EXTENSION* extension = X509_get_ext(cert, i);
+////            printf("extentsion %s\n", extension->value->data);
+////        }
+////        X509_NAME* issuer = X509_get_issuer_name(cert);
+////        X509_NAME* sub = X509_get_subject_name(cert);
+////        ASN1_INTEGER* sn = X509_get_serialNumber(cert);
+////        EVP_PKEY* pub_key = X509_get_pubkey(cert);
+////        int nid = X509_get_signature_nid(cert);
+//
+//
+//        int  err = X509_STORE_CTX_get_error(ctx);
+//        if (err == X509_V_ERR_HOSTNAME_MISMATCH) {
+//            return 0;
+//        }
+////        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY
+//        return 1;
+//    }
+
 
     //TODO 需要解决内存泄露问题，将各个接口传递char*的方面进行修改
     class ssl_shake::ssl_shake_impl {
     public:
-        ssl_shake_impl() : buf((char*)malloc(buf_len)) {
+
+        static std::map<SSL*, ssl_shake_impl*> ssl_impl_map;
+
+        static int verify_callback(int ok, X509_STORE_CTX* ctx) {
+//        X509 *cert = X509_STORE_CTX_get_current_cert(ctx);
+//        BIO* bio = BIO_new(BIO_s_mem());
+//        X509_print(bio, cert);
+//        char buf[10240];
+//        int ret = BIO_read(bio, buf, 10240);
+//        printf("%s", buf);
+
+            bool validate_domain = false;
+            bool validate_cert = false;
+            SSL* ssl = (SSL*)X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
+            if (ssl_impl_map.find(ssl) != ssl_impl_map.end()) {
+                ssl_shake_impl* impl = ssl_impl_map[ssl];
+                if (impl->validate_domain_bool) {
+                    validate_domain = true;
+                }
+            }
+
+            int  err = X509_STORE_CTX_get_error(ctx);
+            if (err == X509_V_ERR_HOSTNAME_MISMATCH && validate_domain) {
+                return 0;
+            }
+            return 1;
+        }
+
+        ssl_shake_impl() : buf((char*)malloc(buf_len)), ctx(nullptr), validate_cert_bool(false), validate_domain_bool(false) {
             ssl = SSL_new(get_ssl_ctx());
             read_bio = BIO_new(BIO_s_mem());
             write_bio = BIO_new(BIO_s_mem());
             SSL_set_bio(ssl, read_bio, write_bio);
+            SSL_set_verify_depth(ssl, 2);
+            ssl_impl_map[ssl] = this;
+//            SSL_CTX_set_cert_verify_callback(get_ssl_ctx(), verify_cert_callback, this);
         }
 
         ~ssl_shake_impl() {
@@ -62,6 +255,10 @@ namespace plan9
         }
         void set_host(std::string host) {
             SSL_set_tlsext_host_name(ssl, host.c_str());
+            X509_VERIFY_PARAM* param = SSL_get0_param(ssl);
+            X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+            X509_VERIFY_PARAM_set1_host(param, host.c_str(), 0);
+//            X509_VERIFY_PARAM_set1_host(param, "guazi.com", 0);
         }
 
         void write(char *data, long len, std::function<void(std::shared_ptr<common_callback>, char *data, long len)> callback) {
@@ -126,12 +323,12 @@ namespace plan9
             }
         }
 
-        void validate_domain(std::function<bool()> callback) {
-            validate_domain_cb = callback;
+        void validate_domain(bool validate) {
+            validate_domain_bool = validate;
         }
 
-        void allow_invalid_cert(std::function<bool()> callback) {
-            allow_invalid_cert_cb = callback;
+        void validate_cert(bool validate) {
+            validate_cert_bool = validate;
         }
 
 
@@ -161,8 +358,7 @@ namespace plan9
             }
         };
 
-        static SSL_CTX* get_ssl_ctx() {
-            static SSL_CTX* ctx = nullptr;
+        SSL_CTX* get_ssl_ctx() {
             if (!ctx) {
                 SSL_library_init();
                 OpenSSL_add_all_algorithms();
@@ -171,22 +367,27 @@ namespace plan9
                 ctx = SSL_CTX_new(SSLv23_client_method());
                 SSL_CTX_set_info_callback(ctx, dummy_ssl_info_callback);
                 SSL_CTX_set_msg_callback(ctx, dummy_ssl_msg_callback);
-//                SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, nullptr);
-//                SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
+                SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
+                X509_STORE* store = SSL_CTX_get_cert_store(ctx);
+                int count = X509_PURPOSE_get_count();
+                int vp_count = X509_VERIFY_PARAM_get_count();
                 assert(ctx);
             }
             return ctx;
         }
-    private:
+//    private:
+        SSL_CTX* ctx;
         SSL* ssl;
         BIO* read_bio;
         BIO* write_bio;
         char* buf;
         static int buf_len;
-        std::function<bool()> validate_domain_cb;
-        std::function<bool()> allow_invalid_cert_cb;
+        bool validate_domain_bool;
+        bool validate_cert_bool;
     };
+
     int ssl_shake::ssl_shake_impl::buf_len = 10240;
+    std::map<SSL*, ssl_shake::ssl_shake_impl*> ssl_shake::ssl_shake_impl::ssl_impl_map;
 
     ssl_shake::ssl_shake( ) : impl(new ssl_shake_impl) {
 
@@ -208,11 +409,11 @@ namespace plan9
         impl->on_read(tcp_id, data, len, callback);
     }
 
-    void ssl_shake::validate_domain(std::function<bool()> callback) {
-        impl->validate_domain(callback);
+    void ssl_shake::validate_domain(bool validate) {
+        impl->validate_domain(validate);
     }
 
-    void ssl_shake::allow_invalid_cert(std::function<bool()> callback) {
-        impl->allow_invalid_cert(callback);
+    void ssl_shake::validate_cert(bool validate) {
+        impl->validate_cert(validate);
     }
 }

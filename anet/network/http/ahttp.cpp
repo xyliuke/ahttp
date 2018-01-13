@@ -852,16 +852,20 @@ namespace plan9 {
             }
         }
 
+        static std::string get_unique_domain(std::string domain, int port) {
+            std::stringstream ss;
+            ss << domain;
+            ss << port;
+            return ss.str();
+        }
+
         static void exec_new_connect(std::shared_ptr<ahttp::ahttp_impl> http, std::string domain, std::string ip, int port) {
             auto connected_callback = [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
                 if (ccb->success) {
                     mutex.lock();
                     if (http->request) {
-                        url_tcp_map[http->request->get_domain()] = tcp_id;
+                        url_tcp_map[get_unique_domain(http->request->get_domain(), http->request->get_port())] = tcp_id;
                     }
-                    //TODO 复用TCP，需要把IP和端口号联合使用
-                    url_tcp_map[ip] = tcp_id;
-
 
                     mutex.unlock();
 
@@ -970,9 +974,10 @@ namespace plan9 {
         static void exec(std::shared_ptr<ahttp::ahttp_impl> http) {
             if (http && http->request != nullptr && http->callback != nullptr) {
                 bool reused_connect = false;
-                if (http->request->is_reused_tcp() && url_tcp_map.find(http->request->get_domain()) != url_tcp_map.end()) {
+                std::string uni_domain = get_unique_domain(http->request->get_domain(), http->request->get_port());
+                if (http->request->is_reused_tcp() && url_tcp_map.find(uni_domain) != url_tcp_map.end()) {
                     //重用tcp
-                    int tcp_id = url_tcp_map[http->request->get_domain()];
+                    int tcp_id = url_tcp_map[uni_domain];
                     std::shared_ptr<std::vector<std::shared_ptr<ahttp::ahttp_impl>>> list;
                     if (tcp_http_map.find(tcp_id) != tcp_http_map.end()) {
                         list = tcp_http_map[tcp_id];

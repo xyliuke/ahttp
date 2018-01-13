@@ -202,7 +202,6 @@ namespace plan9
 //    }
 
 
-    //TODO 需要解决内存泄露问题，将各个接口传递char*的方面进行修改
     class ssl_shake::ssl_shake_impl {
     public:
 

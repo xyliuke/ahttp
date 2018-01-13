@@ -243,6 +243,9 @@ namespace plan9
         }
 
         ~ssl_shake_impl() {
+            if (ssl_impl_map.find(ssl) != ssl_impl_map.end()) {
+                ssl_impl_map.erase(ssl);
+            }
             if (buf != nullptr) {
                 delete buf;
                 buf = nullptr;

@@ -184,7 +184,7 @@ namespace plan9 {
         }
 
         std::shared_ptr<char_array> get_http_method_string () {
-            std::shared_ptr<char_array> array(new char_array(20));
+            std::shared_ptr<char_array> array = std::make_shared<char_array>(20);
             array->append(method);
             array->append(" ");
             array->append(path);
@@ -195,7 +195,7 @@ namespace plan9 {
         }
 
         std::shared_ptr<char_array> get_http_header_string() {
-            std::shared_ptr<char_array> ss(new char_array(200));
+            std::shared_ptr<char_array> ss = std::make_shared<char_array>(200);
             if (header != nullptr) {
                 header->const_iteration([=](std::string key, std::string value) -> bool {
                     ss->append(key);
@@ -834,11 +834,11 @@ namespace plan9 {
                         http->send_ssl_connected_event(ccb2);
                     }
 
-                    std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>> list_disconnected;
+                    std::shared_ptr<std::vector<ahttp_impl*>> list_disconnected;
                     if (tcp_http_disconnected_map.find(tcp_id) != tcp_http_disconnected_map.end()) {
                         list_disconnected = tcp_http_disconnected_map[tcp_id];
                     } else {
-                        list_disconnected.reset(new std::vector<std::shared_ptr<ahttp_impl>>);
+                        list_disconnected.reset(new std::vector<ahttp_impl*>);
                         tcp_http_disconnected_map[tcp_id] = list_disconnected;
                     }
                     list_disconnected->push_back(http);
@@ -859,7 +859,7 @@ namespace plan9 {
             return ss.str();
         }
 
-        static void exec_new_connect(std::shared_ptr<ahttp::ahttp_impl> http, std::string domain, std::string ip, int port) {
+        static void exec_new_connect(ahttp::ahttp_impl* http, std::string domain, std::string ip, int port) {
             auto connected_callback = [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
                 if (ccb->success) {
                     mutex.lock();
@@ -869,11 +869,11 @@ namespace plan9 {
 
                     mutex.unlock();
 
-                    std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>> list;
+                    std::shared_ptr<std::vector<ahttp_impl*>> list;
                     if (tcp_http_map.find(tcp_id) != tcp_http_map.end()) {
                         list = tcp_http_map[tcp_id];
                     } else {
-                        list.reset(new std::vector<std::shared_ptr<ahttp_impl>>);
+                        list.reset(new std::vector<ahttp_impl*>);
                         mutex.lock();
                         tcp_http_map[tcp_id] = list;
                         mutex.unlock();
@@ -893,11 +893,11 @@ namespace plan9 {
             };
             uv_wrapper::connect(ip, port, http->request->is_use_ssl(), domain, [=](std::shared_ptr<common_callback> ccb, int tcp_id){
                 //tcp connected
-                std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>> list_disconnected;
+                std::shared_ptr<std::vector<ahttp_impl*>> list_disconnected;
                 if (tcp_http_disconnected_map.find(tcp_id) != tcp_http_disconnected_map.end()) {
                     list_disconnected = tcp_http_disconnected_map[tcp_id];
                 } else {
-                    list_disconnected.reset(new std::vector<std::shared_ptr<ahttp_impl>>);
+                    list_disconnected.reset(new std::vector<ahttp_impl*>);
                     tcp_http_disconnected_map[tcp_id] = list_disconnected;
                 }
                 list_disconnected->push_back(http);
@@ -957,7 +957,7 @@ namespace plan9 {
                 if (tcp_http_disconnected_map.find(tcp_id) != tcp_http_disconnected_map.end()) {
                     auto http_list = tcp_http_disconnected_map[tcp_id];
                     tcp_http_disconnected_map.erase(tcp_id);
-                    std::vector<std::shared_ptr<ahttp_impl>>::const_iterator itt = http_list->begin();
+                    std::vector<ahttp_impl*>::const_iterator itt = http_list->begin();
                     while (itt != http_list->end()) {
                         auto ahttp_i = *itt;
                         if (ahttp_i) {
@@ -971,18 +971,18 @@ namespace plan9 {
             });
         }
 
-        static void exec(std::shared_ptr<ahttp::ahttp_impl> http) {
+        static void exec(ahttp::ahttp_impl* http) {
             if (http && http->request != nullptr && http->callback != nullptr) {
                 bool reused_connect = false;
                 std::string uni_domain = get_unique_domain(http->request->get_domain(), http->request->get_port());
                 if (http->request->is_reused_tcp() && url_tcp_map.find(uni_domain) != url_tcp_map.end()) {
                     //重用tcp
                     int tcp_id = url_tcp_map[uni_domain];
-                    std::shared_ptr<std::vector<std::shared_ptr<ahttp::ahttp_impl>>> list;
+                    std::shared_ptr<std::vector<ahttp::ahttp_impl*>> list;
                     if (tcp_http_map.find(tcp_id) != tcp_http_map.end()) {
                         list = tcp_http_map[tcp_id];
                     } else {
-                        list.reset(new std::vector<std::shared_ptr<ahttp::ahttp_impl>>);
+                        list.reset(new std::vector<ahttp::ahttp_impl*>);
                         mutex.lock();
                         tcp_http_map[tcp_id] = list;
                         mutex.unlock();
@@ -1021,19 +1021,17 @@ namespace plan9 {
             }
         }
         void exec2(std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
-            std::shared_ptr<ahttp_impl> self;
             //TODO 可能存在内存泄露
-            self.reset(this);
             request = model;
             this->callback = callback;
             if (model->get_timeout() > 0) {
                 timer_id = uv_wrapper::post_timer([=](){
-                    std::map<int, std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>>>::const_iterator it = tcp_http_map.begin();
+                    std::map<int, std::shared_ptr<std::vector<ahttp_impl*>>>::const_iterator it = tcp_http_map.begin();
                     bool find = false;
                     while (it != tcp_http_map.end()) {
-                        std::vector<std::shared_ptr<ahttp_impl>>::iterator itt = it->second->begin();
+                        std::vector<ahttp_impl*>::iterator itt = it->second->begin();
                         while (itt != it->second->end()) {
-                            if (*itt == self) {
+                            if (*itt == this) {
                                 find = true;
                                 it->second->erase(itt);
                                 break;
@@ -1045,26 +1043,26 @@ namespace plan9 {
                         }
                         it++;
                     }
-                    if (find && self->callback) {
+                    if (find && this->callback) {
                         std::shared_ptr<common_callback> ccb(new common_callback(false, -1, "timeout"));
-                        if (!self->response) {
-                            self->response.reset(new ahttp_response);
+                        if (!this->response) {
+                            this->response.reset(new ahttp_response);
                         }
-                        self->callback(ccb, self->request, self->response);
+                        this->callback(ccb, this->request, this->response);
                     }
                 }, model->get_timeout() * 1000, 0);
             }
-            ahttp_impl::exec(self);
+            ahttp_impl::exec(this);
         }
 
         void cancel() {
             mutex.lock();
-            std::map<int, std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>>>::const_iterator it = tcp_http_map.begin();
+            std::map<int, std::shared_ptr<std::vector<ahttp_impl*>>>::const_iterator it = tcp_http_map.begin();
             bool find = false;
             while (it != tcp_http_map.end()) {
-                std::vector<std::shared_ptr<ahttp_impl>>::iterator itt = it->second->begin();
+                std::vector<ahttp_impl*>::iterator itt = it->second->begin();
                 while (itt != it->second->end()) {
-                    if ((*itt).get() == this) {
+                    if ((*itt) == this) {
                         find = true;
                         it->second->erase(itt);
                         break;
@@ -1080,9 +1078,9 @@ namespace plan9 {
             it = tcp_http_disconnected_map.begin();
             find = false;
             while (it != tcp_http_disconnected_map.end()) {
-                std::vector<std::shared_ptr<ahttp_impl>>::iterator itt = it->second->begin();
+                std::vector<ahttp_impl*>::iterator itt = it->second->begin();
                 while (itt != it->second->end()) {
-                    if ((*itt).get() == this) {
+                    if ((*itt) == this) {
                         find = true;
                         it->second->erase(itt);
                         break;
@@ -1248,8 +1246,8 @@ namespace plan9 {
 
 
         static std::map<std::string, int> url_tcp_map;
-        static std::map<int, std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>>> tcp_http_map;
-        static std::map<int, std::shared_ptr<std::vector<std::shared_ptr<ahttp_impl>>>> tcp_http_disconnected_map;
+        static std::map<int, std::shared_ptr<std::vector<ahttp_impl*>>> tcp_http_map;
+        static std::map<int, std::shared_ptr<std::vector<ahttp_impl*>>> tcp_http_disconnected_map;
         static mutex_wrap mutex;
         std::shared_ptr<ahttp_response> response;
         std::shared_ptr<ahttp_request> request;
@@ -1270,8 +1268,8 @@ namespace plan9 {
     };
 
     std::map<std::string, int> ahttp::ahttp_impl::url_tcp_map;
-    std::map<int, std::shared_ptr<std::vector<std::shared_ptr<ahttp::ahttp_impl>>>> ahttp::ahttp_impl::tcp_http_map;
-    std::map<int, std::shared_ptr<std::vector<std::shared_ptr<ahttp::ahttp_impl>>>> ahttp::ahttp_impl::tcp_http_disconnected_map;
+    std::map<int, std::shared_ptr<std::vector<ahttp::ahttp_impl*>>> ahttp::ahttp_impl::tcp_http_map;
+    std::map<int, std::shared_ptr<std::vector<ahttp::ahttp_impl*>>> ahttp::ahttp_impl::tcp_http_disconnected_map;
     mutex_wrap ahttp::ahttp_impl::mutex;
 
     ahttp::ahttp() : impl(new ahttp_impl) {

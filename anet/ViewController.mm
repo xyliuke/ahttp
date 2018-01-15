@@ -35,7 +35,7 @@ pplx::task<void> task;
     [super viewDidLoad];
     plan9::uv_wrapper::init(nullptr);
     plan9::uv_wrapper::set_ssl_impl([=] () -> std::shared_ptr<plan9::ssl_interface> {
-        std::shared_ptr<plan9::ssl_interface> ret(new plan9::ssl_shake);
+        std::shared_ptr<plan9::ssl_interface> ret = std::make_shared<plan9::ssl_interface>();
         return ret;
     });
     // Do any additional setup after loading the view.

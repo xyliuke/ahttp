@@ -559,7 +559,7 @@ namespace plan9 {
         uv_tcp_init(loop, tcp);
         uv_tcp_nodelay(tcp, 1);
 
-        std::shared_ptr<uv_content_s> content(new uv_content_s);
+        std::shared_ptr<uv_content_s> content = std::make_shared<uv_content_s>();
         content->tcp_id = count;
         content->tcp = tcp;
         content->ssl_enable = ssl_enable;

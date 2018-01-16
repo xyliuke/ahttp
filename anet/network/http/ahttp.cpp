@@ -827,7 +827,7 @@ namespace plan9 {
     class ahttp::ahttp_impl {
     public:
 
-        ahttp_impl() : timer_id(-1), read_begin(false),
+        ahttp_impl() : timer_id(-1), read_begin(false), low_priority(false),
                        dns_resolve_callback(std::bind(&uv_wrapper::resolve, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
                         validate_domain(false), validate_cert(false) {
 
@@ -1115,6 +1115,20 @@ namespace plan9 {
             mutex.unlock();
         }
 
+        static void set_max_connection(int max) {
+            if (max > 0 && max < 16) {
+                max_connection_num = max;
+            }
+        }
+
+        void set_high_priority() {
+            low_priority = false;
+        }
+
+        void set_low_priority() {
+            low_priority = true;
+        }
+
         void is_validate_domain(bool validate) {
             validate_domain = validate;
         }
@@ -1285,11 +1299,14 @@ namespace plan9 {
         bool read_begin;
         bool validate_domain;
         bool validate_cert;
+        bool low_priority;
+        static int max_connection_num;
     };
 
     std::map<std::string, int> ahttp::ahttp_impl::url_tcp_map;
     std::map<int, std::shared_ptr<std::vector<ahttp::ahttp_impl*>>> ahttp::ahttp_impl::tcp_http_map;
     std::map<int, std::shared_ptr<std::vector<ahttp::ahttp_impl*>>> ahttp::ahttp_impl::tcp_http_disconnected_map;
+    int ahttp::ahttp_impl::max_connection_num = 4;
     mutex_wrap ahttp::ahttp_impl::mutex;
 
     ahttp::ahttp() : impl(new ahttp_impl) {
@@ -1301,11 +1318,15 @@ namespace plan9 {
     }
 
     void ahttp::set_max_connection(int max) {
-
+        ahttp_impl::set_max_connection(max);
     }
 
     void ahttp::set_low_priority() {
+        impl->set_low_priority();
+    }
 
+    void ahttp::set_high_priority() {
+        impl->set_high_priority();
     }
 
     void ahttp::is_validate_domain(bool validate) {

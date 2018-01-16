@@ -220,6 +220,13 @@ namespace plan9 {
         void set_low_priority();
 
         /**
+         * 设置高优先级
+         * 默认为高优先级，默认情况下，
+         * 未达到最大连接数数的请求，在已存在的tcp不空闲时，创建新的连接；存在空闲tcp时，优先复用原来tcp
+         * 达到最大连接数时，等待tcp空闲，再复用tcp进行请求
+         */
+        void set_high_priority();
+        /**
          * 是否验证域名
          * @param validate true 验证 false 不验证
          */

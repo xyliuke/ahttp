@@ -254,12 +254,17 @@ namespace plan9
                 SSL_free(ssl);
                 ssl = nullptr;
             }
+            if (ctx != nullptr) {
+                SSL_CTX_free(ctx);
+                ctx = nullptr;
+            }
+            std::cout << "ssl shake impl dealloc\n";
         }
         void set_host(std::string host) {
             SSL_set_tlsext_host_name(ssl, host.c_str());
             X509_VERIFY_PARAM* param = SSL_get0_param(ssl);
             X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
-            X509_VERIFY_PARAM_set1_host(param, host.c_str(), 0);
+            X509_VERIFY_PARAM_set1_host(param, host.c_str(), host.length());
 //            X509_VERIFY_PARAM_set1_host(param, "guazi.com", 0);
         }
 

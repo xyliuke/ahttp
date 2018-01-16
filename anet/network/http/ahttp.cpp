@@ -341,6 +341,15 @@ namespace plan9 {
 
     };
 
+    const std::string ahttp_request::METHOD_GET = "GET";
+    const std::string ahttp_request::METHOD_POST = "POST";
+    const std::string ahttp_request::METHOD_HEAD = "HEAD";
+    const std::string ahttp_request::METHOD_OPTIONS = "OPTIONS";//暂不支持
+    const std::string ahttp_request::METHOD_PUT = "PUT";//暂不支持
+    const std::string ahttp_request::METHOD_DELETE = "DELETE";//暂不支持
+    const std::string ahttp_request::METHOD_TRACE = "TRACE";//暂不支持
+    const std::string ahttp_request::METHOD_CONNECT = "CONNECT";//暂不支持
+
     ahttp_request::ahttp_request() : impl(new ahttp_request_impl) {
 
     }
@@ -1018,6 +1027,7 @@ namespace plan9 {
                         http->send_dns_event(ccb);
                         exec_new_connect(http, http->request->get_header("host"), http->request->get_domain(), http->request->get_port());
                     } else {
+                        //TODO 处理dns解析问题，包括定制dns解析；如果解析成多个ip后，第一个ip连接失败的情况
                         http->dns_resolve_callback(http->request->get_domain(), http->request->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips){
                             http->send_dns_event(ccb);
                             if (ccb->success) {
@@ -1144,7 +1154,7 @@ namespace plan9 {
 
         void get(std::string url, int timeout, std::shared_ptr<std::map<std::string, std::string>>header, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
             std::shared_ptr<ahttp_request> request(new ahttp_request);
-            request->set_method("GET");
+            request->set_method(ahttp_request::METHOD_GET);
             request->set_url(url);
             request->append_header(header);
             request->set_timeout(timeout);
@@ -1153,7 +1163,7 @@ namespace plan9 {
 
         void post(std::string url, int timeout, std::shared_ptr<std::map<std::string, std::string>>header, std::shared_ptr<std::map<std::string, std::string>> data, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
             std::shared_ptr<ahttp_request> request(new ahttp_request);
-            request->set_method("POST");
+            request->set_method(ahttp_request::METHOD_POST);
             request->set_url(url);
             request->append_header(header);
             request->append_body_data(data);
@@ -1164,7 +1174,7 @@ namespace plan9 {
 
         void download(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
             std::shared_ptr<ahttp_request> request(new ahttp_request);
-            request->set_method("GET");
+            request->set_method(ahttp_request::METHOD_GET);
             request->set_url(url);
             request->append_header(header);
             request->set_timeout(0);
@@ -1181,7 +1191,7 @@ namespace plan9 {
 
         void upload(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
             std::shared_ptr<ahttp_request> request(new ahttp_request);
-            request->set_method("POST");
+            request->set_method(ahttp_request::METHOD_POST);
             request->set_url(url);
             request->append_header(header);
             request->set_timeout(0);
@@ -1288,6 +1298,14 @@ namespace plan9 {
 
     ahttp::~ahttp() {
         cancel();
+    }
+
+    void ahttp::set_max_connection(int max) {
+
+    }
+
+    void ahttp::set_low_priority() {
+
     }
 
     void ahttp::is_validate_domain(bool validate) {

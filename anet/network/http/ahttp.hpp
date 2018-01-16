@@ -20,6 +20,16 @@ namespace plan9 {
 
     class ahttp_request {
     public:
+
+        static const std::string METHOD_GET;
+        static const std::string METHOD_POST;
+        static const std::string METHOD_HEAD;//暂不支持
+        static const std::string METHOD_OPTIONS;//暂不支持
+        static const std::string METHOD_PUT;//暂不支持
+        static const std::string METHOD_DELETE;//暂不支持
+        static const std::string METHOD_TRACE;//暂不支持
+        static const std::string METHOD_CONNECT;//暂不支持
+
         ahttp_request();
         /**
          * 向header中添加数据
@@ -87,14 +97,14 @@ namespace plan9 {
 
         /**
          * 是否为HTTPS协议
-         * @return
+         * @return true为使用ssl协议
          */
         bool is_use_ssl();
 
         /**
          * 给定的字符串是否为ip格式，包括ip4和ip6
          * @param str
-         * @return
+         * @return true表示str为ip格式
          */
         static bool is_ip_format(std::string str);
 
@@ -193,6 +203,22 @@ namespace plan9 {
     public:
         ahttp();
         ~ahttp();
+
+        /**
+         * 设置相同ip和端口号下的最大同时连接数
+         * 未达到最大连接数数的请求，在已存在的tcp不空闲时，创建新的连接；存在空闲tcp时，优先复用原来tcp
+         * 达到最大连接数时，等待tcp空闲，再复用tcp进行请求
+         *
+         * @param max
+         */
+        static void set_max_connection(int max);
+
+        /**
+         * 设置低优先级，默认为高优先级
+         * 设置低优先级后，会优先考虑复用tcp的情况，只有在没有tcp连接情况下，才会创建新的连接
+         */
+        void set_low_priority();
+
         /**
          * 是否验证域名
          * @param validate true 验证 false 不验证

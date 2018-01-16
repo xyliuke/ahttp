@@ -35,7 +35,7 @@ pplx::task<void> task;
     [super viewDidLoad];
     plan9::uv_wrapper::init(nullptr);
     plan9::uv_wrapper::set_ssl_impl([=] () -> std::shared_ptr<plan9::ssl_interface> {
-        std::shared_ptr<plan9::ssl_interface> ret = std::make_shared<plan9::ssl_interface>();
+        std::shared_ptr<plan9::ssl_interface> ret = std::make_shared<plan9::ssl_shake>();
         return ret;
     });
     // Do any additional setup after loading the view.
@@ -301,8 +301,8 @@ static int getNum() {
 //        });
 //        std::string url = "http://api.chesupai.cn/customer/detail/info?id=1429449&idfa=11BFBC7A-98EF-4B37-A216-E8DAF0ABAB8B&osv=iOS8.1&net=wifi&screenWH=750%252C1334&deviceId=3200A4C2-C469-469D-A42A-920B1A5A0216&deviceModel=iPhoneSimulator&platform=1&dpi=326&versionId=2.7.3&model=x86_64&pushTYpe=0&sign=9102c932d5e96cd5129b1c35f9baee28";
 
-//        ah->is_validate_domain(true);
-//        ah->is_validate_cert(true);
+        ah->is_validate_domain(true);
+        ah->is_validate_cert(true);
         ah->get(url, h, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
 //            std::cout << response->get_response_length() << std::endl;
             std::cout << response->get_body_string() << std::endl;

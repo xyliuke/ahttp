@@ -27,6 +27,8 @@ namespace plan9 {
          * @param value header中value
          */
         void append_header(std::string key, std::string value);
+
+        std::string get_header(std::string key);
         /**
          * 向header中添加数据
          * @param key header中key

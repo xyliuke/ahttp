@@ -54,7 +54,14 @@ namespace plan9 {
             ss << value;
             append_header(key, ss.str());
         }
-
+        std::string get_header(std::string key) {
+            bool find = false;
+            std::string ret = header->get("host", &find);
+            if (find) {
+                return ret;
+            }
+            return "";
+        }
         void append_header(std::shared_ptr<std::map<std::string, std::string>> headers) {
             if (headers) {
                 std::map<std::string, std::string>::const_iterator it = headers->begin();
@@ -340,6 +347,10 @@ namespace plan9 {
 
     void ahttp_request::append_header(std::string key, std::string value) {
         impl->append_header(key, value);
+    }
+
+    std::string ahttp_request::get_header(std::string key) {
+        return impl->get_header(key);
     }
 
     void ahttp_request::append_header(std::string key, int value) {
@@ -1005,7 +1016,7 @@ namespace plan9 {
                     if (http->request->is_ip_format(http->request->get_domain())) {
                         std::shared_ptr<common_callback> ccb(new common_callback);
                         http->send_dns_event(ccb);
-                        exec_new_connect(http, http->request->get_domain(), http->request->get_domain(), http->request->get_port());
+                        exec_new_connect(http, http->request->get_header("host"), http->request->get_domain(), http->request->get_port());
                     } else {
                         http->dns_resolve_callback(http->request->get_domain(), http->request->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips){
                             http->send_dns_event(ccb);
@@ -1021,7 +1032,6 @@ namespace plan9 {
             }
         }
         void exec2(std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
-            //TODO 可能存在内存泄露
             request = model;
             this->callback = callback;
             if (model->get_timeout() > 0) {

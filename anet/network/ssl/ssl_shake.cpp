@@ -224,10 +224,11 @@ namespace plan9
                     validate_domain = true;
                 }
             }
-
-            int  err = X509_STORE_CTX_get_error(ctx);
-            if (err == X509_V_ERR_HOSTNAME_MISMATCH && validate_domain) {
-                return 0;
+            if (validate_domain || validate_cert) {
+                int  err = X509_STORE_CTX_get_error(ctx);
+                if (err == X509_V_ERR_HOSTNAME_MISMATCH && validate_domain) {
+                    return 0;
+                }
             }
             return 1;
         }
@@ -239,7 +240,6 @@ namespace plan9
             SSL_set_bio(ssl, read_bio, write_bio);
             SSL_set_verify_depth(ssl, 2);
             ssl_impl_map[ssl] = this;
-//            SSL_CTX_set_cert_verify_callback(get_ssl_ctx(), verify_cert_callback, this);
         }
 
         ~ssl_shake_impl() {

@@ -249,7 +249,7 @@ static int getNum() {
 //    ah.reset();
 //        list.push_back(ah);
 
-        ah->set_dns_event_callback([=](std::shared_ptr<common_callback>) {
+        ah->set_dns_event_callback([=](std::shared_ptr<common_callback> ccbo) {
             auto tp = std::chrono::system_clock::now();
             std::cout << i << " dns " << tp.time_since_epoch().count() / 1000 << std::endl;
         });
@@ -277,10 +277,10 @@ static int getNum() {
             auto tp = std::chrono::system_clock::now();
             std::cout << i << " read end " << tp.time_since_epoch().count() / 1000 << "\tsize : " << bytes << std::endl;
         });
-        ah->set_disconnected_event_callback([=](std::shared_ptr<common_callback>) {
-            auto tp = std::chrono::system_clock::now();
-            std::cout << i << "disconnected " << tp.time_since_epoch().count() / 1000 << std::endl;
-        });
+//        ah->set_disconnected_event_callback([=](std::shared_ptr<common_callback>) {
+//            auto tp = std::chrono::system_clock::now();
+//            std::cout << i << "disconnected " << tp.time_since_epoch().count() / 1000 << std::endl;
+//        });
 //        ah->exec(req, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
 //            std::cout << request->to_string() << std::endl;
 //            std::cout << response->to_string() << std::endl;
@@ -289,8 +289,8 @@ static int getNum() {
         std::shared_ptr<std::map<std::string, std::string>> h(new std::map<std::string, std::string>);
     (*h)["host"] = "api.chesupai.cn";
 //        (*h)["Accept-Encoding"] = "gzip, deflate";
-        std::string url = "https://124.250.45.37";
-//    std::string url = "https://api.chesupai.cn";
+//        std::string url = "https://124.250.45.37";
+    std::string url = "https://api.chesupai.cn";
 //        ah->set_dns_resolve([=](std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)> callback) {
 //            if (callback) {
 //                std::shared_ptr<common_callback> ccb(new common_callback);
@@ -306,6 +306,12 @@ static int getNum() {
         ah->get(url, h, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
 //            std::cout << response->get_response_length() << std::endl;
             std::cout << response->get_body_string() << std::endl;
+            std::map<std::string, std::string>::iterator it = ah->get_debug_info()->begin();
+            while (it != ah->get_debug_info()->end()) {
+                std::cout << it->first << ":" << it->second << std::endl;
+                it ++;
+            }
+
         });
 //        ah->download("http://cn.bing.com/az/hprichbg/rb/Forest_ZH-CN16430313748_1920x1080.jpg", "/Users/keliu/Downloads/a.jpg", nullptr, [=](long current, long total){
 //            std::cout << current << "/" << total << std::endl;

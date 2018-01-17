@@ -199,6 +199,8 @@ namespace plan9 {
         std::shared_ptr<ahttp_response_impl> impl;
     };
 
+    //TODO 失败的错误类型返回，如SSL握手错误等
+    //TODO 是否使用代理的设置
     class ahttp {
     public:
         ahttp();
@@ -295,8 +297,8 @@ namespace plan9 {
         void set_read_begin_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);
         //最后一次读到数据的事件
         void set_read_end_event_callback(std::function<void(std::shared_ptr<common_callback>, long)> callback);
-        //关闭连接的事件
-        void set_disconnected_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);
+
+        std::shared_ptr<std::map<std::string, std::string>> get_debug_info();
 
     private:
         class ahttp_impl;

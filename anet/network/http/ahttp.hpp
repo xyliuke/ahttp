@@ -31,6 +31,8 @@ namespace plan9 {
         static const std::string METHOD_CONNECT;//暂不支持
 
         ahttp_request();
+
+        void set_uesd_proxy(bool uesd);
         /**
          * 向header中添加数据
          * @param key header中key
@@ -200,11 +202,18 @@ namespace plan9 {
     };
 
     //TODO 失败的错误类型返回，如SSL握手错误等
-    //TODO 是否使用代理的设置
+    //TODO 是否使用代理的设置，代理自动发现功能
     class ahttp {
     public:
         ahttp();
         ~ahttp();
+
+        /**
+         * 设置代理功能
+         * @param host
+         * @param port
+         */
+        static void set_proxy(std::string host, int port);
 
         /**
          * 设置相同ip和端口号下的最大同时连接数

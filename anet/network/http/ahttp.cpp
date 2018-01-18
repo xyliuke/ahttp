@@ -27,74 +27,78 @@ namespace plan9 {
 
         }
 
+        void set_proxy(bool used) {
+            push("proxy", used ? "1" : "0");
+        }
+
         void set_reused_tcp(bool reused) {
-            (*info)["reused_tcp"] = reused ? "1" : "0";
+            push("reused_tcp", reused ? "1" : "0");
         }
 
         void set_fetch_time() {
             fetch = get_current_time();
             std::stringstream ss;
             ss << (fetch / 1000);
-            (*info)["fetch"] = ss.str();
+            push("fetch", ss.str());
         }
 
         void set_ip(std::string ip) {
-            (*info)["ip"] = ip;
+            push("ip", ip);
         }
 
         void set_dns_start_time() {
-            (*info)["dns_start"] = get_current_time_string();
+            push("dns_start", get_current_time_string());
         }
 
         void set_dns_end_time() {
-            (*info)["dns_end"] = get_current_time_string();
+            push("dns_end", get_current_time_string());
         }
 
         void set_connect_start_time() {
-            (*info)["connect_start"] = get_current_time_string();
+            push("connect_start", get_current_time_string());
         }
 
         void set_connect_end_time() {
-            (*info)["connect_end"] = get_current_time_string();
+            push("connect_end", get_current_time_string());
         }
 
         void set_ssl_start_time() {
-            (*info)["ssl_start"] = get_current_time_string();
+            push("ssl_start", get_current_time_string());
         }
         void set_ssl_end_time() {
-            (*info)["ssl_end"] = get_current_time_string();
+            push("ssl_end", get_current_time_string());
         }
 
         void set_request_start_time() {
-            (*info)["request_start"] = get_current_time_string();
+            push("request_start", get_current_time_string());
         }
         void set_request_end_time() {
-            (*info)["request_end"] = get_current_time_string();
+            push("request_end", get_current_time_string());
         }
         void set_response_start_time() {
-            (*info)["response_start"] = get_current_time_string();
+            push("response_start", get_current_time_string());
         }
 
         void set_response_end_time() {
             long end = get_current_time();
             std::stringstream ss;
             ss << (end / 1000);
-            (*info)["response_end"] = ss.str();
+            push("response_end", ss.str());
             std::stringstream sss;
             sss << ((end - fetch) / 1000);
-            (*info)["total"] = sss.str();
+            push("total", sss.str());
         }
 
         void set_request_data_size(int size) {
             std::stringstream ss;
             ss << size;
-            (*info)["request_bytes"] = ss.str();
+            push("request_bytes", ss.str());
         }
 
         void set_response_data_size(int size) {
             std::stringstream ss;
             ss << size;
-            (*info)["response_bytes"] = ss.str();
+            push("response_bytes", ss.str());
         }
 
         std::shared_ptr<std::map<std::string, std::string>> get_info() {
@@ -111,6 +115,11 @@ namespace plan9 {
         long get_current_time() {
             auto tp = std::chrono::system_clock::now();
             return tp.time_since_epoch().count();
+        }
+        void push(std::string key, std::string value) {
+            if (info) {
+                (*info)[key] = value;
+            }
         }
         long fetch;
     };
@@ -139,8 +148,13 @@ namespace plan9 {
     class ahttp_request::ahttp_request_impl {
     public:
         ahttp_request_impl() : header(new case_insensitive_map), method("GET"), version("1.1"), port(80), path("/"),
-                            timeout(30), reused_tcp(true) {
+                            timeout(30), reused_tcp(true), used_proxy(false) {
         }
+
+        void set_uesd_proxy(bool uesd) {
+            used_proxy = uesd;
+        }
+
         void append_header(std::string key, std::string value) {
             header->add(key, value);
         }
@@ -204,11 +218,11 @@ namespace plan9 {
                 }
             }
             if (!is_ip_format(domain)) {
-                std::stringstream ss;
-                ss << domain;
-                ss << ":";
-                ss << port;
-                append_header("Host", ss.str());
+//                std::stringstream ss;
+//                ss << domain;
+//                ss << ":";
+//                ss << port;
+                append_header("Host", domain);
             }
         }
 
@@ -289,6 +303,11 @@ namespace plan9 {
             std::shared_ptr<char_array> array = std::make_shared<char_array>(20);
             array->append(method);
             array->append(" ");
+            if (used_proxy) {
+                array->append(protocol);
+                array->append("://");
+                array->append(domain);
+            }
             array->append(path);
             array->append(" ");
             array->append("HTTP/");
@@ -363,7 +382,7 @@ namespace plan9 {
                 std::shared_ptr<char_array> http = get_http_string();
                 callback(http->get_data(), http->get_len(), 0, http->get_len());
 
-                //上传文件
+                //TODO上传文件
 //                get_http_data_from_file(http.length(), callback);
             }
         }
@@ -433,7 +452,7 @@ namespace plan9 {
         std::string boundary;
         int timeout;
         bool reused_tcp;
-
+        bool used_proxy;
     };
 
     const std::string ahttp_request::METHOD_GET = "GET";
@@ -447,6 +466,10 @@ namespace plan9 {
 
     ahttp_request::ahttp_request() : impl(new ahttp_request_impl) {
 
+    }
+
+    void ahttp_request::set_uesd_proxy(bool uesd) {
+        impl->set_uesd_proxy(uesd);
     }
 
     void ahttp_request::append_header(std::string key, std::string value) {
@@ -1059,6 +1082,7 @@ namespace plan9 {
         static std::string get_unique_domain(std::string domain, int port) {
             std::stringstream ss;
             ss << domain;
+            ss << ":";
             ss << port;
             return ss.str();
         }
@@ -1080,7 +1104,7 @@ namespace plan9 {
             uv_wrapper::connect(ip, port, http->request->is_use_ssl(), domain, [=](std::shared_ptr<common_callback> ccb, int tcp_id){
                 //tcp connected
                 mutex.lock();
-                std::string uni_domain = get_unique_domain(http->request->get_domain(), http->request->get_port());
+                std::string uni_domain = http->get_uni_domain();
                 std::shared_ptr<http_content> content = get_content(uni_domain, false);
                 if (content) {
                     auto http_list = content->get_http_list(tcp_id, true);
@@ -1146,9 +1170,10 @@ namespace plan9 {
             });
         }
 
-        static void exec(ahttp::ahttp_impl* http) {
-            if (http && http->request != nullptr && http->callback != nullptr) {
-                std::string uni_domain = get_unique_domain(http->request->get_domain(), http->request->get_port());
+        static void exec_direct(ahttp::ahttp_impl* http) {
+            if (http && http->request != nullptr) {
+                http->info->set_proxy(false);
+                std::string uni_domain = http->get_uni_domain();
                 std::shared_ptr<http_content> content = get_content(uni_domain, true);
 
                 int tcp_id = -1;
@@ -1227,6 +1252,101 @@ namespace plan9 {
                 }
             }
         }
+        static void exec_proxy(ahttp::ahttp_impl* http) {
+            if (http && http->request) {
+                http->request->set_uesd_proxy(true);
+                http->info->set_proxy(true);
+
+                std::string uni_domain = http->get_uni_domain();
+                auto content = get_content(uni_domain, true);
+
+                auto send_op = [=](int tcp_id) {
+                    http->info->set_request_start_time();
+                    http->request->get_http_data([=](std::shared_ptr<char> data, int len, int sent, int total){
+                        uv_wrapper::write(tcp_id, data, len, [=](std::shared_ptr<common_callback> write_callback){
+                            http->send_send_event(write_callback, sent + len, total);
+                        });
+                    });
+                };
+
+                if (content->tcp_http_map.size() > 0) {
+                    //存在代理服务器链路
+                    int tcp_id = content->tcp_http_map.begin()->first;
+                    auto list = content->tcp_http_map.begin()->second;
+                    if (uv_wrapper::tcp_alive(tcp_id)) {
+                        list->push_back(http);
+                        if (list->size() == 0) {
+                            //复用tcp
+                            send_op(tcp_id);
+                        }
+                    }
+                }
+
+                auto connect_op = [=](std::string ip, int port) {
+                    http->info->set_reused_tcp(false);
+                    http->info->set_connect_start_time();
+                    uv_wrapper::connect(ip, port, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
+                        http->info->set_connect_end_time();
+                        if (http->request->is_use_ssl()) {
+                            http->info->set_ssl_start_time();
+                            http->info->set_ssl_end_time();
+                        }
+
+                        auto list = content->get_http_list(tcp_id, true);
+                        if (list) {
+                            list->push_back(http);
+                        }
+                        send_op(tcp_id);
+                    }, [=](int tcp_id, std::shared_ptr<char> data, int len) {
+                        auto http_list = get_http_list(tcp_id);
+                        if (http_list) {
+                            if (http_list->size() > 0) {
+                                auto h = http_list->at(0);
+                                std::shared_ptr<common_callback> ccb(new common_callback);
+                                h->send_read_begin_event(ccb);
+                                if (h->append(data, len)) {
+                                    mutex.lock();
+                                    http_list->erase(http_list->begin());
+                                    uv_wrapper::cancel_timer(h->timer_id);
+                                    mutex.unlock();
+                                    if (h->callback != nullptr) {
+                                        std::shared_ptr<common_callback> ccb(new common_callback);
+                                        h->callback(ccb, h->request, h->response);
+                                    }
+                                    if (http_list->size() > 0) {
+                                        exec_reused_connect(tcp_id);
+                                    }
+                                }
+                            }
+                        }
+                    }, [=](std::shared_ptr<common_callback> ccb, int tcp_id){
+                        remove_http_list(tcp_id);
+                    });
+                };
+
+                if (uv_wrapper::is_ip4(proxy_host) || uv_wrapper::is_ip6(proxy_host)) {
+                    connect_op(proxy_host, proxy_port);
+                } else {
+                    http->info->set_dns_start_time();
+                    uv_wrapper::resolve(proxy_host, proxy_port, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips) {
+                        http->info->set_dns_end_time();
+                        if (ccb->success && ips->size() > 0) {
+                            std::string ip = ips->at(0);
+                            connect_op(ip, proxy_port);
+                        }
+                    });
+                }
+
+            }
+        }
+        static void exec(ahttp::ahttp_impl* http) {
+            if (proxy_port > 0 && proxy_host.length() > 0) {
+                //使用了代理
+                exec_proxy(http);
+            } else {
+                exec_direct(http);
+            };
+        }
         void exec2(std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
             info->set_fetch_time();
             request = model;
@@ -1234,7 +1354,7 @@ namespace plan9 {
             if (model->get_timeout() > 0) {
                 timer_id = uv_wrapper::post_timer([=](){
                     mutex.lock();
-                    std::string uni_domain = get_unique_domain(model->get_domain(), model->get_port());
+                    std::string uni_domain = get_uni_domain();
                     if (url_2_http.find(uni_domain) != url_2_http.end()) {
                         auto content = url_2_http[uni_domain];
                         content->remove_http(this);
@@ -1258,7 +1378,7 @@ namespace plan9 {
         void cancel() {
             mutex.lock();
 
-            std::string uni_domain = get_unique_domain(this->request->get_domain(), request->get_port());
+            std::string uni_domain = get_uni_domain();
             if (url_2_http.find(uni_domain) != url_2_http.end()) {
                 auto content = url_2_http[uni_domain];
                 content->remove_http(this);
@@ -1270,6 +1390,11 @@ namespace plan9 {
             if (max > 0 && max < 16) {
                 max_connection_num = max;
             }
+        }
+
+        static void set_proxy(std::string host, int port) {
+            proxy_host = host;
+            proxy_port = port;
         }
 
         void set_high_priority() {
@@ -1439,6 +1564,15 @@ namespace plan9 {
             }
             return isEnd;
         }
+
+        std::string get_uni_domain() {
+            if (proxy_port > 0 && proxy_host.length() > 0) {
+                return get_unique_domain(proxy_host, proxy_port);
+            } else {
+                return get_unique_domain(request->get_domain(), request->get_port());
+            }
+
+        }
         
         static std::map<std::string, std::shared_ptr<http_content>> url_2_http;
 
@@ -1462,9 +1596,13 @@ namespace plan9 {
         bool low_priority;
         std::shared_ptr<http_info> info;
         static int max_connection_num;
+        static std::string proxy_host;
+        static int proxy_port;
     };
 
     std::map<std::string, std::shared_ptr<ahttp::ahttp_impl::http_content>> ahttp::ahttp_impl::url_2_http;
+    int ahttp::ahttp_impl::proxy_port = -1;
+    std::string ahttp::ahttp_impl::proxy_host = "";
 
     int ahttp::ahttp_impl::max_connection_num = 4;
     mutex_wrap ahttp::ahttp_impl::mutex;
@@ -1475,6 +1613,10 @@ namespace plan9 {
 
     ahttp::~ahttp() {
         cancel();
+    }
+
+    void ahttp::set_proxy(std::string host, int port) {
+        ahttp_impl::set_proxy(host, port);
     }
 
     void ahttp::set_max_connection(int max) {

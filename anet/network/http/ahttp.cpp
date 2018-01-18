@@ -1025,37 +1025,34 @@ namespace plan9 {
         ~ahttp_impl() {
             cancel();
         }
+
         static void exec_reused_connect(int tcp_id) {
-        }
-        static void exec_reused_connect(int tcp_id, std::shared_ptr<http_content> content) {
-            if (content && content->tcp_http_map.find(tcp_id) != content->tcp_http_map.end()) {
-                auto list = content->tcp_http_map[tcp_id];
-                if (list->size() > 0) {
-                    auto http = list->at(0);
-                    http->info->set_reused_tcp(true);
-                    http->info->set_dns_start_time();
-                    http->info->set_dns_end_time();
-                    http->info->set_connect_start_time();
-                    http->info->set_connect_end_time();
-                    std::shared_ptr<common_callback> ccb = std::make_shared<common_callback>();
-                    http->send_dns_event(ccb);
+            auto list = get_http_list(tcp_id);
+            if (list && list->size() > 0) {
+                auto http = list->at(0);
+                http->info->set_reused_tcp(true);
+                http->info->set_dns_start_time();
+                http->info->set_dns_end_time();
+                http->info->set_connect_start_time();
+                http->info->set_connect_end_time();
+                std::shared_ptr<common_callback> ccb = std::make_shared<common_callback>();
+                http->send_dns_event(ccb);
 
-                    std::shared_ptr<common_callback> ccb1 = std::make_shared<common_callback>();
-                    http->send_connected_event(ccb1);
+                std::shared_ptr<common_callback> ccb1 = std::make_shared<common_callback>();
+                http->send_connected_event(ccb1);
 
-                    if (http->request->is_use_ssl()) {
-                        http->info->set_ssl_start_time();
-                        http->info->set_ssl_end_time();
-                        std::shared_ptr<common_callback> ccb2(new common_callback);
-                        http->send_ssl_connected_event(ccb2);
-                    }
-                    http->info->set_request_start_time();
-                    http->request->get_http_data([=](std::shared_ptr<char> data, int len, int sent, int total){
-                        uv_wrapper::write(tcp_id, data, len, [=](std::shared_ptr<common_callback> write_callback){
-                            http->send_send_event(write_callback, sent + len, total);
-                        });
-                    });
+                if (http->request->is_use_ssl()) {
+                    http->info->set_ssl_start_time();
+                    http->info->set_ssl_end_time();
+                    std::shared_ptr<common_callback> ccb2(new common_callback);
+                    http->send_ssl_connected_event(ccb2);
                 }
+                http->info->set_request_start_time();
+                http->request->get_http_data([=](std::shared_ptr<char> data, int len, int sent, int total){
+                    uv_wrapper::write(tcp_id, data, len, [=](std::shared_ptr<common_callback> write_callback){
+                        http->send_send_event(write_callback, sent + len, total);
+                    });
+                });
             }
         }
 
@@ -1190,7 +1187,7 @@ namespace plan9 {
                 }
                 if (http_list && http_list->size() == 0) {
                     http_list->push_back(http);
-                    exec_reused_connect(tcp_id, content);
+                    exec_reused_connect(tcp_id);
                     return;
                 }
 
@@ -1217,6 +1214,7 @@ namespace plan9 {
                                 if (ccb->success) {
                                     if (ips->size() > 0) {
                                         std::string ip = (*ips)[0];
+                                        http->info->set_ip(ip);
                                         exec_new_connect(http, http->request->get_domain(), ip, http->request->get_port());
                                     }
                                 }
@@ -1396,7 +1394,7 @@ namespace plan9 {
         void send_send_event(std::shared_ptr<common_callback> callback, long bytes, long total) {
             if (bytes >= total) {
                 info->set_request_end_time();
-                info->set_request_data_size(total);
+                info->set_request_data_size((int)total);
             }
             if (send_callback) {
                 send_callback(callback, bytes, total);
@@ -1436,7 +1434,7 @@ namespace plan9 {
             std::shared_ptr<common_callback> ccb(new common_callback);
             send_read_event(ccb, len);
             if (isEnd) {
-                info->set_response_data_size(response->get_response_length());
+                info->set_response_data_size((int)(response->get_response_length()));
                 send_read_end_event(nullptr, response->get_response_length());
             }
             return isEnd;

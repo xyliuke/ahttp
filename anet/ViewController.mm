@@ -38,7 +38,7 @@ pplx::task<void> task;
         std::shared_ptr<plan9::ssl_interface> ret = std::make_shared<plan9::ssl_shake>();
         return ret;
     });
-    plan9::ahttp::set_proxy("127.0.0.1", 8888);
+//    plan9::ahttp::set_proxy("127.0.0.1", 8888);
     // Do any additional setup after loading the view.
 }
 

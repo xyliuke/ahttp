@@ -42,8 +42,12 @@ namespace plan9 {
             push("fetch", ss.str());
         }
 
-        void set_ip(std::string ip) {
-            push("ip", ip);
+        void set_ip(std::string ip, int port) {
+            std::stringstream ss;
+            ss << ip;
+            ss << ":";
+            ss << port;
+            push("remote", ss.str());
         }
 
         void set_dns_start_time() {
@@ -99,6 +103,22 @@ namespace plan9 {
             std::stringstream ss;
             ss << size;
             push("response_bytes", ss.str());
+        }
+
+        void set_local_ip_port(std::string ip, int port) {
+            std::stringstream ss;
+            ss << ip;
+            ss << ":";
+            ss << port;
+            push("local", ss.str());
+        }
+
+        void set_local_ip_port(std::string ip, std::string port) {
+            std::stringstream ss;
+            ss << ip;
+            ss << ":";
+            ss << port;
+            push("local", ss.str());
         }
 
         std::shared_ptr<std::map<std::string, std::string>> get_info() {
@@ -1053,6 +1073,7 @@ namespace plan9 {
             auto list = get_http_list(tcp_id);
             if (list && list->size() > 0) {
                 auto http = list->at(0);
+                http->set_local_info(tcp_id);
                 http->info->set_reused_tcp(true);
                 http->info->set_dns_start_time();
                 http->info->set_dns_end_time();
@@ -1112,6 +1133,7 @@ namespace plan9 {
                     mutex.unlock();
                     
                     http->info->set_connect_end_time();
+                    http->set_local_info(tcp_id);
                     http->send_connected_event(ccb);
                     if (http->request->is_use_ssl()) {
 
@@ -1239,7 +1261,7 @@ namespace plan9 {
                                 if (ccb->success) {
                                     if (ips->size() > 0) {
                                         std::string ip = (*ips)[0];
-                                        http->info->set_ip(ip);
+                                        http->info->set_ip(ip, http->request->get_port());
                                         exec_new_connect(http, http->request->get_domain(), ip, http->request->get_port());
                                     }
                                 }
@@ -1283,10 +1305,12 @@ namespace plan9 {
                 }
 
                 auto connect_op = [=](std::string ip, int port) {
+                    http->info->set_ip(ip, port);
                     http->info->set_reused_tcp(false);
                     http->info->set_connect_start_time();
                     uv_wrapper::connect(ip, port, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
                         http->info->set_connect_end_time();
+                        http->set_local_info(tcp_id);
                         if (http->request->is_use_ssl()) {
                             http->info->set_ssl_start_time();
                             http->info->set_ssl_end_time();
@@ -1572,6 +1596,11 @@ namespace plan9 {
                 return get_unique_domain(request->get_domain(), request->get_port());
             }
 
+        }
+
+        void set_local_info(int tcp_id) {
+            auto tcp_info = uv_wrapper::get_info(tcp_id);
+            info->set_local_ip_port((*tcp_info)["local_ip"], (*tcp_info)["local_port"]);
         }
         
         static std::map<std::string, std::shared_ptr<http_content>> url_2_http;

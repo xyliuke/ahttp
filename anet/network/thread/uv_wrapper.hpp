@@ -11,6 +11,7 @@
 
 #include <string>
 #include <functional>
+#include <map>
 #include "../libuv/include/uv.h"
 #include "../common/common_callback.hpp"
 
@@ -80,6 +81,8 @@ namespace plan9 {
         static bool tcp_alive(int tcp_id);
 
         static int get_fd(int tcp_id);
+
+        static std::shared_ptr<std::map<std::string, std::string>> get_info(int tcp_id);
 
         static bool is_ip4(std::string ip);
         static bool is_ip6(std::string ip);

@@ -29,7 +29,10 @@ namespace plan9 {
                 read_buf = nullptr;
             }
         }
-
+        std::string remote_ip;
+        int remote_port;
+        std::string local_ip;
+        int local_port;
         int tcp_id;
         bool ssl_enable;
         std::shared_ptr<ssl_interface> ssl_impl;
@@ -498,6 +501,16 @@ namespace plan9 {
     static void connect_event_callback(uv_connect_t* handle, int status) {
         if (handle != nullptr && handle->data != nullptr) {
             uv_content_s* content = (uv_content_s*)handle->data;
+            struct sockaddr addr;
+            memset(&addr, -1, sizeof addr);
+            int addr_len = sizeof addr;
+
+            uv_tcp_getsockname(content->tcp, &addr, &addr_len);
+            struct sockaddr_in *in = (sockaddr_in*)&addr;
+            char ip[30];
+            uv_ip4_name(in, ip, 30);
+            content->local_ip = std::string(ip);
+            content->local_port = in->sin_port;
             if (handle->type == UV_CONNECT) {
                 if (status >= 0) {
                     auto tcp_handle = content->tcp;
@@ -563,6 +576,8 @@ namespace plan9 {
         content->tcp_id = count;
         content->tcp = tcp;
         content->ssl_enable = ssl_enable;
+        content->remote_ip = ip;
+        content->remote_port = port;
 
         if (ssl_callback) {
             content->ssl_impl = ssl_callback();
@@ -718,6 +733,23 @@ namespace plan9 {
             }
         }
         return -1;
+    }
+
+    std::shared_ptr<std::map<std::string, std::string>> uv_wrapper::get_info(int tcp_id) {
+        std::shared_ptr<std::map<std::string, std::string>> ret = std::make_shared<std::map<std::string, std::string>>();
+        if (tcp_id_2_content.find(tcp_id) != tcp_id_2_content.end()) {
+            auto content = tcp_id_2_content[tcp_id];
+            (*ret)["remote_ip"] = content->remote_ip;
+            (*ret)["local_ip"] = content->local_ip;
+            std::stringstream ss;
+            ss << content->remote_ip;
+            (*ret)["remote_port"] = ss.str();
+            std::stringstream sss;
+            sss << content->local_port;
+            (*ret)["local_port"] = sss.str();
+            (*ret)["ssl"] = content->ssl_enable ? "1" : "0";
+        }
+        return ret;
     }
 
     bool uv_wrapper::is_ip4(std::string ip) {

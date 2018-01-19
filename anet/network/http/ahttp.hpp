@@ -209,6 +209,13 @@ namespace plan9 {
         ~ahttp();
 
         /**
+         * 设置是否自动使用代理
+         * @param auto_use  true 表示请求时会自动获取代理服务器，并使用代理服务器；
+         * false 表示不自动获取最新的代理服务器，而是依赖set_proxy的配置
+         */
+        static void set_auto_proxy(bool auto_use);
+
+        /**
          * 设置代理功能
          * @param host
          * @param port

@@ -17,6 +17,7 @@
 #include "zlib_wrap.hpp"
 #include "case_insensitive_map.h"
 #include "char_array.h"
+#include "local_proxy.h"
 
 namespace plan9 {
 
@@ -1364,12 +1365,30 @@ namespace plan9 {
             }
         }
         static void exec(ahttp::ahttp_impl* http) {
-            if (proxy_port > 0 && proxy_host.length() > 0) {
-                //使用了代理
-                exec_proxy(http);
-            } else {
-                exec_direct(http);
+            auto exec_op = [=]() {
+                if (proxy_port > 0 && proxy_host.length() > 0) {
+                    //使用了代理
+                    exec_proxy(http);
+                } else {
+                    exec_direct(http);
+                };
             };
+            if (auto_use_proxy) {
+                local_proxy::get_proxy([=](std::shared_ptr<std::map<std::string, std::string>> proxy){
+                    if (proxy->find("HTTPPort") != proxy->end() && proxy->find("HTTPProxy") != proxy->end()) {
+                        std::string port = proxy->at("HTTPPort");
+                        proxy_host = proxy->at("HTTPProxy");
+                        proxy_port = atoi(port.c_str());
+                    } else {
+                        proxy_host = "";
+                        proxy_port = -1;
+                    }
+                    exec_op();
+                });
+            } else {
+                exec_op();
+            }
+
         }
         void exec2(std::shared_ptr<ahttp_request> model, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
             info->set_fetch_time();
@@ -1417,8 +1436,17 @@ namespace plan9 {
         }
 
         static void set_proxy(std::string host, int port) {
-            proxy_host = host;
-            proxy_port = port;
+            if (proxy_host != host || port != proxy_port) {
+                if (proxy_port > 0 && proxy_host.length() > 0) {
+                    url_2_http.erase(get_unique_domain(proxy_host, proxy_port));
+                }
+                proxy_host = host;
+                proxy_port = port;
+            }
+        }
+
+        static void set_auto_proxy(bool auto_use) {
+            auto_use_proxy = auto_use;
         }
 
         void set_high_priority() {
@@ -1627,11 +1655,13 @@ namespace plan9 {
         static int max_connection_num;
         static std::string proxy_host;
         static int proxy_port;
+        static bool auto_use_proxy;
     };
 
     std::map<std::string, std::shared_ptr<ahttp::ahttp_impl::http_content>> ahttp::ahttp_impl::url_2_http;
     int ahttp::ahttp_impl::proxy_port = -1;
     std::string ahttp::ahttp_impl::proxy_host = "";
+    bool ahttp::ahttp_impl::auto_use_proxy = false;
 
     int ahttp::ahttp_impl::max_connection_num = 4;
     mutex_wrap ahttp::ahttp_impl::mutex;
@@ -1642,6 +1672,10 @@ namespace plan9 {
 
     ahttp::~ahttp() {
         cancel();
+    }
+
+    void ahttp::set_auto_proxy(bool auto_use) {
+        ahttp_impl::set_auto_proxy(auto_use);
     }
 
     void ahttp::set_proxy(std::string host, int port) {

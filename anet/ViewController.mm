@@ -24,6 +24,7 @@
 #include "cpprest/http_client.h"
 #import "ssl_shake.h"
 #import "log.h"
+#import "local_proxy.h"
 #include <cpprest/filestream.h>
 #include <openssl/ssl.h>
 
@@ -38,6 +39,9 @@ pplx::task<void> task;
         std::shared_ptr<plan9::ssl_interface> ret = std::make_shared<plan9::ssl_shake>();
         return ret;
     });
+
+//    NSDictionary *d = (__bridge NSDictionary *)dic;
+
 //    plan9::ahttp::set_proxy("127.0.0.1", 8888);
     // Do any additional setup after loading the view.
 }
@@ -126,6 +130,10 @@ static int getNum() {
     return 4 + 5;
 }
 
+void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CFErrorRef error) {
+
+}
+
 - (IBAction)click_connect:(id)sender {
 
     /*
@@ -147,11 +155,21 @@ static int getNum() {
 //        return 5 + 4;
 //    }));
 
-    plan9::uv_wrapper::is_ip4("192.168.1.1");
-    plan9::uv_wrapper::is_ip4("1.1.1.1");
-    plan9::uv_wrapper::is_ip4("a.b.c.e");
-    plan9::uv_wrapper::is_ip4("abce");
+//    plan9::uv_wrapper::is_ip4("192.168.1.1");
+//    plan9::uv_wrapper::is_ip4("1.1.1.1");
+//    plan9::uv_wrapper::is_ip4("a.b.c.e");
+//    plan9::uv_wrapper::is_ip4("abce");
 
+//    plan9::local_proxy::get_proxy([=](std::shared_ptr<std::map<std::string, std::string>> p) {
+//        std::map<std::string, std::string>::iterator it = p->begin();
+//        while (it != p->end()) {
+//            std::cout << it->first << ":" << it->second << std::endl;
+//            it ++;
+//        }
+//    });
+    static bool a = true;
+    plan9::ahttp::set_auto_proxy(a);
+    a = !a;
 }
 - (IBAction)click_ssl:(id)sender {
 //    plan9::ahttp_request model;

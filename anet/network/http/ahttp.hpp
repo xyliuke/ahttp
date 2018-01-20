@@ -202,7 +202,6 @@ namespace plan9 {
     };
 
     //TODO 失败的错误类型返回，如SSL握手错误等
-    //TODO 是否使用代理的设置，代理自动发现功能
     class ahttp {
     public:
         ahttp();
@@ -212,6 +211,7 @@ namespace plan9 {
          * 设置是否自动使用代理
          * @param auto_use  true 表示请求时会自动获取代理服务器，并使用代理服务器；
          * false 表示不自动获取最新的代理服务器，而是依赖set_proxy的配置
+         * @note 当auto_use由true修改为false时，自动清空proxy设置
          */
         static void set_auto_proxy(bool auto_use);
 

@@ -27,12 +27,10 @@ static std::shared_ptr<std::map<std::string, std::string>> get_local_proxy() {
 #include <CoreFoundation/CFString.h>
 #include <sstream>
 
-static std::string get_string_value(CFDictionaryRef dic, std::string key);
+static std::string get_string_value(CFDictionaryRef dic, CFStringRef key);
 
-static int get_int_value(CFDictionaryRef dic, std::string key) {
-    const char* k = key.c_str();
-    CFStringRef str = CFStringCreateWithCString(NULL, k, kCFStringEncodingUTF8);
-    const void* value = CFDictionaryGetValue(dic, str);
+static int get_int_value(CFDictionaryRef dic, CFStringRef key) {
+    const void* value = CFDictionaryGetValue(dic, key);
     int ret = 0;
     if (value != NULL) {
         if (CFGetTypeID(value) == CFNumberGetTypeID()) {
@@ -44,10 +42,8 @@ static int get_int_value(CFDictionaryRef dic, std::string key) {
     }
     return ret;
 }
-static std::string get_string_value(CFDictionaryRef dic, std::string key) {
-    const char* k = key.c_str();
-    CFStringRef str = CFStringCreateWithCString(NULL, k, kCFStringEncodingUTF8);
-    const void* value = CFDictionaryGetValue(dic, str);
+static std::string get_string_value(CFDictionaryRef dic, CFStringRef key) {
+    const void* value = CFDictionaryGetValue(dic, key);
     if (value != NULL) {
         if (CFGetTypeID(value) == CFStringGetTypeID()) {
             char buf[100];
@@ -67,16 +63,16 @@ static std::shared_ptr<std::map<std::string, std::string>> get_local_proxy() {
     auto ret = std::make_shared<std::map<std::string, std::string>>();
     CFDictionaryRef dic = CFNetworkCopySystemProxySettings();
 
-    int httpEnable = get_int_value(dic, "HTTPEnable");
+    int httpEnable = get_int_value(dic, kCFNetworkProxiesHTTPEnable);
     if (httpEnable == 1) {
-        (*ret)["HTTPProxy"] = get_string_value(dic, "HTTPProxy");
-        (*ret)["HTTPPort"] = get_string_value(dic, "HTTPPort");
+        (*ret)["HTTPProxy"] = get_string_value(dic, kCFNetworkProxiesHTTPProxy);
+        (*ret)["HTTPPort"] = get_string_value(dic, kCFNetworkProxiesHTTPPort);
     }
 
-    int httpsEnable = get_int_value(dic, "HTTPSEnable");
+    int httpsEnable = get_int_value(dic, kCFNetworkProxiesHTTPSEnable);
     if (httpsEnable == 1) {
-        (*ret)["HTTPSProxy"] = get_string_value(dic, "HTTPSProxy");
-        (*ret)["HTTPSPort"] = get_string_value(dic, "HTTPSPort");
+        (*ret)["HTTPSProxy"] = get_string_value(dic, kCFNetworkProxiesHTTPSProxy);
+        (*ret)["HTTPSPort"] = get_string_value(dic, kCFNetworkProxiesHTTPSPort);
     }
 
     return ret;
@@ -110,6 +106,7 @@ static std::shared_ptr<std::map<std::string, std::string>> get_local_proxy() {
 
 namespace plan9
 {
+    //TODO Android/Windows/Linux平台下代理自动发现功能
     void local_proxy::get_proxy(std::function<void(std::shared_ptr<std::map<std::string, std::string>>)> callback) {
         if (callback) {
             callback(get_local_proxy());

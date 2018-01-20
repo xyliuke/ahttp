@@ -1446,6 +1446,9 @@ namespace plan9 {
         }
 
         static void set_auto_proxy(bool auto_use) {
+            if (auto_use_proxy && !auto_use) {
+                set_proxy("", -1);
+            }
             auto_use_proxy = auto_use;
         }
 

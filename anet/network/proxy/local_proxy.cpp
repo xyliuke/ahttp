@@ -106,7 +106,7 @@ static std::shared_ptr<std::map<std::string, std::string>> get_local_proxy() {
 
 namespace plan9
 {
-    //TODO Android/Windows/Linux平台下代理自动发现功能
+    //TODO Android/Windows/Linux平台下获取代理配置功能
     void local_proxy::get_proxy(std::function<void(std::shared_ptr<std::map<std::string, std::string>>)> callback) {
         if (callback) {
             callback(get_local_proxy());

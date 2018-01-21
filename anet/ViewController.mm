@@ -311,6 +311,7 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //        (*h)["Accept-Encoding"] = "gzip, deflate";
 //        std::string url = "https://124.250.45.37";
     std::string url = "https://api.chesupai.cn";
+    url = "https://api.chesupai.cn/customer/init/init?idfa=C499C8BE-0DCD-4C4F-8AE2-1F6602CBDEFD&dpi=326&versionId=2.9.0&deviceId=07689F82-C9BC-47BD-BD6F-A790A4BCBCC1&screenWH=750%2C1334&osv=iOS11.2&model=x86_64&platform=1&sign=d19016d5fbb3b0312e35f911dcdfcb8d&net=data&deviceModel=iPhone";
 //        ah->set_dns_resolve([=](std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)> callback) {
 //            if (callback) {
 //                std::shared_ptr<common_callback> ccb(new common_callback);
@@ -327,8 +328,8 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
         ah->get(url, h, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
 //            std::cout << response->get_response_length() << std::endl;
             std::cout << response->get_body_string() << std::endl;
-            std::map<std::string, std::string>::iterator it = ah->get_debug_info()->begin();
-            while (it != ah->get_debug_info()->end()) {
+            std::map<std::string, std::string>::iterator it = ah->get_network_info()->begin();
+            while (it != ah->get_network_info()->end()) {
                 std::cout << it->first << ":" << it->second << std::endl;
                 it ++;
             }

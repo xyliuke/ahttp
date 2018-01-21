@@ -208,7 +208,7 @@ namespace plan9 {
         ~ahttp();
 
         /**
-         * 设置是否自动使用代理
+         * 设置是否自动使用代理，默认为false
          * @param auto_use  true 表示请求时会自动获取代理服务器，并使用代理服务器；
          * false 表示不自动获取最新的代理服务器，而是依赖set_proxy的配置
          * @note 当auto_use由true修改为false时，自动清空proxy设置
@@ -216,7 +216,7 @@ namespace plan9 {
         static void set_auto_proxy(bool auto_use);
 
         /**
-         * 设置代理功能
+         * 设置代理功能，当设置set_auto_proxy由true变成false时，要重新设置
          * @param host
          * @param port
          */
@@ -299,22 +299,54 @@ namespace plan9 {
          */
         void set_dns_resolve(std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> callback);
         //各个时间段事件回调
-        //解析DNS后事件
+
+        /**
+         * 解析DNS后事件
+         * @param callback 回调
+         */
         void set_dns_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);
-        //连接服务器后事件
+
+        /**
+         * 连接服务器后事件
+         * @param callback 回调
+         */
         void set_connected_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);
-        //ssl握手成功后的事件
+
+        /**
+         * ssl握手成功后的事件
+         * @param callback 回调
+         */
         void set_ssl_connected_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);
-        //客户端发送数据后事件
+
+        /**
+         * 客户端发送数据后事件
+         * @param callback 回调
+         */
         void set_send_event_callback(std::function<void(std::shared_ptr<common_callback>, long sent, long total)> callback);
-        //读取数据事件，每次读取数据都会触发，调用download函数时不要使用这个事件
+
+        /**
+         * 读取数据事件，每次读取数据都会触发，调用download函数时不要使用这个事件
+         * @param callback 回调
+         */
         void set_read_event_callback(std::function<void(std::shared_ptr<common_callback>, long size)> callback);
-        //第一次读到数据的事件
+
+        /**
+         * 第一次读到数据的事件
+         * @param callback 回调
+         */
         void set_read_begin_event_callback(std::function<void(std::shared_ptr<common_callback>)> callback);
-        //最后一次读到数据的事件
+
+        /**
+         * 最后一次读到数据的事件
+         * @param callback 回调
+         */
         void set_read_end_event_callback(std::function<void(std::shared_ptr<common_callback>, long)> callback);
 
-        std::shared_ptr<std::map<std::string, std::string>> get_debug_info();
+        /**
+         * 获取请求过程中网络相关数据信息
+         * @return 返回kv格式的请求数据
+         */
+        std::shared_ptr<std::map<std::string, std::string>> get_network_info();
 
     private:
         class ahttp_impl;

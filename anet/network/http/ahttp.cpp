@@ -1061,7 +1061,7 @@ namespace plan9 {
 
     public:
         ahttp_impl() : timer_id(-1), read_begin(false), low_priority(false),
-                       dns_resolve_callback(std::bind(&uv_wrapper::resolve, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
+                       dns_resolve_callback(nullptr),
                         validate_domain(false), validate_cert(false), info(std::make_shared<http_info>()) {
 
         }
@@ -1256,7 +1256,7 @@ namespace plan9 {
                         } else {
                             //TODO 处理dns解析问题，包括定制dns解析；如果解析成多个ip后，第一个ip连接失败的情况
                             http->info->set_dns_start_time();
-                            http->dns_resolve_callback(http->request->get_domain(), http->request->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips){
+                            http->get_dns_resolve()(http->request->get_domain(), http->request->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips){
                                 http->info->set_dns_end_time();
                                 http->send_dns_event(ccb);
                                 if (ccb->success) {
@@ -1633,6 +1633,17 @@ namespace plan9 {
             auto tcp_info = uv_wrapper::get_info(tcp_id);
             info->set_local_ip_port((*tcp_info)["local_ip"], (*tcp_info)["local_port"]);
         }
+
+        std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> get_dns_resolve() {
+            if (dns_resolve_callback) {
+                return dns_resolve_callback;
+            }
+            static std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> default_dns_resolve = nullptr;
+            if (!default_dns_resolve) {
+                default_dns_resolve = std::bind(&uv_wrapper::resolve, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+            }
+            return default_dns_resolve;
+        }
         
         static std::map<std::string, std::shared_ptr<http_content>> url_2_http;
 
@@ -1772,7 +1783,7 @@ namespace plan9 {
         impl->upload(url, file, header, process_callback, callback);
     }
 
-    std::shared_ptr<std::map<std::string, std::string>> ahttp::get_debug_info() {
+    std::shared_ptr<std::map<std::string, std::string>> ahttp::get_network_info() {
         return impl->get_debug_info();
     }
 

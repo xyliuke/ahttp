@@ -742,7 +742,7 @@ namespace plan9 {
             (*ret)["remote_ip"] = content->remote_ip;
             (*ret)["local_ip"] = content->local_ip;
             std::stringstream ss;
-            ss << content->remote_ip;
+            ss << content->remote_port;
             (*ret)["remote_port"] = ss.str();
             std::stringstream sss;
             sss << content->local_port;

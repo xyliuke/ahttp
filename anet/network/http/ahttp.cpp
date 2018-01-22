@@ -43,7 +43,15 @@ namespace plan9 {
             push("fetch", ss.str());
         }
 
-        void set_ip(std::string ip, int port) {
+        void set_remote_ip_port(std::string ip, int port) {
+            std::stringstream ss;
+            ss << ip;
+            ss << ":";
+            ss << port;
+            push("remote", ss.str());
+        }
+
+        void set_remote_ip_port(std::string ip, std::string port) {
             std::stringstream ss;
             ss << ip;
             ss << ":";
@@ -1262,7 +1270,6 @@ namespace plan9 {
                                 if (ccb->success) {
                                     if (ips->size() > 0) {
                                         std::string ip = (*ips)[0];
-                                        http->info->set_ip(ip, http->request->get_port());
                                         exec_new_connect(http, http->request->get_domain(), ip, http->request->get_port());
                                     }
                                 }
@@ -1306,7 +1313,7 @@ namespace plan9 {
                 }
 
                 auto connect_op = [=](std::string ip, int port) {
-                    http->info->set_ip(ip, port);
+                    http->info->set_remote_ip_port(ip, port);
                     http->info->set_reused_tcp(false);
                     http->info->set_connect_start_time();
                     uv_wrapper::connect(ip, port, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
@@ -1632,6 +1639,7 @@ namespace plan9 {
         void set_local_info(int tcp_id) {
             auto tcp_info = uv_wrapper::get_info(tcp_id);
             info->set_local_ip_port((*tcp_info)["local_ip"], (*tcp_info)["local_port"]);
+            info->set_remote_ip_port((*tcp_info)["remote_ip"], (*tcp_info)["remote_port"]);
         }
 
         std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> get_dns_resolve() {

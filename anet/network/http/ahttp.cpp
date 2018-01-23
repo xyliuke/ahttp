@@ -1403,7 +1403,9 @@ namespace plan9 {
                         content->add_connected_list(tcp_id, http);
                         send_op(tcp_id);
                     }, [=](int tcp_id, std::shared_ptr<char> data, int len) {
+                        mutex.lock();
                         auto http_list = get_http_list(tcp_id);
+                        mutex.unlock();
                         if (http_list) {
                             if (http_list->size() > 0) {
                                 auto h = http_list->at(0);
@@ -1686,6 +1688,7 @@ namespace plan9 {
         }
 
         bool append(std::shared_ptr<char> data, int len) {
+            mutex.lock();
             if (!response) {
                 response.reset(new ahttp_response);
             }
@@ -1696,6 +1699,7 @@ namespace plan9 {
                 info->set_response_data_size((int)(response->get_response_length()));
                 send_read_end_event(nullptr, response->get_response_length());
             }
+            mutex.unlock();
             return isEnd;
         }
 

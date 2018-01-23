@@ -260,13 +260,15 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //    ofstream.flush();
 //    ofstream.close();
 //    req->set_timeout(5);
-    int i = 0;
-//    for (int i = 0; i < 1; ++i) {
-//        static std::vector<std::shared_ptr<ahttp>> list;
-//        std::shared_ptr<ahttp> ah;
+    int max = 10;
+    static std::vector<std::shared_ptr<ahttp>> list;
+    list.clear();
+    for (int i = 0; i < max; ++i) {
+
+        std::shared_ptr<ahttp> ah;
         ah.reset(new ahttp);
 //    ah.reset();
-//        list.push_back(ah);
+        list.push_back(ah);
 
     /*
         ah->set_dns_event_callback([=](std::shared_ptr<common_callback> ccbo) {
@@ -347,7 +349,7 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //        if (i == 0) {
 //            sleep(3);
 //        }
-//    }
+    }
 //    ssl_shake ssl;
 //    ssl.do_shake(0, nullptr);
 }

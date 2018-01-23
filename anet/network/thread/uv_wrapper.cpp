@@ -610,7 +610,7 @@ namespace plan9 {
     }
 
     void uv_wrapper::reconnect(int tcp_id) {
-        //TODO 待实现
+        //TODO TCP重连待实现
 
     }
 

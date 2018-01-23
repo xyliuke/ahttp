@@ -267,6 +267,7 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 
         std::shared_ptr<ahttp> ah;
         ah.reset(new ahttp);
+        ah->set_low_priority();
 //    ah.reset();
         list.push_back(ah);
 

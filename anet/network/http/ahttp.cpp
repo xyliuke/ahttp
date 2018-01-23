@@ -1325,8 +1325,8 @@ namespace plan9 {
                 //没有空闲的tcp链路或者没有tcp链路
                 if (content->get_all_http_num() < max_connection_num) {
                     //一个域名连接的tcp小于最大连接数
-                    if (http->low_priority) {
-                        content->add_connected_list(tcp_id, http);
+                    if (http->low_priority && content->get_all_http_num() > 0) {
+                        content->add_unconnected_list(http);
                     } else {
                         //创建新的链路
                         content->add_unconnected_list(http);

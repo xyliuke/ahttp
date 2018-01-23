@@ -978,7 +978,6 @@ namespace plan9 {
         private:
             std::map<int, std::shared_ptr<std::vector<ahttp_impl*>>> tcp_http_map;
             std::set<ahttp_impl*> unconnected_list;
-            std::string domain;
         public:
 
             ahttp_impl* get_next(int tcp_id) {
@@ -991,6 +990,26 @@ namespace plan9 {
                     unconnected_list.erase(unconnected_list.begin());
                     list->push_back(http);
                     return http;
+                }
+
+                auto it = get_begin();
+                while (it != get_end()) {
+                    if (it->first != tcp_id) {
+                        auto http_list = it->second;
+                        if (http_list->size() > 1) {
+                            auto itt = http_list->begin();
+                            itt ++;//不取第一个，第一个正在请求中
+                            while (itt != http_list->end()) {
+                                auto http = *itt;
+                                if (http->is_long_time_not_exec()) {
+                                    http_list->erase(itt);
+                                    list->push_back(http);
+                                    return http;
+                                }
+                            }
+                        }
+                    }
+                    it ++;
                 }
                 return nullptr;
             }
@@ -1147,7 +1166,6 @@ namespace plan9 {
         ahttp_impl() : timer_id(-1), read_begin(false), low_priority(false),
                        dns_resolve_callback(nullptr),
                         validate_domain(false), validate_cert(false), info(std::make_shared<http_info>()) {
-
         }
 
         ~ahttp_impl() {
@@ -1496,6 +1514,10 @@ namespace plan9 {
                     }
                 }, model->get_timeout() * 1000, 0);
             }
+            //设置调用初始化时间
+            auto tp = std::chrono::system_clock::now();
+            time = tp.time_since_epoch().count();
+
             ahttp_impl::exec(this);
         }
 
@@ -1728,6 +1750,12 @@ namespace plan9 {
             }
             return default_dns_resolve;
         }
+
+        bool is_long_time_not_exec() {
+            auto tp = std::chrono::system_clock::now();
+            long t = tp.time_since_epoch().count();
+            return t - time > 1000000;
+        }
         
         static std::map<std::string, std::shared_ptr<http_content>> url_2_http;
 
@@ -1749,6 +1777,7 @@ namespace plan9 {
         bool validate_domain;
         bool validate_cert;
         bool low_priority;
+        long time;
         std::shared_ptr<http_info> info;
         static int max_connection_num;
         static std::string proxy_host;

@@ -996,11 +996,11 @@ namespace plan9 {
             }
 
             int get_connected_num() {
-                return tcp_http_map.size();
+                return (int)tcp_http_map.size();
             }
 
             int get_all_http_num() {
-                return tcp_http_map.size() + unconnected_list.size();
+                return (int)(tcp_http_map.size() + unconnected_list.size());
             }
 
             std::map<int, std::shared_ptr<std::vector<ahttp_impl*>>>::iterator get_begin() {

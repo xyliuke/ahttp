@@ -105,7 +105,7 @@ namespace plan9 {
 
         /**
          * 给定的字符串是否为ip格式，包括ip4和ip6
-         * @param str
+         * @param str 字符串参数
          * @return true表示str为ip格式
          */
         static bool is_ip_format(std::string str);
@@ -217,8 +217,8 @@ namespace plan9 {
 
         /**
          * 设置代理功能，当设置set_auto_proxy由true变成false时，要重新设置
-         * @param host
-         * @param port
+         * @param host ip或者域名
+         * @param port 端口号
          */
         static void set_proxy(std::string host, int port);
 
@@ -227,7 +227,7 @@ namespace plan9 {
          * 未达到最大连接数数的请求，在已存在的tcp不空闲时，创建新的连接；存在空闲tcp时，优先复用原来tcp
          * 达到最大连接数时，等待tcp空闲，再复用tcp进行请求
          *
-         * @param max
+         * @param max 最大连接数
          */
         static void set_max_connection(int max);
 

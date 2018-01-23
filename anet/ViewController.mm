@@ -20,16 +20,14 @@
 #import <fstream>
 #include "case_insensitive_map.h"
 #import "char_array.h"
-//#include "cpprest/http_client.h"
-#include "cpprest/http_client.h"
 #import "ssl_shake.h"
 #import "log.h"
 #import "local_proxy.h"
-#include <cpprest/filestream.h>
 #include <openssl/ssl.h>
+#import <openssl/err.h>
 
 std::shared_ptr<plan9::ahttp> ah;
-pplx::task<void> task;
+
 @implementation ViewController
 
 - (void)viewDidLoad {
@@ -53,25 +51,7 @@ pplx::task<void> task;
     // Update the view, if already loaded.
 }
 - (IBAction)click_dns:(id)sender {
-    using namespace web::http::client;
-    using namespace web;                        // Common features like URIs.
-    using namespace web::http;
-    using namespace concurrency::streams;
-    using namespace utility;
-//    http_client client(U("http://www.baidu.com"));
-//    client.request(methods::GET);
-    http_client client(U("https://api.chesupai.cn"));
-    task = client.request(methods::GET).then([](http_response response){
-        std::cout << response.status_code();
-//    Concurrency::streams::streambuf<char> buf;
-        Concurrency::streams::stringstreambuf sbuffer;
-        response.body().read_to_end(sbuffer);
-        std::cout << sbuffer.collection();
-    });
-    
-    task.wait();
-    
-    
+
 //    pplx::task<<#typename _Type#>>
 
 //    auto fileStream = std::make_shared<ostream>();

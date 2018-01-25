@@ -4,6 +4,8 @@
 //
 
 #include "ssl_shake.h"
+#include "cert.h"
+#include "tri_bool.h"
 #include <openssl/ssl.h>
 #include <assert.h>
 #include <iostream>
@@ -12,6 +14,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <map>
+#include <vector>
 
 
 namespace plan9
@@ -49,40 +52,91 @@ namespace plan9
     public:
 
         static std::map<SSL*, ssl_shake_impl*> ssl_impl_map;
+        static std::shared_ptr<std::vector<X509*>> ca;
+
+        static bool verify_cert(X509* cert) {
+            if (ca) {
+                static X509_STORE* store = NULL;
+                if (store == NULL) {
+                    store = X509_STORE_new();
+                    auto it = ca->begin();
+                    while (it != ca->end()) {
+                        X509* x = *it;
+                        X509_STORE_add_cert(store, x);
+                        it ++;
+                    }
+                }
+
+                X509_STORE_CTX* store_ctx = X509_STORE_CTX_new();
+                X509_STORE_CTX_init(store_ctx, store, cert, 0);
+//                X509_STORE_CTX_set_depth(store_ctx, 3);
+                int ret = X509_verify_cert(store_ctx);
+                return ret == 1;
+            }
+            return true;
+        }
 
         static int verify_callback(int ok, X509_STORE_CTX* ctx) {
-//        X509 *cert = X509_STORE_CTX_get_current_cert(ctx);
-//        BIO* bio = BIO_new(BIO_s_mem());
-//        X509_print(bio, cert);
-//        char buf[10240];
-//        int ret = BIO_read(bio, buf, 10240);
-//        printf("%s", buf);
+//            X509* cert = X509_STORE_CTX_get_current_cert(ctx);
+//            BIO* bio = BIO_new(BIO_s_mem());
+//            X509_print(bio, cert);
+//            char buf[10240];
+//            int ret = BIO_read(bio, buf, 10240);
+//            printf("%s", buf);
 
-            bool validate_domain = false;
-            bool validate_cert = false;
+
+
             SSL* ssl = (SSL*)X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
             if (ssl_impl_map.find(ssl) != ssl_impl_map.end()) {
                 ssl_shake_impl* impl = ssl_impl_map[ssl];
-                if (impl->validate_domain_bool) {
-                    validate_domain = true;
+                bool validate_domain = impl->validate_domain_bool;
+                bool validate_cert = impl->validate_cert_bool;
+
+                if (validate_domain) {
+                    int  err = X509_STORE_CTX_get_error(ctx);
+                    if (err == X509_V_ERR_HOSTNAME_MISMATCH) {
+                        return 0;
+                    }
+                }
+
+                if (validate_cert) {
+                    if (impl->has_validated_cert == tri_true) {
+                        return 1;
+                    } else if (impl->has_validated_cert == tri_false) {
+                        return 0;
+                    }
+                    stack_st_X509* chain = X509_STORE_CTX_get1_chain(ctx);
+                    int num = sk_X509_num(chain);
+                    if (num > 0) {
+                        X509* v = sk_X509_value(chain, num - 1);
+                        X509_NAME* issuer = X509_get_issuer_name(v);
+                        bool ver = verify_cert(v);
+                        impl->has_validated_cert = tri_true;
+                        if (ver) {
+                            return 1;
+                        } else {
+                            return 0;
+                        }
+                    }
                 }
             }
-            if (validate_domain || validate_cert) {
-                int  err = X509_STORE_CTX_get_error(ctx);
-                if (err == X509_V_ERR_HOSTNAME_MISMATCH && validate_domain) {
-                    return 0;
-                }
-            }
+
             return 1;
         }
 
-        ssl_shake_impl() : buf((char*)malloc(buf_len)), ctx(nullptr), validate_cert_bool(false), validate_domain_bool(false) {
+        ssl_shake_impl() : buf((char*)malloc(buf_len)), ctx(nullptr), validate_cert_bool(false), validate_domain_bool(false),
+                        has_validated_cert(tri_undefined) {
             ssl = SSL_new(get_ssl_ctx());
             read_bio = BIO_new(BIO_s_mem());
             write_bio = BIO_new(BIO_s_mem());
             SSL_set_bio(ssl, read_bio, write_bio);
             SSL_set_verify_depth(ssl, 2);
             ssl_impl_map[ssl] = this;
+            if (!ca) {
+                cert::get_ca_cert([=](std::shared_ptr<std::vector<X509*>> list) mutable {
+                    ca = list;
+                });
+            }
         }
 
         ~ssl_shake_impl() {
@@ -223,19 +277,21 @@ namespace plan9
             }
             return ctx;
         }
-//    private:
+    private:
         SSL_CTX* ctx;
         SSL* ssl;
         BIO* read_bio;
         BIO* write_bio;
         char* buf;
         static int buf_len;
-        bool validate_domain_bool;
-        bool validate_cert_bool;
+        bool validate_domain_bool;//是否验证域名
+        bool validate_cert_bool;//是否验证证书
+        tri_bool has_validated_cert;//已经验证通过了的标志，避免多次验证
     };
 
     int ssl_shake::ssl_shake_impl::buf_len = 10240;
     std::map<SSL*, ssl_shake::ssl_shake_impl*> ssl_shake::ssl_shake_impl::ssl_impl_map;
+    std::shared_ptr<std::vector<X509*>> ssl_shake::ssl_shake_impl::ca;
 
     ssl_shake::ssl_shake( ) : impl(new ssl_shake_impl) {
 

@@ -23,6 +23,7 @@
 #import "ssl_shake.h"
 #import "log.h"
 #import "local_proxy.h"
+#import "cert.h"
 #include <openssl/ssl.h>
 #import <openssl/err.h>
 
@@ -147,9 +148,12 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //            it ++;
 //        }
 //    });
-    static bool a = true;
-    plan9::ahttp::set_auto_proxy(a);
-    a = !a;
+//    static bool a = true;
+//    plan9::ahttp::set_auto_proxy(a);
+//    a = !a;
+//    plan9::cert::get_ca_cert([=](std::shared_ptr<std::vector<X509*>>) {
+//
+//    });
 }
 - (IBAction)click_ssl:(id)sender {
 //    plan9::ahttp_request model;
@@ -240,7 +244,7 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //    ofstream.flush();
 //    ofstream.close();
 //    req->set_timeout(5);
-    int max = 10;
+    int max = 1;
     static std::vector<std::shared_ptr<ahttp>> list;
     list.clear();
     for (int i = 0; i < max; ++i) {
@@ -294,7 +298,7 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //        (*h)["Accept-Encoding"] = "gzip, deflate";
 //        std::string url = "https://124.250.45.37";
     std::string url = "https://api.chesupai.cn";
-    url = "https://api.chesupai.cn/customer/init/init?idfa=C499C8BE-0DCD-4C4F-8AE2-1F6602CBDEFD&dpi=326&versionId=2.9.0&deviceId=07689F82-C9BC-47BD-BD6F-A790A4BCBCC1&screenWH=750%2C1334&osv=iOS11.2&model=x86_64&platform=1&sign=d19016d5fbb3b0312e35f911dcdfcb8d&net=data&deviceModel=iPhone";
+//    url = "https://api.chesupai.cn/customer/init/init?idfa=C499C8BE-0DCD-4C4F-8AE2-1F6602CBDEFD&dpi=326&versionId=2.9.0&deviceId=07689F82-C9BC-47BD-BD6F-A790A4BCBCC1&screenWH=750%2C1334&osv=iOS11.2&model=x86_64&platform=1&sign=d19016d5fbb3b0312e35f911dcdfcb8d&net=data&deviceModel=iPhone";
 //        ah->set_dns_resolve([=](std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)> callback) {
 //            if (callback) {
 //                std::shared_ptr<common_callback> ccb(new common_callback);
@@ -306,8 +310,8 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //        });
 //        std::string url = "http://api.chesupai.cn/customer/detail/info?id=1429449&idfa=11BFBC7A-98EF-4B37-A216-E8DAF0ABAB8B&osv=iOS8.1&net=wifi&screenWH=750%252C1334&deviceId=3200A4C2-C469-469D-A42A-920B1A5A0216&deviceModel=iPhoneSimulator&platform=1&dpi=326&versionId=2.7.3&model=x86_64&pushTYpe=0&sign=9102c932d5e96cd5129b1c35f9baee28";
 
-//        ah->is_validate_domain(true);
-//        ah->is_validate_cert(true);
+        ah->is_validate_domain(true);
+        ah->is_validate_cert(true);
         ah->get(url, h, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
 //            std::cout << response->get_response_length() << std::endl;
             std::cout << response->get_body_string() << std::endl;

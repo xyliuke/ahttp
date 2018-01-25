@@ -5,9 +5,6 @@
 
 #include "local_proxy.h"
 
-#ifdef __APPLE__
-
-#endif
 
 #ifdef _WIN32
 //define something for Windows (32-bit and 64-bit, this part is common)
@@ -75,6 +72,7 @@ static std::shared_ptr<std::map<std::string, std::string>> get_local_proxy() {
         (*ret)["HTTPSPort"] = get_string_value(dic, kCFNetworkProxiesHTTPSPort);
     }
 
+    CFRelease(dic);
     return ret;
 };
 

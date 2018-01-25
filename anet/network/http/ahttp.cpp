@@ -1191,8 +1191,7 @@ namespace plan9 {
                 if (http->request->is_use_ssl()) {
                     http->info->set_ssl_start_time();
                     http->info->set_ssl_end_time();
-                    std::shared_ptr<common_callback> ccb2(new common_callback);
-                    http->send_ssl_connected_event(ccb2);
+                    http->send_ssl_connected_event(common_callback::get());
                 }
                 http->info->set_request_start_time();
                 http->request->get_http_data([=](std::shared_ptr<char> data, int len, int sent, int total){
@@ -1261,16 +1260,14 @@ namespace plan9 {
                 if (http_list) {
                     if (http_list->size() > 0) {
                         auto h = http_list->at(0);
-                        std::shared_ptr<common_callback> ccb(new common_callback);
-                        h->send_read_begin_event(ccb);
+                        h->send_read_begin_event(common_callback::get());
                         if (h->append(data, len)) {
                             mutex.lock();
                             http_list->erase(http_list->begin());
                             uv_wrapper::cancel_timer(h->timer_id);
                             mutex.unlock();
                             if (h->callback != nullptr) {
-                                std::shared_ptr<common_callback> ccb(new common_callback);
-                                h->callback(ccb, h->request, h->response);
+                                h->callback(common_callback::get(), h->request, h->response);
                             }
 
                             exec_reused_connect(tcp_id);
@@ -1352,8 +1349,7 @@ namespace plan9 {
                         if (http->request->is_ip_format(http->request->get_domain())) {
                             http->info->set_dns_start_time();
                             http->info->set_dns_end_time();
-                            std::shared_ptr<common_callback> ccb(new common_callback);
-                            http->send_dns_event(ccb);
+                            http->send_dns_event(common_callback::get());
                             exec_new_connect(http, http->request->get_header("host"), http->request->get_domain(), http->request->get_port());
                         } else {
                             //TODO 如果解析成多个ip后，处理第一个ip连接失败的情况
@@ -1427,16 +1423,14 @@ namespace plan9 {
                         if (http_list) {
                             if (http_list->size() > 0) {
                                 auto h = http_list->at(0);
-                                std::shared_ptr<common_callback> ccb(new common_callback);
-                                h->send_read_begin_event(ccb);
+                                h->send_read_begin_event(common_callback::get());
                                 if (h->append(data, len)) {
                                     mutex.lock();
                                     http_list->erase(http_list->begin());
                                     uv_wrapper::cancel_timer(h->timer_id);
                                     mutex.unlock();
                                     if (h->callback != nullptr) {
-                                        std::shared_ptr<common_callback> ccb(new common_callback);
-                                        h->callback(ccb, h->request, h->response);
+                                        h->callback(common_callback::get(), h->request, h->response);
                                     }
                                     exec_reused_connect(tcp_id);
 
@@ -1506,11 +1500,10 @@ namespace plan9 {
                     info->set_response_start_time();
                     info->set_response_end_time();
                     if (this->callback) {
-                        std::shared_ptr<common_callback> ccb(new common_callback(false, -1, "timeout"));
                         if (!this->response) {
                             this->response.reset(new ahttp_response);
                         }
-                        this->callback(ccb, this->request, this->response);
+                        this->callback(common_callback::get(false, -1, "timeout"), this->request, this->response);
                     }
                 }, model->get_timeout() * 1000, 0);
             }
@@ -1601,7 +1594,7 @@ namespace plan9 {
         }
 
         void get(std::string url, int timeout, std::shared_ptr<std::map<std::string, std::string>>header, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
-            std::shared_ptr<ahttp_request> request(new ahttp_request);
+            auto request = std::make_shared<ahttp_request>();
             request->set_method(ahttp_request::METHOD_GET);
             request->set_url(url);
             request->append_header(header);
@@ -1610,7 +1603,7 @@ namespace plan9 {
         }
 
         void post(std::string url, int timeout, std::shared_ptr<std::map<std::string, std::string>>header, std::shared_ptr<std::map<std::string, std::string>> data, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
-            std::shared_ptr<ahttp_request> request(new ahttp_request);
+            auto request = std::make_shared<ahttp_request>();
             request->set_method(ahttp_request::METHOD_POST);
             request->set_url(url);
             request->append_header(header);
@@ -1621,12 +1614,12 @@ namespace plan9 {
 
 
         void download(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
-            std::shared_ptr<ahttp_request> request(new ahttp_request);
+            auto request = std::make_shared<ahttp_request>();
             request->set_method(ahttp_request::METHOD_GET);
             request->set_url(url);
             request->append_header(header);
             request->set_timeout(0);
-            this->response.reset(new ahttp_response);
+            this->response = std::make_shared<ahttp_response>();
             this->response->set_response_data_file(file);
             if (process_callback) {
                 this->set_read_event_callback([=](std::shared_ptr<common_callback> ccb, int size){
@@ -1638,13 +1631,13 @@ namespace plan9 {
         }
 
         void upload(std::string url, std::string file, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(long current, long total)> process_callback, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
-            std::shared_ptr<ahttp_request> request(new ahttp_request);
+            auto request = std::make_shared<ahttp_request>();
             request->set_method(ahttp_request::METHOD_POST);
             request->set_url(url);
             request->append_header(header);
             request->set_timeout(0);
             request->append_body_data_from_file("file", file);
-            this->response.reset(new ahttp_response);
+            this->response = std::make_shared<ahttp_response>();
             if (process_callback) {
                 this->set_read_event_callback([=](std::shared_ptr<common_callback> ccb, int size){
                     long total = response->get_content_length();
@@ -1715,8 +1708,7 @@ namespace plan9 {
                 response.reset(new ahttp_response);
             }
             bool isEnd = response->append_response_data(data, len);
-            std::shared_ptr<common_callback> ccb(new common_callback);
-            send_read_event(ccb, len);
+            send_read_event(common_callback::get(), len);
             if (isEnd) {
                 info->set_response_data_size((int)(response->get_response_length()));
                 send_read_end_event(nullptr, response->get_response_length());

@@ -42,7 +42,7 @@ namespace plan9 {
     }
 
     std::shared_ptr<std::vector<std::string>> string_parser::split(std::string string, std::string split) {
-        std::shared_ptr<std::vector<std::string>> ret(new std::vector<std::string>);
+        std::shared_ptr<std::vector<std::string>> ret = std::make_shared<std::vector<std::string>>();
         std::string::size_type pos1, pos2;
         pos2 = string.find(split);
         pos1 = 0;

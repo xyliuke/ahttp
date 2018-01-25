@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		6135E0F4A833755B2BCAA7A3 /* case_insensitive_map.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135EE020116A5AAD26F3533 /* case_insensitive_map.cpp */; };
 		6135E438D3BD009B06FAD4FE /* char_array.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135EE04C9CD540286C2F288 /* char_array.cpp */; };
+		6135E503B9322955DCC82318 /* cert.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135E682983C7959B8A20A6F /* cert.cpp */; };
 		6135E548D2903E56BAE7863D /* log.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135E268039E3FF33F1CAC27 /* log.cpp */; };
 		6135E635DFA9CE3FE898B8D4 /* uv_wrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135E2A0832EA6891E99CE15 /* uv_wrapper.cpp */; };
 		6135E7ACAAFA26C0779BA691 /* local_proxy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135E8DC9C579ED31D682F4C /* local_proxy.cpp */; };
@@ -76,9 +77,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		6135E10CD65999C872C88737 /* cert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cert.h; sourceTree = "<group>"; };
 		6135E11C7ED4983B3CCCE153 /* log.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = log.h; sourceTree = "<group>"; };
 		6135E268039E3FF33F1CAC27 /* log.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = log.cpp; sourceTree = "<group>"; };
 		6135E2A0832EA6891E99CE15 /* uv_wrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = uv_wrapper.cpp; sourceTree = "<group>"; };
+		6135E682983C7959B8A20A6F /* cert.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cert.cpp; sourceTree = "<group>"; };
 		6135E6B9D46676ED51DB9239 /* char_array.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = char_array.h; sourceTree = "<group>"; };
 		6135E704B9E6706E0E22DE95 /* ssl_shake.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ssl_shake.h; sourceTree = "<group>"; };
 		6135E8DC9C579ED31D682F4C /* local_proxy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = local_proxy.cpp; sourceTree = "<group>"; };
@@ -271,6 +274,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6135E0D629C340EAD0677074 /* cert */ = {
+			isa = PBXGroup;
+			children = (
+				6135E682983C7959B8A20A6F /* cert.cpp */,
+				6135E10CD65999C872C88737 /* cert.h */,
+			);
+			path = cert;
+			sourceTree = "<group>";
+		};
 		6135E6D8F874B4EDBB928686 /* ssl */ = {
 			isa = PBXGroup;
 			children = (
@@ -390,6 +402,7 @@
 				E385F4111F973DAC00E26281 /* http */,
 				6135E6D8F874B4EDBB928686 /* ssl */,
 				6135E80A068A0E3FEB2753DA /* proxy */,
+				6135E0D629C340EAD0677074 /* cert */,
 			);
 			path = network;
 			sourceTree = "<group>";
@@ -676,6 +689,7 @@
 				6135EF0C82C54E698B5C34C8 /* ssl_shake.cpp in Sources */,
 				6135E548D2903E56BAE7863D /* log.cpp in Sources */,
 				6135E7ACAAFA26C0779BA691 /* local_proxy.cpp in Sources */,
+				6135E503B9322955DCC82318 /* cert.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

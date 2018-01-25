@@ -9,8 +9,8 @@
 #ifndef common_callback_hpp
 #define common_callback_hpp
 
-#include <stdio.h>
 #include <string>
+#include <memory>
 
 namespace plan9
 {
@@ -21,6 +21,14 @@ public:
     }
 
     common_callback() : success(true), error_code(0), reason("success"){
+    }
+
+    inline static std::shared_ptr<common_callback> get() {
+        return std::make_shared<common_callback>();
+    }
+
+    inline static std::shared_ptr<common_callback> get(bool success_, int error_code_, std::string reason_) {
+        return std::make_shared<common_callback>(success_, error_code_, reason_);
     }
 
     bool success;

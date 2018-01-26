@@ -369,7 +369,7 @@ namespace plan9 {
 
     static void on_resolved(uv_getaddrinfo_t *resolver, int status, struct addrinfo *res) {
         if (status >= 0) {
-            std::shared_ptr<std::vector<std::string>> ret(new std::vector<std::string>);// = res->ai_addrlen
+            std::shared_ptr<std::vector<std::string>> ret = std::make_shared<std::vector<std::string>>();// = res->ai_addrlen
             struct addrinfo *next = res;
             while (next != nullptr) {
                 if (next->ai_family == PF_INET) {
@@ -387,8 +387,7 @@ namespace plan9 {
             }
             if (resolver != nullptr && resolver->data != nullptr) {
                 auto func = (function_wrap<std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>> *) resolver->data;
-                std::shared_ptr<common_callback> cb(new common_callback);
-                func->function(cb, ret);
+                func->function(common_callback::get(), ret);
                 delete resolver->data;
                 resolver->data = nullptr;
             }
@@ -396,8 +395,7 @@ namespace plan9 {
             std::string reason = std::string(uv_err_name(status));
             if (resolver != nullptr && resolver->data != nullptr) {
                 auto func = (function_wrap<std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>> *) resolver->data;
-                std::shared_ptr<common_callback> cb(new common_callback(false, -1, reason));
-                func->function(cb, nullptr);
+                func->function(common_callback::get(false, -1, reason), nullptr);
                 delete resolver->data;
                 resolver->data = nullptr;
             }
@@ -414,8 +412,7 @@ namespace plan9 {
             std::shared_ptr<std::vector<std::string>>)> callback) {
         if (loop == nullptr) {
             if (callback) {
-                std::shared_ptr<common_callback> cb(new common_callback(false, -1, "loop must be init"));
-                callback(cb, nullptr);
+                callback(common_callback::get(false, -1, "loop must be init"), nullptr);
             }
             return;
         }
@@ -433,8 +430,7 @@ namespace plan9 {
         int ret = uv_getaddrinfo(loop, resolver, on_resolved, url.c_str(), p.c_str(), &hints);
         if (ret) {
             if (callback) {
-                std::shared_ptr<common_callback> cb(new common_callback(false, -1, "call getadrinfo fail"));
-                callback(cb, nullptr);
+                callback(common_callback::get(false, -1, "call getadrinfo fail"), nullptr);
             }
         }
     }
@@ -454,8 +450,7 @@ namespace plan9 {
                             } else if (len < 0) {
                                 //ssl connected
                                 if (content->ssl_connect_callback) {
-                                    std::shared_ptr<common_callback> ccb(new common_callback);
-                                    content->ssl_connect_callback(ccb, content->tcp_id);
+                                    content->ssl_connect_callback(common_callback::get(), content->tcp_id);
                                 }
                             } else {
                                 if (content->read_callback) {
@@ -520,8 +515,7 @@ namespace plan9 {
                     uv_read_start((uv_stream_t*)tcp_handle, alloc_callback, read_callback);
 
                     if (content->connect_callback != nullptr) {
-                        std::shared_ptr<common_callback> ccb(new common_callback);
-                        content->connect_callback(ccb, content->tcp_id);
+                        content->connect_callback(common_callback::get(), content->tcp_id);
                     }
 
                     if (content->ssl_enable && content->ssl_impl) {
@@ -531,14 +525,12 @@ namespace plan9 {
                 } else {
                     std::string reason = std::string(uv_err_name(status));
                     if (content->connect_callback != nullptr) {
-                        std::shared_ptr<common_callback> ccb(new common_callback(false, status, reason));
-                        content->connect_callback(ccb, content->tcp_id);
+                        content->connect_callback(common_callback::get(false, status, reason), content->tcp_id);
                     }
                 }
             } else if (handle->type == UV_DISCONNECT) {
                 if (content->close_callback) {
-                    std::shared_ptr<common_callback> ccb(new common_callback);
-                    content->close_callback(ccb, content->tcp_id);
+                    content->close_callback(common_callback::get(), content->tcp_id);
                 }
             }
             free(handle);
@@ -558,8 +550,7 @@ namespace plan9 {
             std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback) {
         if (loop == nullptr) {
             if (connect_callback) {
-                std::shared_ptr<common_callback> cb(new common_callback(false, -1, "loop must be init"));
-                connect_callback(cb, -1);
+                connect_callback(common_callback::get(false, -1, "loop must be init"), -1);
             }
             return;
         }
@@ -623,8 +614,7 @@ namespace plan9 {
             tcp_id_2_content.erase(tcp_id);
             uv_close((uv_handle_t*)(content->tcp), nullptr);
             if (content->close_callback) {
-                std::shared_ptr<common_callback> ccb(new common_callback);
-                content->close_callback(ccb, tcp_id);
+                content->close_callback(common_callback::get(), tcp_id);
             }
         }
     }

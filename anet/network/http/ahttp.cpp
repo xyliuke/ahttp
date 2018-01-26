@@ -413,47 +413,55 @@ namespace plan9 {
                 callback(http->get_data(), http->get_len(), 0, http->get_len());
 
                 //TODO上传文件
-//                get_http_data_from_file(http.length(), callback);
+                get_http_data_from_file(http->get_len(), callback);
             }
         }
 
-        void get_http_data_from_file(long send, std::function<void(char* data, long len, long sent, long total)> callback) {
+        void get_http_data_from_file(long send, std::function<void(std::shared_ptr<char> data, long len, long sent, long total)> callback) {
             if (callback && data_from_file && data_from_file->size() > 0) {
                 using namespace std;
 
-                std::function<void(char*, long, long)> func = bind(callback, placeholders::_1, placeholders::_2, placeholders::_3, 10);
-
+                long total = 0;
                 std::map<std::string, std::string>::const_iterator it = data_from_file->begin();
+                //计算文件大小
+                while (it != data_from_file->end()) {
+                    string file = it->second;
+                    ifstream ifs(file, ios::binary | ios::in);
+                    total += ifs.tellg();
+                }
+
+                std::function<void(std::shared_ptr<char>, long, long)> func = bind(callback, placeholders::_1, placeholders::_2, placeholders::_3, total);
+
+                it = data_from_file->begin();
                 long send_bytes = send;
                 while (it != data_from_file->end()) {
-                    stringstream ss;
-                    ss << boundary;
-                    ss << "\r\nContent-Disposition: form-data;name=\"";
-                    ss << it->first;
-                    ss << "\"\r\n";
-                    char* buf1 = (char*)malloc(ss.str().length());
-                    memcpy(buf1, (char*)(ss.str().c_str()), ss.str().length());
-                    func(buf1, ss.str().length(), send_bytes);
-                    send_bytes += ss.str().length();
+
+                    auto ss = std::make_shared<char_array>();
+                    *ss << boundary;
+                    *ss << "\r\nContent-Disposition: form-data;name=\"";
+                    *ss << it->first;
+                    *ss << "\"\r\n";
+
+                    func(ss->get_data(), ss->get_len(), send_bytes);
+                    send_bytes += ss->get_len();
 
                     string file = it->second;
                     ifstream ifs(file, ios::binary | ios::in);
+                    long count = ifs.tellg();
                     if (ifs.is_open()) {
                         while (!ifs.eof()) {
-                            char* buf = (char*) malloc(1024);
-                            ifs.read(buf, 1024);
-                            func(buf, ifs.gcount(), send_bytes);
+                            auto buf = std::make_shared<char_array>(1024);
+                            ifs.read(buf->get_data_ptr(), buf->get_cap());
+                            func(buf->get_data(), ifs.gcount(), send_bytes);
                             send_bytes += ifs.gcount();
                         }
                     }
 
-                    stringstream sss;
-                    sss << "\r\n";
-                    sss << boundary;
-                    char* buf2 = (char*)malloc(ss.str().length());
-                    memcpy(buf2, (char*)(sss.str().c_str()), sss.str().length());
-                    func(buf2, sss.str().length(), send_bytes);
-                    send_bytes += sss.str().length();
+                    auto sss = std::make_shared<char_array>();
+                    *sss << "\r\n";
+                    *sss << boundary;
+                    func(sss->get_data(), sss->get_len(), send_bytes);
+                    send_bytes += sss->get_len();
 
                     it ++;
                 }

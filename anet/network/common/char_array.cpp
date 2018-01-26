@@ -53,6 +53,9 @@ namespace plan9
     int char_array::get_len() {
         return len;
     }
+    int char_array::get_cap() {
+        return cap;
+    }
 
     std::string char_array::to_string() {
         return std::string(data.get(), len);

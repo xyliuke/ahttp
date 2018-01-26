@@ -21,6 +21,7 @@ namespace plan9 {
         void insert(char* data, int len, int pos);
         void erase(int pos, int len);
         int get_len();
+        int get_cap();
         char* get_data_ptr();
         std::shared_ptr<char> get_data();
         std::string to_string();

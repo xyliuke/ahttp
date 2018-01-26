@@ -261,7 +261,7 @@ namespace plan9 {
             if (data && data->size() > 0) {
                 if (boundary == "") {
                     boundary = get_boundary_string();
-                    header->add("Content-Type", "Content-Type:multipart/form-data;boundary=" + boundary);
+                    header->add("Content-Type", "multipart/form-data;boundary=" + boundary);
                 }
                 if (!this->data) {
                     this->data.reset(new std::map<std::string, std::string>);
@@ -362,18 +362,21 @@ namespace plan9 {
         std::shared_ptr<char_array> get_http_body_string(){
             std::shared_ptr<char_array> ret;
             if (data && data->size() > 0) {
-                ret.reset(new char_array);
+                ret.reset(new char_array(1024));
+                ret->append("--");
                 ret->append(boundary);
                 std::map<std::string, std::string>::const_iterator it = data->begin();
                 while (it != data->end()) {
                     ret->append("\r\nContent-Disposition: form-data;name=\"");
                     ret->append(it->first);
-                    ret->append("\r\n");
+                    ret->append("\"\r\n\r\n");
                     ret->append(it->second);
                     ret->append("\r\n");
+                    ret->append("--");
                     ret->append(boundary);
                     it ++;
                 }
+                ret->append("--");
             }
             return ret;
         }

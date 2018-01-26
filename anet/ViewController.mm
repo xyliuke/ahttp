@@ -154,6 +154,7 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //    plan9::cert::get_ca_cert([=](std::shared_ptr<std::vector<X509*>>) {
 //
 //    });
+    [self post];
 }
 - (IBAction)click_ssl:(id)sender {
 //    plan9::ahttp_request model;
@@ -339,7 +340,31 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //    ssl.do_shake(0, nullptr);
 }
 
+- (void) post {
+    using namespace plan9;
+    static std::shared_ptr<ahttp> http = std::make_shared<ahttp>();
+    auto h = std::make_shared<std::map<std::string, std::string>>();
+    (*h)["Accept"] = "*/*";
+    (*h)["accept-encoding"] = "gzip, deflate";
+    (*h)["User-Agent"] = "PostmanRuntime/7.1.1";
 
+    auto data = std::make_shared<std::map<std::string, std::string>>();
+    (*data)["cityIds"] =  "12";
+    (*data)["sourceIds"] =  "1754599,1754009,1766477,1754003,1766557,1708424,1630764,1766423,1746491,1740561,1766380,1766363,1766317,1766310,1766417,1710087,1766256,1740466,1766228,1766111";
+    (*data)["type"] = "1";
+
+    http->post("https://api.chesupai.cn/exposure/changedCarSourceInfo?idfa=01D4B665-11AB-45FA-A8EB-2172CA06A566&dpi=326&versionId=2.9.0&deviceId=FDAB131D-04B6-475A-8C82-A48FC5EA4FEE&screenWH=750%2C1334&osv=iOS11.2&model=x86_64&platform=1&sign=8b40155f6a3ab16946e3d3eb6976bca4&net=wifi&deviceModel=iPhone",
+            h, data, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
+        std::cout << request->to_string() << std::endl;
+                std::cout << response->get_body_string() << std::endl;
+        std::map<std::string, std::string>::iterator it = http->get_network_info()->begin();
+        while (it != http->get_network_info()->end()) {
+            std::cout << it->first << ":" << it->second << std::endl;
+            it ++;
+        }
+
+    });
+}
 
 - (void) ssl_connect_direct {
     int sockfd = -1;

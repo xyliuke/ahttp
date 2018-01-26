@@ -170,14 +170,12 @@ namespace plan9
                     if (ret > 0) {
                         int bytes_read = 0;
                         while((bytes_read = BIO_read(write_bio, buf, buf_len)) > 0) {
-                            std::shared_ptr<common_callback> ccb(new common_callback);
-                            callback(ccb, buf, bytes_read);
+                            callback(common_callback::get(), buf, bytes_read);
                         }
                         return;
                     }
                 }
-                std::shared_ptr<common_callback> ccb(new common_callback(false, -1, "ssl write error"));
-                callback(ccb, nullptr, -1);
+                callback(common_callback::get(false, -1, "ssl write error"), nullptr, -1);
             }
         }
 
@@ -187,8 +185,7 @@ namespace plan9
             bool finish = do_shake_finish(tcp_id);
             if (finish) {
                 if (callback) {
-                    std::shared_ptr<common_callback> ccb(new common_callback);
-                    callback(ccb);
+                    callback(common_callback::get());
                 }
             }
         }
@@ -199,9 +196,9 @@ namespace plan9
                     int ret = BIO_write(read_bio, data, len);
                     if (ret >= 0) {
                         static int num = 10240;
-                        std::shared_ptr<char> buf((char*) malloc(num));
+                        std::shared_ptr<char> buf(new char[num]{});
                         ret = SSL_read(ssl, buf.get(), num);
-                        std::shared_ptr<common_callback> ccb(new common_callback);
+                        std::shared_ptr<common_callback> ccb = std::make_shared<common_callback>();
                         if (ret < 0) {
                             ccb->success = false;
                             ccb->error_code = -1;
@@ -218,8 +215,7 @@ namespace plan9
                 int written = BIO_write(read_bio, data, len);
                 if (written > 0 && do_shake_finish(tcp_id)) {
                     if (callback) {
-                        std::shared_ptr<common_callback> ccb(new common_callback);
-                        callback(ccb, nullptr, -1);
+                        callback(common_callback::get(), nullptr, -1);
                     }
                 }
             }

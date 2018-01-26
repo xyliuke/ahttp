@@ -44,7 +44,6 @@ static std::shared_ptr<std::vector<X509*>> get_system_ca_cert() {
                 d2i_X509(&c, &p, CFDataGetLength(data));
                 list->push_back(c);
             }
-
         }
     }
     CFRelease(array);
@@ -80,7 +79,7 @@ static std::shared_ptr<std::vector<X509*>> get_system_ca_cert() {
 
 namespace plan9
 {
-    //TODO 验证服务器证书
+    //TODO Android/Windows/Linux平台下获取系统证书
     void cert::get_ca_cert(std::function<void(std::shared_ptr<std::vector<X509*>>)> callback) {
         if (callback) {
             callback(get_system_ca_cert());

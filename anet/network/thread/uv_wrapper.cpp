@@ -229,6 +229,9 @@ namespace plan9 {
 
     void uv_wrapper::set_ssl_impl(std::function<std::shared_ptr<ssl_interface>()> callback) {
         ssl_callback = callback;
+        if (ssl_callback) {
+            ssl_callback();//预初始化
+        }
     }
 
     std::shared_ptr<ssl_interface> uv_wrapper::get_ssl_impl_by_tcp_id(int tcp_id) {

@@ -22,7 +22,6 @@ namespace plan9
         void write(char* data, long len, std::function<void(std::shared_ptr<common_callback>, char* data, long len)> callback);
 
         void validate_domain(bool validate);
-        //TODO 添加验证证书功能
         void validate_cert(bool validate);
     private:
         class ssl_shake_impl;

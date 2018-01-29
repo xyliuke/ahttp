@@ -24,6 +24,7 @@
 #import "log.h"
 #import "local_proxy.h"
 #import "cert.h"
+#import "state_machine.h"
 #include <openssl/ssl.h>
 #import <openssl/err.h>
 
@@ -115,6 +116,8 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 
 }
 
+
+
 - (IBAction)click_connect:(id)sender {
 
     /*
@@ -154,7 +157,65 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //    plan9::cert::get_ca_cert([=](std::shared_ptr<std::vector<X509*>>) {
 //
 //    });
-    [self post];
+//    [self post];
+
+    using namespace plan9;
+    using namespace std;
+    class s1 : public plan9::state {
+    public:
+        virtual void on_entry(int event, state_machine& fsm) {
+            std::cout << "s1 entry" << std::endl;
+        }
+        virtual void on_exit(int event, state_machine& fsm) {
+            std::cout << "s1 on_exit" << std::endl;
+        }
+    };
+
+    class s2 : public plan9::state {
+    public:
+        virtual void on_entry(int event, state_machine& fsm) {
+            std::cout << "s2 entry" << std::endl;
+        }
+        virtual void on_exit(int event, state_machine& fsm) {
+            std::cout << "s2 on_exit" << std::endl;
+        }
+    };
+
+    class s3 : public plan9::state {
+    public:
+        virtual void on_entry(int event, state_machine& fsm) {
+            std::cout << "s3 entry" << std::endl;
+        }
+        virtual void on_exit(int event, state_machine& fsm) {
+            std::cout << "s3 on_exit" << std::endl;
+        }
+    };
+
+    class s4 : public plan9::state {
+    public:
+        virtual void on_entry(int event, state_machine& fsm) {
+            std::cout << "s4 entry" << std::endl;
+        }
+        virtual void on_exit(int event, state_machine& fsm) {
+            std::cout << "s4 on_exit" << std::endl;
+        }
+    };
+
+//    transition_row1<s1, s2> r1(1, [=](state_machine& fsm) -> bool {
+//        return true;
+//    });
+
+    state_machine fsm;
+    fsm.rows = {
+            T_ROW(s1, 1, s2, [=](state_machine&) -> bool {
+                return true;
+            }),
+            T_ROW(s2, 2, s3, [=](state_machine&) -> bool {
+                return true;
+            })
+    };
+    fsm.set_init_state<s1>();
+    fsm.process_event(1);
 }
 - (IBAction)click_ssl:(id)sender {
 //    plan9::ahttp_request model;

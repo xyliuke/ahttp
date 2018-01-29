@@ -10,7 +10,7 @@
 #include <functional>
 #include <string>
 
-namespace plna9
+namespace plan9
 {
     class ping {
     public:

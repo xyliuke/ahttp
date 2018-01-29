@@ -104,6 +104,7 @@
 		6135EE2631038C7B62738550 /* tri_bool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tri_bool.h; sourceTree = "<group>"; };
 		6135EE509CAB7DB5304B1CEF /* state_machine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = state_machine.cpp; sourceTree = "<group>"; };
 		6135EE824EB3C8E0AF504C3E /* log.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = log.cpp; sourceTree = "<group>"; };
+		6135EF3EDE2719D2D9BBC420 /* traits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = traits.h; sourceTree = "<group>"; };
 		E342FD401FB33CED00BA7AC1 /* zutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zutil.h; sourceTree = "<group>"; };
 		E342FD411FB33CED00BA7AC1 /* inftrees.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = inftrees.h; sourceTree = "<group>"; };
 		E342FD421FB33CED00BA7AC1 /* inflate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = inflate.c; sourceTree = "<group>"; };
@@ -302,6 +303,14 @@
 			path = state;
 			sourceTree = "<group>";
 		};
+		6135E4EE2C6176295A7B66B0 /* traits */ = {
+			isa = PBXGroup;
+			children = (
+				6135EF3EDE2719D2D9BBC420 /* traits.h */,
+			);
+			path = traits;
+			sourceTree = "<group>";
+		};
 		6135E6ACBADF7ED9D596EC53 /* icmp */ = {
 			isa = PBXGroup;
 			children = (
@@ -461,6 +470,7 @@
 				6135EBD60D657EE0637E750D /* error */,
 				6135E25A0FAF221237B5510D /* state */,
 				6135E88C00C71BF5FF6A919B /* network */,
+				6135E4EE2C6176295A7B66B0 /* traits */,
 			);
 			path = network;
 			sourceTree = "<group>";

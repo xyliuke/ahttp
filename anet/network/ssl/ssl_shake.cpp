@@ -109,7 +109,6 @@ namespace plan9
                     int num = sk_X509_num(chain);
                     if (num > 0) {
                         X509* v = sk_X509_value(chain, num - 1);
-                        X509_NAME* issuer = X509_get_issuer_name(v);
                         bool ver = verify_cert(v);
                         impl->has_validated_cert = tri_true;
                         if (ver) {
@@ -166,7 +165,7 @@ namespace plan9
         void write(char *data, long len, std::function<void(std::shared_ptr<common_callback>, char *data, long len)> callback) {
             if (callback) {
                 if (ssl && write_bio) {
-                    int ret = SSL_write(ssl, data, len);
+                    int ret = SSL_write(ssl, data, (int)len);
                     if (ret > 0) {
                         int bytes_read = 0;
                         while((bytes_read = BIO_read(write_bio, buf, buf_len)) > 0) {
@@ -193,7 +192,7 @@ namespace plan9
         void on_read(int tcp_id, char* data, long len, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<char>, long)> callback) {
             if (SSL_is_init_finished(ssl)) {
                 if (callback) {
-                    int ret = BIO_write(read_bio, data, len);
+                    int ret = BIO_write(read_bio, data, (int)len);
                     if (ret >= 0) {
                         static int num = 10240;
                         std::shared_ptr<char> buf(new char[num]{});
@@ -212,7 +211,7 @@ namespace plan9
                     }
                 }
             } else {
-                int written = BIO_write(read_bio, data, len);
+                int written = BIO_write(read_bio, data, (int)len);
                 if (written > 0 && do_shake_finish(tcp_id)) {
                     if (callback) {
                         callback(common_callback::get(), nullptr, -1);
@@ -266,9 +265,6 @@ namespace plan9
 //                SSL_CTX_set_info_callback(ctx, dummy_ssl_info_callback);
 //                SSL_CTX_set_msg_callback(ctx, dummy_ssl_msg_callback);
                 SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
-                X509_STORE* store = SSL_CTX_get_cert_store(ctx);
-                int count = X509_PURPOSE_get_count();
-                int vp_count = X509_VERIFY_PARAM_get_count();
                 assert(ctx);
             }
             return ctx;

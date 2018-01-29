@@ -202,6 +202,7 @@ namespace plan9 {
     };
 
     //TODO 失败的错误类型返回，如SSL握手错误等
+    //TODO 内部状态使用状态机来实现
     class ahttp {
     public:
         ahttp();

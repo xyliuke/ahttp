@@ -467,7 +467,6 @@ namespace plan9 {
             } else {
                 if (nread > 0) {
                     if (content->read_callback) {
-//                        std::shared_ptr<char> data(buf->base);
                         std::shared_ptr<char> data(new char[buf->len]{});
                         memcpy(data.get(), buf->base, buf->len);
                         content->read_callback(content->tcp_id, data, nread);

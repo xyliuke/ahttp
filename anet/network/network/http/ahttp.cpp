@@ -19,6 +19,7 @@
 #include "case_insensitive_map.h"
 #include "char_array.h"
 #include "local_proxy.h"
+#include "common_callback_err_wrapper.h"
 
 namespace plan9 {
 
@@ -450,7 +451,6 @@ namespace plan9 {
 
                     string file = it->second;
                     ifstream ifs(file, ios::binary | ios::in);
-                    long count = ifs.tellg();
                     if (ifs.is_open()) {
                         while (!ifs.eof()) {
                             auto buf = std::make_shared<char_array>(1024);
@@ -474,8 +474,8 @@ namespace plan9 {
         static std::string get_boundary_string() {
             auto tp = std::chrono::system_clock::now();
             std::stringstream ss;
-            ss << "--------------------------";
-            ss << "Boundary";
+            ss << "--";
+            ss << "Boundary+";
             ss << tp.time_since_epoch().count();
             return ss.str();
         }
@@ -1277,10 +1277,7 @@ namespace plan9 {
                             http_list->erase(http_list->begin());
                             uv_wrapper::cancel_timer(h->timer_id);
                             mutex.unlock();
-                            if (h->callback != nullptr) {
-                                h->callback(common_callback::get(), h->request, h->response);
-                            }
-
+                            h->send_http_callback(common_callback::get());
                             exec_reused_connect(tcp_id);
                         }
                     }
@@ -1373,6 +1370,9 @@ namespace plan9 {
                                         std::string ip = (*ips)[0];
                                         exec_new_connect(http, http->request->get_domain(), ip, http->request->get_port());
                                     }
+                                } else {
+                                    common_callback_err_wrapper::set_err_no(ccb, E_DNS_RESOLVE);
+                                    http->send_http_callback(ccb);
                                 }
                             });
                         }
@@ -1440,9 +1440,7 @@ namespace plan9 {
                                     http_list->erase(http_list->begin());
                                     uv_wrapper::cancel_timer(h->timer_id);
                                     mutex.unlock();
-                                    if (h->callback != nullptr) {
-                                        h->callback(common_callback::get(), h->request, h->response);
-                                    }
+                                    h->send_http_callback(common_callback::get());
                                     exec_reused_connect(tcp_id);
 
                                 }
@@ -1510,12 +1508,7 @@ namespace plan9 {
                     info->set_response_data_size(0);
                     info->set_response_start_time();
                     info->set_response_end_time();
-                    if (this->callback) {
-                        if (!this->response) {
-                            this->response.reset(new ahttp_response);
-                        }
-                        this->callback(common_callback::get(false, -1, "timeout"), this->request, this->response);
-                    }
+                    send_http_callback(common_callback_err_wrapper::get(E_TIME_OUT));
                 }, model->get_timeout() * 1000, 0);
             }
             //设置调用初始化时间
@@ -1713,6 +1706,15 @@ namespace plan9 {
             }
         }
 
+        void send_http_callback(std::shared_ptr<common_callback> ccb) {
+            if (callback) {
+                if (!response) {
+                    response.reset(new ahttp_response);
+                }
+                callback(ccb, request, response);
+            }
+        }
+
         bool append(std::shared_ptr<char> data, int len) {
             mutex.lock();
             if (!response) {
@@ -1786,6 +1788,9 @@ namespace plan9 {
         static std::string proxy_host;
         static int proxy_port;
         static bool auto_use_proxy;
+        typedef enum http_state_ {
+
+        } http_state;
     };
 
     std::map<std::string, std::shared_ptr<ahttp::ahttp_impl::http_content>> ahttp::ahttp_impl::url_2_http;

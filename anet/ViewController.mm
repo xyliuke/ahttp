@@ -314,8 +314,13 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
         ah->is_validate_domain(true);
         ah->is_validate_cert(true);
         ah->get(url, h, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
+            if (ccb->success) {
+                std::cout << response->get_body_string() << std::endl;
+            } else {
+                std::cout << ccb->reason << std::endl;
+            }
 //            std::cout << response->get_response_length() << std::endl;
-            std::cout << response->get_body_string() << std::endl;
+
             std::map<std::string, std::string>::iterator it = ah->get_network_info()->begin();
             while (it != ah->get_network_info()->end()) {
                 std::cout << it->first << ":" << it->second << std::endl;

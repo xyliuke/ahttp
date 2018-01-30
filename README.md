@@ -20,4 +20,4 @@ ahttp是一个学习http client的库，完成了一些基本功能。本工程�
 - 完善HTTP/1.1协议
 - 支持HTTP2
 - 支持WebSocket
-- 
+- 支持ICMP协议，检测服务器是否在线

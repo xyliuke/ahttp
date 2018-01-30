@@ -15,6 +15,7 @@
 		6135E4C52B8D4B326D6A532F /* zutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 6135E1080CAD0EBC7579F1FB /* zutil.c */; };
 		6135E5ADCC043618051FA3AE /* uncompr.c in Sources */ = {isa = PBXBuildFile; fileRef = 6135E7B61D407B3A68DEFDBF /* uncompr.c */; };
 		6135E5B46511E098412FF379 /* compress.c in Sources */ = {isa = PBXBuildFile; fileRef = 6135EC5ECD715781DD1A95C6 /* compress.c */; };
+		6135E6A02E0B0067373D5FBF /* ahttp1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135E9CDC49549AF592A812A /* ahttp1.cpp */; };
 		6135E7CB7AD6C34128D8AA83 /* local_proxy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135EA06C47F575C22D03417 /* local_proxy.cpp */; };
 		6135E807623AB896AE62D8A1 /* uv_wrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6135EC24207771F8A588E1A7 /* uv_wrapper.cpp */; };
 		6135E86C6F5D58B5ED0D7637 /* inftrees.c in Sources */ = {isa = PBXBuildFile; fileRef = 6135EC0474124F12C0C8250E /* inftrees.c */; };
@@ -84,6 +85,8 @@
 		6135E8F90876AD42F14334A5 /* ping.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ping.cpp; sourceTree = "<group>"; };
 		6135E90ACC0D741DCFA21BA2 /* case_insensitive_map.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = case_insensitive_map.h; sourceTree = "<group>"; };
 		6135E9168C1F8F727C38A2D3 /* deflate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = deflate.c; sourceTree = "<group>"; };
+		6135E9C91BF56195E759C089 /* ahttp1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ahttp1.h; sourceTree = "<group>"; };
+		6135E9CDC49549AF592A812A /* ahttp1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ahttp1.cpp; sourceTree = "<group>"; };
 		6135E9F78DA32F4711760C76 /* inftrees.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = inftrees.h; sourceTree = "<group>"; };
 		6135EA06C47F575C22D03417 /* local_proxy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = local_proxy.cpp; sourceTree = "<group>"; };
 		6135EA5EF5704B44FE480900 /* string_parser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = string_parser.cpp; sourceTree = "<group>"; };
@@ -372,6 +375,8 @@
 			children = (
 				6135E63BA9AA1D63874FEED6 /* ahttp.cpp */,
 				6135EA8D58B1AA26BC36F31B /* ahttp.hpp */,
+				6135E9CDC49549AF592A812A /* ahttp1.cpp */,
+				6135E9C91BF56195E759C089 /* ahttp1.h */,
 			);
 			path = http;
 			sourceTree = "<group>";
@@ -680,6 +685,7 @@
 				6135E29F22CCC52E7AB1D00D /* ahttp.cpp in Sources */,
 				6135ED3087CB8729C70BBE65 /* ping.cpp in Sources */,
 				6135E807623AB896AE62D8A1 /* uv_wrapper.cpp in Sources */,
+				6135E6A02E0B0067373D5FBF /* ahttp1.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

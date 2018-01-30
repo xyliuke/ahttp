@@ -10,7 +10,7 @@ namespace plan9
 {
 
     class ahttp1::ahttp_impl {
-
+    public:
         ahttp_impl() : fsm(std::make_shared<state_machine>()) {
             STATE_MACHINE_ADD_ROW(fsm.get(), init_state, FETCH, begin_state, [=](state_machine& fsm) -> bool {
                 return true;

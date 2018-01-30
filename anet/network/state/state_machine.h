@@ -97,12 +97,30 @@ namespace plan9 {
 
     class state_machine {
     public:
+        state_machine();
         std::vector<std::shared_ptr<transition_row>> rows;
+        /**
+         * 设置初始状态
+         * @tparam T 状态的类型
+         */
         template <typename T>
         void set_init_state() {
             current = typeid(T).hash_code();
         }
+        /**
+         * 状态机的开始
+         */
+        void start();
+        /**
+         * 触发某个事件
+         * @param event
+         */
         void process_event(int event);
+        /**
+         * 找不到对应的迁移状态后触发的函数
+         * @param begin 触发前的状态
+         * @param event 事件
+         */
         virtual void no_transition(std::shared_ptr<state> begin, int event);
     private:
         size_t current;

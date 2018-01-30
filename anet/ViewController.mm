@@ -189,6 +189,9 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
         virtual void on_exit(int event, state_machine& fsm) {
             std::cout << "s3 on_exit" << std::endl;
         }
+        virtual std::string get_class_name() {
+            return std::string(typeid(this).name());
+        }
     };
 
     class s4 : public plan9::state {
@@ -208,13 +211,18 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
     state_machine fsm;
     fsm.rows = {
             T_ROW(s1, 1, s2, [=](state_machine&) -> bool {
+                std::cout << "1 action" << std::endl;
                 return true;
             }),
             T_ROW(s2, 2, s3, [=](state_machine&) -> bool {
+                std::cout << "2 action" << std::endl;
                 return true;
             })
     };
     fsm.set_init_state<s1>();
+    fsm.start();
+    fsm.process_event(1);
+    fsm.process_event(2);
     fsm.process_event(1);
 }
 - (IBAction)click_ssl:(id)sender {

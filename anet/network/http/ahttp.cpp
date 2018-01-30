@@ -1788,9 +1788,12 @@ namespace plan9 {
         static std::string proxy_host;
         static int proxy_port;
         static bool auto_use_proxy;
-        typedef enum http_state_ {
-
-        } http_state;
+        typedef enum http_event_ {
+            DNS,
+            CONNECT,
+            REQUEST,
+            RESPONSE,
+        } http_event;
     };
 
     std::map<std::string, std::shared_ptr<ahttp::ahttp_impl::http_content>> ahttp::ahttp_impl::url_2_http;

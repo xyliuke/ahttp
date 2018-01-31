@@ -103,6 +103,8 @@ namespace plan9 {
          */
         bool is_use_ssl();
 
+        bool is_ip_format_host();
+
         /**
          * 给定的字符串是否为ip格式，包括ip4和ip6
          * @param str 字符串参数

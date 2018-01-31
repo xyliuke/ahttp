@@ -163,30 +163,30 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
     using namespace std;
     class s1 : public plan9::state {
     public:
-        virtual void on_entry(int event, state_machine& fsm) {
+        virtual void on_entry(int event, state_machine* fsm) {
             std::cout << "s1 entry" << std::endl;
         }
-        virtual void on_exit(int event, state_machine& fsm) {
+        virtual void on_exit(int event, state_machine* fsm) {
             std::cout << "s1 on_exit" << std::endl;
         }
     };
 
     class s2 : public plan9::state {
     public:
-        virtual void on_entry(int event, state_machine& fsm) {
+        virtual void on_entry(int event, state_machine* fsm) {
             std::cout << "s2 entry" << std::endl;
         }
-        virtual void on_exit(int event, state_machine& fsm) {
+        virtual void on_exit(int event, state_machine* fsm) {
             std::cout << "s2 on_exit" << std::endl;
         }
     };
 
     class s3 : public plan9::state {
     public:
-        virtual void on_entry(int event, state_machine& fsm) {
+        virtual void on_entry(int event, state_machine* fsm) {
             std::cout << "s3 entry" << std::endl;
         }
-        virtual void on_exit(int event, state_machine& fsm) {
+        virtual void on_exit(int event, state_machine* fsm) {
             std::cout << "s3 on_exit" << std::endl;
         }
         virtual std::string get_class_name() {
@@ -196,10 +196,10 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 
     class s4 : public plan9::state {
     public:
-        virtual void on_entry(int event, state_machine& fsm) {
+        virtual void on_entry(int event, state_machine* fsm) {
             std::cout << "s4 entry" << std::endl;
         }
-        virtual void on_exit(int event, state_machine& fsm) {
+        virtual void on_exit(int event, state_machine* fsm) {
             std::cout << "s4 on_exit" << std::endl;
         }
     };
@@ -209,15 +209,15 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //    });
     {
         state_machine fsm;
-        STATE_MACHINE_ADD_ROW(&fsm, s1, 1, s2, [=](state_machine&) -> bool {
+        STATE_MACHINE_ADD_ROW(&fsm, s1, 1, s2, [=](state_machine*) -> bool {
             std::cout << "1 action" << std::endl;
             return true;
         });
-        STATE_MACHINE_ADD_ROW(&fsm, s2, 2, s3, [=](state_machine&) -> bool {
+        STATE_MACHINE_ADD_ROW(&fsm, s2, 2, s3, [=](state_machine*) -> bool {
             std::cout << "2 action" << std::endl;
             return false;
         });
-        STATE_MACHINE_ADD_ROW(&fsm, s2, 2, s4, [=](state_machine&) -> bool {
+        STATE_MACHINE_ADD_ROW(&fsm, s2, 2, s4, [=](state_machine*) -> bool {
             std::cout << "2 action" << std::endl;
             return true;
         });

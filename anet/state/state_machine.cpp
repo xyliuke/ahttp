@@ -9,6 +9,10 @@ namespace plan9
 {
     std::map<state_machine*, std::shared_ptr<std::map<size_t, std::shared_ptr<state>>>> transition_row::map_;
 
+    const std::type_info& state::get_type() {
+        return typeid(this);
+    }
+
     state_machine::state_machine() : current(0) {
 
     }
@@ -21,7 +25,7 @@ namespace plan9
         if (current > 0) {
             auto c = transition_row::get(this, current);
             if (c) {
-                c->on_entry(0, *this);
+                c->on_entry(0, this);
             }
         }
     }
@@ -32,16 +36,16 @@ namespace plan9
             auto row = rows[i];
             if (row->is_match(event, current)) {
                 exist = true;
-                if (row->exec_action(*this)) {
+                if (row->exec_action(this)) {
                     auto c_state = transition_row::get(this, current);
                     if (c_state) {
-                        c_state->on_exit(event, *this);
+                        c_state->on_exit(event, this);
                     }
 
                     current = row->get_end();
                     auto n_state = transition_row::get(this, current);
                     if (n_state) {
-                        n_state->on_entry(event, *this);
+                        n_state->on_entry(event, this);
                     }
                     break;
                 }

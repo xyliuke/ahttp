@@ -330,6 +330,10 @@ namespace plan9 {
             return string_parser::to_lower(protocol) == "https";
         }
 
+        bool is_ip_format_host() {
+            return is_ip_format(domain);
+        }
+
         std::shared_ptr<char_array> get_http_method_string () {
             std::shared_ptr<char_array> array = std::make_shared<char_array>(20);
             array->append(method);
@@ -383,6 +387,9 @@ namespace plan9 {
         }
 
         std::string get_domain() {
+            if (is_ip_format_host()) {
+                return get_header("host");
+            }
             return domain;
         }
 
@@ -579,6 +586,10 @@ namespace plan9 {
 
     bool ahttp_request::is_use_ssl() {
         return impl->is_use_ssl();
+    }
+
+    bool ahttp_request::is_ip_format_host() {
+        return impl->is_ip_format_host();
     }
 
     bool ahttp_request::is_ip_format(std::string str) {

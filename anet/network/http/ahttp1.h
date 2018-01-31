@@ -7,6 +7,7 @@
 #define ANET_AHTTP1_H
 
 #include <memory>
+#include "ahttp.hpp"
 
 namespace plan9
 {
@@ -14,7 +15,7 @@ namespace plan9
 
     public:
         ahttp1();
-
+        void exec(std::shared_ptr<ahttp_request> request, std::function<void(std::shared_ptr<common_callback>ccb, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
     private:
         class ahttp_impl;
         std::shared_ptr<ahttp_impl> impl;

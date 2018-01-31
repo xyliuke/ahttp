@@ -20,8 +20,10 @@ namespace plan9 {
 
     class state {
     public:
-        virtual void on_entry(int event, state_machine& fsm) {}
-        virtual void on_exit(int event, state_machine& fsm) {}
+        virtual void on_entry(int event, state_machine* fsm) {}
+        virtual void on_exit(int event, state_machine* fsm) {}
+        virtual const std::type_info& get_type();
+        virtual void exec() {}
     };
 
     class transition_row {
@@ -30,7 +32,7 @@ namespace plan9 {
     public:
 
         template <typename B, typename E>
-        static std::shared_ptr<transition_row> get(state_machine* fsm, int event, std::function<bool(state_machine&)> action) {
+        static std::shared_ptr<transition_row> get(state_machine* fsm, int event, std::function<bool(state_machine*)> action) {
             std::shared_ptr<transition_row> ret = std::make_shared<transition_row>(event, action);
             ret->set_state<B, E>(fsm);
             return ret;
@@ -41,7 +43,7 @@ namespace plan9 {
          * @param event 迁移的事件
          * @param action 迁移的动作，返回true表示同意迁移，返回false表示不同意迁移
          */
-        transition_row(const int event, std::function<bool(state_machine&)> action)
+        transition_row(const int event, std::function<bool(state_machine*)> action)
                 : event_(event), action_(action) {
         }
         /**
@@ -72,7 +74,7 @@ namespace plan9 {
             return event_ == event && begin == b_hash_code;
         }
 
-        bool exec_action(state_machine& fsm) {
+        bool exec_action(state_machine* fsm) {
             if (action_) {
                 return action_(fsm);
             }
@@ -101,7 +103,7 @@ namespace plan9 {
         size_t b_hash_code;
         size_t e_hash_code;
         const int event_;
-        const std::function<bool(state_machine&)> action_;
+        const std::function<bool(state_machine*)> action_;
         static std::map<state_machine*, std::shared_ptr<std::map<size_t, std::shared_ptr<state>>>> map_;
     };
 
@@ -135,7 +137,7 @@ namespace plan9 {
         virtual void no_transition(std::shared_ptr<state> begin, int event);
 
         template <typename B, typename E>
-        void add_row(int event, std::function<bool(state_machine&)> action) {
+        void add_row(int event, std::function<bool(state_machine*)> action) {
             rows.push_back(transition_row::get<B, E>(this, event, action));
         };
     private:

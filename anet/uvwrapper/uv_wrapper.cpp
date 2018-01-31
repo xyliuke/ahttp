@@ -536,13 +536,13 @@ namespace plan9 {
         }
     }
 
-    void uv_wrapper::connect(std::string ip, int port, std::function<void(std::shared_ptr<common_callback>, int tcp_id)> connect_callback,
+    int uv_wrapper::connect(std::string ip, int port, std::function<void(std::shared_ptr<common_callback>, int tcp_id)> connect_callback,
             std::function<void(int, std::shared_ptr<char>, int len)> read_callback,
             std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback) {
-        connect(ip, port, false, "", connect_callback, nullptr, read_callback, close_callback);
+        return connect(ip, port, false, "", connect_callback, nullptr, read_callback, close_callback);
     }
 
-    void uv_wrapper::connect(std::string ip, int port, bool ssl_enable, std::string host,
+    int uv_wrapper::connect(std::string ip, int port, bool ssl_enable, std::string host,
             std::function<void(std::shared_ptr<common_callback>, int)> connect_callback,
             std::function<void(std::shared_ptr<common_callback>, int tcp_id)> ssl_connect_callback,
             std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,
@@ -551,7 +551,7 @@ namespace plan9 {
             if (connect_callback) {
                 connect_callback(common_callback::get(false, -1, "loop must be init"), -1);
             }
-            return;
+            return -1;
         }
 
         static int count = 1;
@@ -591,15 +591,18 @@ namespace plan9 {
 
         uv_tcp_connect(req, tcp, (struct sockaddr*)&addr, connect_event_callback);
 
+        int ret = count;
+
         count ++;
+        return ret;
     }
 
-    void uv_wrapper::connect_ssl(std::string ip, int port, std::string host,
+    int uv_wrapper::connect_ssl(std::string ip, int port, std::string host,
             std::function<void(std::shared_ptr<common_callback>, int)> connect_callback,
             std::function<void(std::shared_ptr<common_callback>, int tcp_id)> ssl_connect_callback,
             std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,
             std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback) {
-        connect(ip, port, true, host, connect_callback, ssl_connect_callback, read_callback, close_callback);
+        return connect(ip, port, true, host, connect_callback, ssl_connect_callback, read_callback, close_callback);
     }
 
     void uv_wrapper::reconnect(int tcp_id) {

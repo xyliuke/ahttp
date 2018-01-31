@@ -55,16 +55,16 @@ namespace plan9 {
         static void resolve(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)> callback);
 
         //TCP 相关
-        static void connect(std::string ip, int port, std::function<void(std::shared_ptr<common_callback>, int tcp_id)> connect_callback,
+        static int connect(std::string ip, int port, std::function<void(std::shared_ptr<common_callback>, int tcp_id)> connect_callback,
                             std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,
                             std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback);
 
-        static void connect(std::string ip, int port, bool ssl_enable, std::string host, std::function<void(std::shared_ptr<common_callback>, int)> connect_callback,
+        static int connect(std::string ip, int port, bool ssl_enable, std::string host, std::function<void(std::shared_ptr<common_callback>, int)> connect_callback,
                 std::function<void(std::shared_ptr<common_callback>, int tcp_id)> ssl_connect_callback,
                 std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,
                 std::function<void(std::shared_ptr<common_callback>, int tcp_id)> close_callback);
 
-        static void connect_ssl(std::string ip, int port, std::string host,
+        static int connect_ssl(std::string ip, int port, std::string host,
                 std::function<void(std::shared_ptr<common_callback>, int)> connect_callback,
                 std::function<void(std::shared_ptr<common_callback>, int tcp_id)> ssl_connect_callback,
                 std::function<void(int tcp_id, std::shared_ptr<char> data, int len)> read_callback,

@@ -31,6 +31,7 @@ namespace plan9
                 get_resolver()(request->get_domain(), request->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips){
                     if (ccb->success) {
                         this->ips = ips;
+                        process_event(DNS_RESOLVE_OK);
                     } else {
                         process_event(DNS_RESOLVE_ERROR);
                     }
@@ -47,6 +48,8 @@ namespace plan9
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, dns_end_state, OPEN, connecting_state, [=](state_machine* fsm) -> bool {
+                //连接TCP
+
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, connecting_state, OPEN_SUCCESS, connected_state, [=](state_machine* fsm) -> bool {
@@ -65,6 +68,7 @@ namespace plan9
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, connected_state, SEND, send_ing_state, [=](state_machine* fsm) -> bool {
+                mgr->send(this);
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, disconnect_state, GIVE_UP, end_state, [=](state_machine* fsm) -> bool {
@@ -193,7 +197,12 @@ namespace plan9
         //dns解析完成
         struct dns_end_state : public state {
             void on_entry(int event, state_machine *fsm) override {
-
+                ahttp_impl* impl = (ahttp_impl*)fsm;
+                if (event == SWITCH_IP) {
+                    //换下一个IP
+                    impl->change_ip();
+                }
+                impl->process_event(OPEN);
             }
 
             void on_exit(int event, state_machine *fsm) override {
@@ -322,9 +331,58 @@ namespace plan9
                 }
             }
 
+            void connect(ahttp_impl* impl) {
+                uv_wrapper::connect(impl->get_ip(), impl->request->get_port(), impl->request->is_use_ssl(), impl->request->get_domain(),
+                        [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
+                            if (ccb->success) {
+                                if (impl->request->is_use_ssl()) {
+                                    impl->process_event(SSL_CONNECT);
+                                } else {
+                                    impl->process_event(SEND);
+                                }
+                            } else {
+                                impl->process_event(CLOSE);
+                            }
+                        }, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
+
+                        }, [=](int tcp_id, std::shared_ptr<char> data, int len) {
+                            ahttp_impl* http = get_http(tcp_id);
+                            if (http) {
+                                bool finish = http->response->append_response_data(data, len);
+                                http->process_event(RECV);
+                                if (finish) {
+                                    http->process_event(RECV_FINISH);
+                                }
+                            }
+                        }, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
+
+                        });
+            }
+
+            void send(ahttp_impl* impl) {
+                //找到对应的TCP_ID
+                int tcp_id = get_tcp_id(impl);
+                impl->request->get_http_data([=](std::shared_ptr<char> data, int len, int sent, int total){
+                    uv_wrapper::write(tcp_id, data, len, [=](std::shared_ptr<common_callback> write_callback){
+                        if (sent >= total) {
+                            //发送完成
+                            impl->process_event(SEND_FINISH);
+                        }
+                    });
+                });
+            }
+
         private:
             bool is_exceed_max_connection_num() {
-                return true;
+                return false;
+            }
+
+            int get_tcp_id(ahttp_impl* impl) {
+                return 1;
+            }
+
+            ahttp_impl* get_http(int tcp_id) {
+                return nullptr;
             }
         };
 
@@ -342,6 +400,15 @@ namespace plan9
         }
         std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> dns_resolve_callback;
         std::shared_ptr<std::vector<std::string>> ips;
+        std::string get_ip() {
+            if (ips && ips->size() > 0) {
+                (*ips)[0];
+            }
+            return "";
+        }
+        void change_ip() {
+            //切换下个可用的IP
+        }
 
     };
 

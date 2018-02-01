@@ -30,6 +30,7 @@ namespace plan9
             });
             STATE_MACHINE_ADD_ROW(this, begin_state, SEND, send_ing_state, [=](state_machine* fsm) -> bool {
                 std::cout << __LINE__ << " : " << "begin_state, SEND, send_ing_state" << std::endl;
+                //TODO 在事件中改变状态，有问题
                 send();
                 return true;
             });
@@ -189,11 +190,15 @@ namespace plan9
                     //重定向
 //                    impl->process_event(SEND);
                 } else {
-                    if (impl->request->is_ip_format_host()) {
-//                    ip直连
-                        impl->process_event(OPEN);
+                    if (impl->is_reused_tcp()) {
+                        impl->process_event(SEND);
                     } else {
-                        impl->process_event(DNS_RESOLVE);
+                        if (impl->request->is_ip_format_host()) {
+//                    ip直连
+                            impl->process_event(OPEN);
+                        } else {
+                            impl->process_event(DNS_RESOLVE);
+                        }
                     }
                 }
 
@@ -349,6 +354,7 @@ namespace plan9
             void on_entry(int event, state_machine *fsm) override {
                 std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
                 ahttp_impl* http = (ahttp_impl*)fsm;
+                http->remove_http();
                 http->send_callback();
             }
 
@@ -358,7 +364,7 @@ namespace plan9
         };
 
         void no_transition(std::shared_ptr<state> begin, int event) override {
-            std::cout << "event " <<  event << std::endl;
+            std::cout << "no transition event " <<  event << std::endl;
             assert(true);
         }
 
@@ -381,6 +387,7 @@ namespace plan9
                     //超过最大连接数
                     impl->process_event(PUSH_WAITING_QUEUE);
                 } else {
+                    assign_reused_tcp(impl);
                     impl->process_event(FETCH);
                 }
             }
@@ -403,6 +410,18 @@ namespace plan9
 
             void switch_ip(ahttp_impl* http) {}
 
+            bool is_reused_tcp(ahttp_impl *http) {
+                if (http && url_tcp->find(http->request->get_domain()) != url_tcp->end()) {
+                    int tcp_id = (*url_tcp)[http->request->get_domain()];
+                    if (uv_wrapper::tcp_alive(tcp_id)) {
+                        return true;
+                    } else {
+                        close(tcp_id);
+                    }
+                }
+                return false;
+            }
+
             void connect(ahttp_impl* impl) {
                 int tcp_id = uv_wrapper::connect(get_ip(impl), impl->request->get_port(), impl->request->is_use_ssl(), impl->request->get_domain(),
                         [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
@@ -422,7 +441,7 @@ namespace plan9
                                 }
                             }
                         }, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
-
+                            close(tcp_id);
                         });
 
                 push(tcp_id, impl);
@@ -439,6 +458,31 @@ namespace plan9
                         }
                     });
                 });
+            }
+
+            void remove_top_http(int tcp_id) {
+                if (tcp_http->find(tcp_id) != tcp_http->end()) {
+                    auto list = (*tcp_http)[tcp_id];
+                    if (list->size() > 0) {
+                        list->erase(list->begin());
+                    }
+                }
+            }
+
+            void remove_http(ahttp_impl* http) {
+                auto it = tcp_http->begin();
+                while (it != tcp_http->end()) {
+                    auto list = it->second;
+                    auto itt = list->begin();
+                    while (itt != list->end()){
+                        if ((*itt) == http) {
+                            list->erase(itt);
+                            return;
+                        }
+                        itt ++;
+                    }
+                    it ++;
+                }
             }
 
         private:
@@ -482,6 +526,28 @@ namespace plan9
                 }
                 list->push_back(http);
             }
+
+            void close(int tcp_id) {
+                tcp_http->erase(tcp_id);
+                auto it = url_tcp->begin();
+                while (it != url_tcp->end()) {
+                    if (it->second == tcp_id) {
+                        url_tcp->erase(it);
+                        break;
+                    }
+                    it ++;
+                }
+            }
+
+            void assign_reused_tcp(ahttp_impl* http) {
+                if (is_reused_tcp(http)) {
+                    int tcp_id = (*url_tcp)[http->request->get_domain()];
+                    if (tcp_id > 0) {
+                        push(tcp_id, http);
+                    }
+                }
+            }
+
             std::shared_ptr<std::map<std::string, std::shared_ptr<std::vector<std::string>>>> url_ips;
             std::shared_ptr<std::map<int, std::shared_ptr<std::vector<ahttp_impl*>>>> tcp_http;
             std::shared_ptr<std::map<std::string, int>> url_tcp;
@@ -517,6 +583,14 @@ namespace plan9
             if (callback) {
                 callback(common_callback::get(), request, response);
             }
+        }
+
+        bool is_reused_tcp() {
+            return mgr->is_reused_tcp(this);
+        }
+
+        void remove_http() {
+            mgr->remove_http(this);
         }
 
     };

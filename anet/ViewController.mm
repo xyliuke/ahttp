@@ -425,7 +425,8 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
     using namespace plan9;
     using namespace std;
 
-    static std::shared_ptr<ahttp1> http = std::make_shared<ahttp1>();
+    static std::shared_ptr<ahttp1> http;
+    http = std::make_shared<ahttp1>();
     auto request = make_shared<ahttp_request>();
     std::string url = "http://api.chesupai.cn";
     request->set_url(url);

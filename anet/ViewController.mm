@@ -25,6 +25,7 @@
 #import "local_proxy.h"
 #import "cert.h"
 #import "state_machine.h"
+#import "ahttp1.h"
 #include <openssl/ssl.h>
 #import <openssl/err.h>
 
@@ -302,16 +303,16 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 
 //    auto tp = std::chrono::system_clock::now();
 //    std::cout << "http " << tp.time_since_epoch().count() / 1000 << std::endl;
-    using namespace plan9;
-    std::shared_ptr<ahttp_request> req(new ahttp_request);
+//    using namespace plan9;
+//    std::shared_ptr<ahttp_request> req(new ahttp_request);
 //    req->set_url("http://api.chesupai.cn");
-    req->set_url("http://cn.bing.com/az/hprichbg/rb/Forest_ZH-CN16430313748_1920x1080.jpg");
+//    req->set_url("http://cn.bing.com/az/hprichbg/rb/Forest_ZH-CN16430313748_1920x1080.jpg");
 //    req->set_url("http://localhost:4567/hello?a=b");
 //    req->set_method("POST");
-    req->append_header("Connection", "keep-alive");
-    req->append_header("Accept", "*/*");
-    req->append_header("Accept-Encoding", "gzip, deflate");
-    req->append_header("Accept-Language", "en-Us,en;q=0.9");
+//    req->append_header("Connection", "keep-alive");
+//    req->append_header("Accept", "*/*");
+//    req->append_header("Accept-Encoding", "gzip, deflate");
+//    req->append_header("Accept-Language", "en-Us,en;q=0.9");
 //    req->append_body_data("a", "b");
 //    std::ofstream ofstream;
 //    ofstream.open("/Users/keliu/Downloads/a.txt", std::ios::app | std::ios::in);
@@ -319,16 +320,16 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //    ofstream.flush();
 //    ofstream.close();
 //    req->set_timeout(5);
-    int max = 1;
-    static std::vector<std::shared_ptr<ahttp>> list;
-    list.clear();
-    for (int i = 0; i < max; ++i) {
+//    int max = 1;
+//    static std::vector<std::shared_ptr<ahttp>> list;
+//    list.clear();
+//    for (int i = 0; i < max; ++i) {
 
-        std::shared_ptr<ahttp> ah;
-        ah.reset(new ahttp);
+//        std::shared_ptr<ahttp> ah;
+//        ah.reset(new ahttp);
 //        ah->set_low_priority();
 //    ah.reset();
-        list.push_back(ah);
+//        list.push_back(ah);
 
     /*
         ah->set_dns_event_callback([=](std::shared_ptr<common_callback> ccbo) {
@@ -368,11 +369,11 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //            std::cout << response->to_string() << std::endl;
 //        });
         
-        std::shared_ptr<std::map<std::string, std::string>> h(new std::map<std::string, std::string>);
+//        std::shared_ptr<std::map<std::string, std::string>> h(new std::map<std::string, std::string>);
 //    (*h)["host"] = "api.chesupai.cn";
 //        (*h)["Accept-Encoding"] = "gzip, deflate";
 //        std::string url = "https://124.250.45.37";
-    std::string url = "https://api.chesupai.cn";
+//    std::string url = "https://api.chesupai.cn";
 //    url = "https://api.chesupai.cn/customer/init/init?idfa=C499C8BE-0DCD-4C4F-8AE2-1F6602CBDEFD&dpi=326&versionId=2.9.0&deviceId=07689F82-C9BC-47BD-BD6F-A790A4BCBCC1&screenWH=750%2C1334&osv=iOS11.2&model=x86_64&platform=1&sign=d19016d5fbb3b0312e35f911dcdfcb8d&net=data&deviceModel=iPhone";
 //        ah->set_dns_resolve([=](std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)> callback) {
 //            if (callback) {
@@ -385,23 +386,23 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //        });
 //        std::string url = "http://api.chesupai.cn/customer/detail/info?id=1429449&idfa=11BFBC7A-98EF-4B37-A216-E8DAF0ABAB8B&osv=iOS8.1&net=wifi&screenWH=750%252C1334&deviceId=3200A4C2-C469-469D-A42A-920B1A5A0216&deviceModel=iPhoneSimulator&platform=1&dpi=326&versionId=2.7.3&model=x86_64&pushTYpe=0&sign=9102c932d5e96cd5129b1c35f9baee28";
 
-        ah->is_validate_domain(true);
-        ah->is_validate_cert(true);
-        ah->get(url, h, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
-            if (ccb->success) {
-                std::cout << response->get_body_string() << std::endl;
-            } else {
-                std::cout << ccb->reason << std::endl;
-            }
-//            std::cout << response->get_response_length() << std::endl;
-
-            std::map<std::string, std::string>::iterator it = ah->get_network_info()->begin();
-            while (it != ah->get_network_info()->end()) {
-                std::cout << it->first << ":" << it->second << std::endl;
-                it ++;
-            }
-
-        });
+//        ah->is_validate_domain(true);
+//        ah->is_validate_cert(true);
+//        ah->get(url, h, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response) {
+//            if (ccb->success) {
+//                std::cout << response->get_body_string() << std::endl;
+//            } else {
+//                std::cout << ccb->reason << std::endl;
+//            }
+////            std::cout << response->get_response_length() << std::endl;
+//
+//            std::map<std::string, std::string>::iterator it = ah->get_network_info()->begin();
+//            while (it != ah->get_network_info()->end()) {
+//                std::cout << it->first << ":" << it->second << std::endl;
+//                it ++;
+//            }
+//
+//        });
 //        ah->download("http://cn.bing.com/az/hprichbg/rb/Forest_ZH-CN16430313748_1920x1080.jpg", "/Users/keliu/Downloads/a.jpg", nullptr, [=](long current, long total){
 //            std::cout << current << "/" << total << std::endl;
 //        }, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request> request, std::shared_ptr<ahttp_response> response){
@@ -414,9 +415,27 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //        if (i == 0) {
 //            sleep(3);
 //        }
-    }
+//    }
 //    ssl_shake ssl;
 //    ssl.do_shake(0, nullptr);
+    [self new_http];
+}
+
+- (void) new_http {
+    using namespace plan9;
+    using namespace std;
+
+    static std::shared_ptr<ahttp1> http = std::make_shared<ahttp1>();
+    auto request = make_shared<ahttp_request>();
+    std::string url = "http://api.chesupai.cn";
+    request->set_url(url);
+    http->exec(request, [=](shared_ptr<common_callback> ccb, shared_ptr<ahttp_request> request, shared_ptr<ahttp_response> response) {
+        if (ccb->success) {
+            std::cout << response->get_body_string() << std::endl;
+        } else {
+            std::cout << ccb->reason << std::endl;
+        }
+    });
 }
 
 - (void) post {

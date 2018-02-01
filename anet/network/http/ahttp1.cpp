@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <set>
+#include <iostream>
 #include "ahttp1.h"
 #include "state_machine.h"
 #include "uv_wrapper.hpp"
@@ -16,21 +17,27 @@ namespace plan9
         ahttp_impl() {
 
             STATE_MACHINE_ADD_ROW(this, init_state, FETCH, begin_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "init_state, FETCH, begin_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, init_state, PUSH_WAITING_QUEUE, wait_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "init_state, PUSH_WAITING_QUEUE, wait_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, wait_state, FETCH, begin_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "wait_state, FETCH, begin_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, begin_state, SEND, send_ing_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "begin_state, SEND, send_ing_state" << std::endl;
+                send();
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, begin_state, DNS_RESOLVE, dns_ing_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "begin_state, DNS_RESOLVE, dns_ing_state" << std::endl;
                 get_resolver()(request->get_domain(), request->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips){
                     if (ccb->success) {
-                        this->ips = ips;
+                        this->push_ips(ips);
                         process_event(DNS_RESOLVE_OK);
                     } else {
                         process_event(DNS_RESOLVE_ERROR);
@@ -39,69 +46,89 @@ namespace plan9
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, dns_ing_state, DNS_RESOLVE_OK, dns_end_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "dns_ing_state, DNS_RESOLVE_OK, dns_end_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, begin_state, OPEN, connecting_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "begin_state, OPEN, connecting_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, dns_ing_state, DNS_RESOLVE_ERROR, end_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "dns_ing_state, DNS_RESOLVE_ERROR, end_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, dns_end_state, OPEN, connecting_state, [=](state_machine* fsm) -> bool {
-                //连接TCP
-
+                std::cout << __LINE__ << " : " << "dns_end_state, OPEN, connecting_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, connecting_state, OPEN_SUCCESS, connected_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "connecting_state, OPEN_SUCCESS, connected_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, connecting_state, CLOSE, disconnect_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "connecting_state, CLOSE, disconnect_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, connected_state, SSL_CONNECT, ssl_ing_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "connected_state, SSL_CONNECT, ssl_ing_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, ssl_ing_state, SSL_CONNECT_SUCCESS, ssl_end_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "ssl_ing_state, SSL_CONNECT_SUCCESS, ssl_end_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, ssl_ing_state, CLOSE, disconnect_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "ssl_ing_state, CLOSE, disconnect_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, connected_state, SEND, send_ing_state, [=](state_machine* fsm) -> bool {
-                mgr->send(this);
+                std::cout << __LINE__ << " : " << "connected_state, SEND, send_ing_state" << std::endl;
+                send();
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, disconnect_state, GIVE_UP, end_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "disconnect_state, GIVE_UP, end_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, disconnect_state, SWITCH_IP, connecting_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "disconnect_state, SWITCH_IP, connecting_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, disconnect_state, RETRY, dns_end_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "disconnect_state, RETRY, dns_end_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, ssl_end_state, SEND, send_ing_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "ssl_end_state, SEND, send_ing_state" << std::endl;
+                send();
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, send_ing_state, SEND_FINISH, send_end_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "send_ing_state, SEND_FINISH, send_end_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, send_end_state, RECV, read_ing_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "send_end_state, RECV, read_ing_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, read_ing_state, RECV_FINISH, read_end_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "read_ing_state, RECV_FINISH, read_end_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, read_end_state, REDIRECT_OUTER, begin_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "read_end_state, REDIRECT_OUTER, begin_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, read_end_state, REDIRECT_INNER, send_ing_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "read_end_state, REDIRECT_INNER, send_ing_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, read_end_state, FORWARD, send_ing_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "read_end_state, FORWARD, send_ing_state" << std::endl;
                 return true;
             });
             STATE_MACHINE_ADD_ROW(this, read_end_state, FINISH, end_state, [=](state_machine* fsm) -> bool {
+                std::cout << __LINE__ << " : " << "read_end_state, FINISH, end_state" << std::endl;
                 return true;
             });
 
@@ -111,7 +138,8 @@ namespace plan9
 
         void exec(std::shared_ptr<ahttp_request> request, std::function<void(std::shared_ptr<common_callback>ccb, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
             this->request = request;
-            this->response = response;
+            this->response = std::make_shared<ahttp_response>();
+            this->callback = callback;
             mgr->push(this);
         }
 
@@ -144,17 +172,18 @@ namespace plan9
         // HTTP的初始状态
         struct init_state : public state {
             void on_entry(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
 
             void on_exit(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
         };
 
         //开始执行请求
         struct begin_state : public state {
             void on_entry(int event, state_machine *fsm) override {
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
                 ahttp_impl* impl = (ahttp_impl*)fsm;
                 if (event == REDIRECT_OUTER) {
                     //重定向
@@ -171,32 +200,33 @@ namespace plan9
             }
 
             void on_exit(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
         };
         //在请求队列中等待
         struct wait_state : public state {
             void on_entry(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
 
             void on_exit(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
         };
         //dns解析中
         struct dns_ing_state : public state {
             void on_entry(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
 
             void on_exit(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
         };
         //dns解析完成
         struct dns_end_state : public state {
             void on_entry(int event, state_machine *fsm) override {
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
                 ahttp_impl* impl = (ahttp_impl*)fsm;
                 if (event == SWITCH_IP) {
                     //换下一个IP
@@ -206,118 +236,142 @@ namespace plan9
             }
 
             void on_exit(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
         };
         //连接中
         struct connecting_state : public state {
             void on_entry(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+                ahttp_impl* http = (ahttp_impl*)fsm;
+                http->mgr->connect(http);
             }
 
             void on_exit(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
         };
         //连接完成
         struct connected_state : public state {
             void on_entry(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+                ahttp_impl* http = (ahttp_impl*)fsm;
+                if (http->request->is_use_ssl()) {
+                    //HTTPS
+                    http->process_event(SSL_CONNECT);
+                } else {
+                    //HTTP
+                    http->process_event(SEND);
+                }
             }
 
             void on_exit(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
         };
         //断开连接
         struct disconnect_state : public state {
             void on_entry(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
 
             void on_exit(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
         };
         //ssl ing
         struct ssl_ing_state : public state {
             void on_entry(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
 
             void on_exit(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
         };
         //ssl end
         struct ssl_end_state : public state {
             void on_entry(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
 
             void on_exit(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
         };
         //发送数据中
         struct send_ing_state : public state {
             void on_entry(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
 
             void on_exit(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
         };
         //发送数据结束
         struct send_end_state : public state {
             void on_entry(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+                ahttp_impl* http = (ahttp_impl*)fsm;
+                http->process_event(RECV);
             }
 
             void on_exit(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
         };
         //读取数据中
         struct read_ing_state : public state {
             void on_entry(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
 
             void on_exit(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
         };
         //读取数据结束
         struct read_end_state : public state {
             void on_entry(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+                ahttp_impl* http = (ahttp_impl*)fsm;
+                //TODO 判断Redirect/Forward情况
+                http->process_event(FINISH);
             }
 
             void on_exit(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
         };
         //请求结束状态
         struct end_state : public state {
             void on_entry(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+                ahttp_impl* http = (ahttp_impl*)fsm;
+                http->send_callback();
             }
 
             void on_exit(int event, state_machine *fsm) override {
-
+                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
             }
         };
 
         void no_transition(std::shared_ptr<state> begin, int event) override {
+            std::cout << "event " <<  event << std::endl;
             assert(true);
         }
 
         std::shared_ptr<ahttp_request> request;
         std::shared_ptr<ahttp_response> response;
+        std::function<void(std::shared_ptr<common_callback>ccb, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback;
+
         class ahttp_mgr {
         public:
+            ahttp_mgr() : url_ips(std::make_shared<std::map<std::string, std::shared_ptr<std::vector<std::string>>>>()),
+                url_tcp(std::make_shared<std::map<std::string, int>>()),
+                tcp_http(std::make_shared<std::map<int, std::shared_ptr<std::vector<ahttp_impl*>>>>()){
+            }
             /**
              * 添加请求到队列
              * @param impl
@@ -331,15 +385,29 @@ namespace plan9
                 }
             }
 
+            void push_ips(ahttp_impl* http, std::shared_ptr<std::vector<std::string>> ips) {
+                if (http) {
+                    (*url_ips)[http->request->get_domain()] = ips;
+                }
+            }
+
+            std::string get_ip(ahttp_impl* http) {
+                if (http) {
+                    if (url_ips->find(http->request->get_domain()) != url_ips->end()) {
+                        //TODO 设置IP的选择性
+                        return (*(*url_ips)[http->request->get_domain()])[0];
+                    }
+                }
+                return "";
+            }
+
+            void switch_ip(ahttp_impl* http) {}
+
             void connect(ahttp_impl* impl) {
-                uv_wrapper::connect(impl->get_ip(), impl->request->get_port(), impl->request->is_use_ssl(), impl->request->get_domain(),
+                int tcp_id = uv_wrapper::connect(get_ip(impl), impl->request->get_port(), impl->request->is_use_ssl(), impl->request->get_domain(),
                         [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
                             if (ccb->success) {
-                                if (impl->request->is_use_ssl()) {
-                                    impl->process_event(SSL_CONNECT);
-                                } else {
-                                    impl->process_event(SEND);
-                                }
+                                impl->process_event(OPEN_SUCCESS);
                             } else {
                                 impl->process_event(CLOSE);
                             }
@@ -349,7 +417,6 @@ namespace plan9
                             ahttp_impl* http = get_http(tcp_id);
                             if (http) {
                                 bool finish = http->response->append_response_data(data, len);
-                                http->process_event(RECV);
                                 if (finish) {
                                     http->process_event(RECV_FINISH);
                                 }
@@ -357,14 +424,16 @@ namespace plan9
                         }, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
 
                         });
+
+                push(tcp_id, impl);
             }
 
             void send(ahttp_impl* impl) {
                 //找到对应的TCP_ID
-                int tcp_id = get_tcp_id(impl);
+                const int tcp_id = get_tcp_id(impl);
                 impl->request->get_http_data([=](std::shared_ptr<char> data, int len, int sent, int total){
                     uv_wrapper::write(tcp_id, data, len, [=](std::shared_ptr<common_callback> write_callback){
-                        if (sent >= total) {
+                        if ((sent + len) >= total) {
                             //发送完成
                             impl->process_event(SEND_FINISH);
                         }
@@ -378,12 +447,44 @@ namespace plan9
             }
 
             int get_tcp_id(ahttp_impl* impl) {
-                return 1;
+                auto it = tcp_http->begin();
+                while (it != tcp_http->end()) {
+                    auto list = it->second;
+                    auto itt = list->begin();
+                    while (itt != list->end()){
+                        if ((*itt) == impl) {
+                            return it->first;
+                        }
+                        itt ++;
+                    }
+                    it ++;
+                }
+                return -1;
             }
 
             ahttp_impl* get_http(int tcp_id) {
+                if (tcp_http->find(tcp_id) != tcp_http->end()) {
+                    auto list = (*tcp_http)[tcp_id];
+                    if (list->size() > 0) {
+                        return (*list)[0];
+                    }
+                }
                 return nullptr;
             }
+            void push(int tcp_id, ahttp_impl* http) {
+                (*url_tcp)[http->request->get_domain()] = tcp_id;
+                std::shared_ptr<std::vector<ahttp_impl*>> list;
+                if (tcp_http->find(tcp_id) != tcp_http->end()) {
+                    list = (*tcp_http)[tcp_id];
+                } else {
+                    list = std::make_shared<std::vector<ahttp_impl*>>();
+                    (*tcp_http)[tcp_id] = list;
+                }
+                list->push_back(http);
+            }
+            std::shared_ptr<std::map<std::string, std::shared_ptr<std::vector<std::string>>>> url_ips;
+            std::shared_ptr<std::map<int, std::shared_ptr<std::vector<ahttp_impl*>>>> tcp_http;
+            std::shared_ptr<std::map<std::string, int>> url_tcp;
         };
 
         static std::shared_ptr<ahttp_mgr> mgr;
@@ -399,15 +500,23 @@ namespace plan9
             return default_dns_resolve;
         }
         std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> dns_resolve_callback;
-        std::shared_ptr<std::vector<std::string>> ips;
-        std::string get_ip() {
-            if (ips && ips->size() > 0) {
-                (*ips)[0];
-            }
-            return "";
+
+        void push_ips(std::shared_ptr<std::vector<std::string>> ips) {
+            mgr->push_ips(this, ips);
         }
+
         void change_ip() {
-            //切换下个可用的IP
+            mgr->switch_ip(this);
+        }
+
+        void send() {
+            mgr->send(this);
+        }
+
+        void send_callback() {
+            if (callback) {
+                callback(common_callback::get(), request, response);
+            }
         }
 
     };

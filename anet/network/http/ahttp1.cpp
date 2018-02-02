@@ -301,6 +301,8 @@ namespace plan9
         //ssl end
         struct ssl_end_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
+                ahttp_impl* http = (ahttp_impl*)fsm;
+                http->process_event(READY_SEND);
             }
 
             void on_exit(std::string event, state_machine *fsm) override {
@@ -444,7 +446,11 @@ namespace plan9
                                 impl->process_event(CLOSE);
                             }
                         }, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
-
+                            if (ccb->success) {
+                                impl->process_event(SSL_CONNECT_SUCCESS);
+                            } else {
+                                impl->process_event(CLOSE);
+                            }
                         }, [=](int tcp_id, std::shared_ptr<char> data, int len) {
                             ahttp_impl* http = get_http(tcp_id);
                             if (http) {

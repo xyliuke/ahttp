@@ -428,7 +428,7 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
     static std::shared_ptr<ahttp1> http;
     http = std::make_shared<ahttp1>();
     auto request = make_shared<ahttp_request>();
-    std::string url = "http://api.chesupai.cn";
+    std::string url = "https://api.chesupai.cn";
     request->set_url(url);
     http->exec(request, [=](shared_ptr<common_callback> ccb, shared_ptr<ahttp_request> request, shared_ptr<ahttp_response> response) {
         if (ccb->success) {

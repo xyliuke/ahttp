@@ -12,6 +12,27 @@
 
 namespace plan9
 {
+    class mutex_wrap {
+    public:
+        mutex_wrap() {
+            uv_mutex_init(&mutex);
+        }
+
+        void lock() {
+            uv_mutex_lock(&mutex);
+        }
+
+        void unlock() {
+            uv_mutex_unlock(&mutex);
+        }
+
+        ~mutex_wrap() {
+            uv_mutex_destroy(&mutex);
+        }
+    private:
+        uv_mutex_t mutex;
+    };
+
     class ahttp1::ahttp_impl : public state_machine {
     public:
         ahttp_impl() {
@@ -390,7 +411,7 @@ namespace plan9
         class ahttp_mgr {
         public:
             ahttp_mgr() : url_ips(std::make_shared<std::map<std::string, std::shared_ptr<std::vector<std::string>>>>()),
-                url_tcp(std::make_shared<std::map<std::string, int>>()),
+                url_tcp(std::make_shared<std::map<std::string, std::shared_ptr<std::set<int>>>>()),
                 tcp_http(std::make_shared<std::map<int, std::shared_ptr<std::vector<ahttp_impl*>>>>()){
             }
             /**
@@ -427,11 +448,9 @@ namespace plan9
 
             bool is_reused_tcp(ahttp_impl *http) {
                 if (http && url_tcp->find(http->request->get_domain()) != url_tcp->end()) {
-                    int tcp_id = (*url_tcp)[http->request->get_domain()];
-                    if (uv_wrapper::tcp_alive(tcp_id)) {
+                    auto list = (*url_tcp)[http->request->get_domain()];
+                    if (list->size() > 0) {
                         return true;
-                    } else {
-                        close(tcp_id);
                     }
                 }
                 return false;
@@ -469,14 +488,16 @@ namespace plan9
             void send(ahttp_impl* impl) {
                 //找到对应的TCP_ID
                 const int tcp_id = get_tcp_id(impl);
-                impl->request->get_http_data([=](std::shared_ptr<char> data, int len, int sent, int total){
-                    uv_wrapper::write(tcp_id, data, len, [=](std::shared_ptr<common_callback> write_callback){
-                        if ((sent + len) >= total) {
-                            //发送完成
-                            impl->process_event(SEND_FINISH);
-                        }
+                if (tcp_id > 0) {
+                    impl->request->get_http_data([=](std::shared_ptr<char> data, int len, int sent, int total){
+                        uv_wrapper::write(tcp_id, data, len, [=](std::shared_ptr<common_callback> write_callback){
+                            if ((sent + len) >= total) {
+                                //发送完成
+                                impl->process_event(SEND_FINISH);
+                            }
+                        });
                     });
-                });
+                }
             }
 
             void remove_top_http(int tcp_id) {
@@ -510,19 +531,26 @@ namespace plan9
             }
 
             int get_tcp_id(ahttp_impl* impl) {
+                mutex.lock();
+                int ret = -1;
                 auto it = tcp_http->begin();
                 while (it != tcp_http->end()) {
                     auto list = it->second;
                     auto itt = list->begin();
                     while (itt != list->end()){
                         if ((*itt) == impl) {
-                            return it->first;
+                            ret = it->first;
+                            break;
                         }
                         itt ++;
                     }
+                    if (ret > 0) {
+                        break;
+                    }
                     it ++;
                 }
-                return -1;
+                mutex.unlock();
+                return ret;
             }
 
             ahttp_impl* get_http(int tcp_id) {
@@ -535,7 +563,16 @@ namespace plan9
                 return nullptr;
             }
             void push(int tcp_id, ahttp_impl* http) {
-                (*url_tcp)[http->request->get_domain()] = tcp_id;
+                mutex.lock();
+                if (url_tcp->find(http->request->get_domain()) != url_tcp->end()) {
+                    auto list = (*url_tcp)[http->request->get_domain()];
+                    list->insert(tcp_id);
+                } else {
+                    auto list = std::make_shared<std::set<int>>();
+                    list->insert(tcp_id);
+                    (*url_tcp)[http->request->get_domain()] = list;
+                }
+
                 std::shared_ptr<std::vector<ahttp_impl*>> list;
                 if (tcp_http->find(tcp_id) != tcp_http->end()) {
                     list = (*tcp_http)[tcp_id];
@@ -544,32 +581,61 @@ namespace plan9
                     (*tcp_http)[tcp_id] = list;
                 }
                 list->push_back(http);
+                mutex.unlock();
             }
 
             void close(int tcp_id) {
+                mutex.lock();
                 tcp_http->erase(tcp_id);
                 auto it = url_tcp->begin();
                 while (it != url_tcp->end()) {
-                    if (it->second == tcp_id) {
-                        url_tcp->erase(it);
-                        break;
+                    auto list = it->second;
+                    auto itt = list->begin();
+                    while (itt != list->end()) {
+                        if (*itt == tcp_id) {
+                            list->erase(itt);
+                        }
+                        itt ++;
                     }
                     it ++;
                 }
+                mutex.unlock();
             }
 
             void assign_reused_tcp(ahttp_impl* http) {
                 if (is_reused_tcp(http)) {
-                    int tcp_id = (*url_tcp)[http->request->get_domain()];
-                    if (tcp_id > 0) {
-                        push(tcp_id, http);
+                    auto tcp_ids = (*url_tcp)[http->request->get_domain()];
+                    if (tcp_ids->size() > 0) {
+                        auto it = tcp_ids->begin();
+                        int tcp_id_task_min_num = -1;
+                        int tcp_id_ret = -1;
+                        while (it != tcp_ids->end()) {
+                            int tcp_id = *it;
+                            if (tcp_http->find(tcp_id) != tcp_http->end()) {
+                                auto list = (*tcp_http)[tcp_id];
+                                if (list->size() < tcp_id_task_min_num) {
+                                    tcp_id_task_min_num = (int)list->size();
+                                    tcp_id_ret = tcp_id;
+                                }
+                            } else {
+                                if (tcp_id_task_min_num > 0) {
+                                    tcp_id_task_min_num = 0;
+                                    tcp_id_ret = tcp_id;
+                                }
+                            }
+                            it ++;
+                        }
+                        if (tcp_id_ret > 0) {
+                            push(tcp_id_ret, http);
+                        }
                     }
                 }
             }
 
             std::shared_ptr<std::map<std::string, std::shared_ptr<std::vector<std::string>>>> url_ips;
             std::shared_ptr<std::map<int, std::shared_ptr<std::vector<ahttp_impl*>>>> tcp_http;
-            std::shared_ptr<std::map<std::string, int>> url_tcp;
+            std::shared_ptr<std::map<std::string, std::shared_ptr<std::set<int>>>> url_tcp;
+            mutex_wrap mutex;
         };
 
         static std::shared_ptr<ahttp_mgr> mgr;

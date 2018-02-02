@@ -594,6 +594,7 @@ namespace plan9
                     while (itt != list->end()) {
                         if (*itt == tcp_id) {
                             list->erase(itt);
+                            break;
                         }
                         itt ++;
                     }

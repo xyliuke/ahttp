@@ -17,152 +17,122 @@ namespace plan9
         ahttp_impl() {
             //1
             STATE_MACHINE_ADD_ROW(this, init_state, PUSH_WAITING_QUEUE, wait_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "init_state, PUSH_WAITING_QUEUE, wait_state" << std::endl;
                 return true;
             });
             //2
             STATE_MACHINE_ADD_ROW(this, init_state, FETCH, begin_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "init_state, FETCH, begin_state" << std::endl;
                 return true;
             });
             //3
             STATE_MACHINE_ADD_ROW(this, wait_state, FETCH, begin_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "wait_state, FETCH, begin_state" << std::endl;
                 return true;
             });
             //4
             STATE_MACHINE_ADD_ROW(this, begin_state, READY_DNS, dns_begin_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "begin_state, READY_DNS, dns_begin_state" << std::endl;
                 return true;
             });
             //5
             STATE_MACHINE_ADD_ROW(this, dns_begin_state, DNS_RESOLVE, dns_ing_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "dns_begin_state, DNS_RESOLVE, dns_ing_state" << std::endl;
                 return true;
             });
             //6
             STATE_MACHINE_ADD_ROW(this, dns_ing_state, DNS_RESOLVE_OK, dns_end_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "dns_ing_state, DNS_RESOLVE_OK, dns_end_state" << std::endl;
                 return true;
             });
             //7
             STATE_MACHINE_ADD_ROW(this, dns_end_state, READY_CONNECT, connect_begin_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "dns_end_state, OPEN, connecting_state" << std::endl;
                 return true;
             });
             //8
             STATE_MACHINE_ADD_ROW(this, connect_begin_state, OPEN, connecting_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "connect_begin_state, OPEN, connecting_state" << std::endl;
                 return true;
             });
             //9
             STATE_MACHINE_ADD_ROW(this, connecting_state, OPEN_SUCCESS, connected_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "connecting_state, OPEN_SUCCESS, connected_state" << std::endl;
                 return true;
             });
             //10
             STATE_MACHINE_ADD_ROW(this, connected_state, SSL_CONNECT, ssl_ing_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "connected_state, SSL_CONNECT, ssl_ing_state" << std::endl;
                 return true;
             });
             //11
             STATE_MACHINE_ADD_ROW(this, ssl_ing_state, SSL_CONNECT_SUCCESS, ssl_end_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "ssl_ing_state, SSL_CONNECT_SUCCESS, ssl_end_state" << std::endl;
                 return true;
             });
             //12
             STATE_MACHINE_ADD_ROW(this, ssl_end_state, READY_SEND, send_begin_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "ssl_end_state, READY_SEND, send_begin_state" << std::endl;
                 return true;
             });
             //13
             STATE_MACHINE_ADD_ROW(this, send_begin_state, SEND, send_ing_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "send_begin_state, SEND, send_ing_state" << std::endl;
                 return true;
             });
             //14
             STATE_MACHINE_ADD_ROW(this, send_ing_state, SEND_FINISH, send_end_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "send_ing_state, SEND_FINISH, send_end_state" << std::endl;
                 return true;
             });
             //15
             STATE_MACHINE_ADD_ROW(this, send_end_state, READY_RECV, read_begin_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "send_end_state, READY_RECV, read_begin_state" << std::endl;
                 return true;
             });
             //16
             STATE_MACHINE_ADD_ROW(this, read_begin_state, RECV, read_ing_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "read_begin_state, RECV, read_ing_state" << std::endl;
                 return true;
             });
             //17
             STATE_MACHINE_ADD_ROW(this, read_ing_state, RECV_FINISH, read_end_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "read_ing_state, RECV_FINISH, read_end_state" << std::endl;
                 return true;
             });
             //18
             STATE_MACHINE_ADD_ROW(this, read_end_state, FINISH, end_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "read_end_state, FINISH, end_state" << std::endl;
                 return true;
             });
             //19
             STATE_MACHINE_ADD_ROW(this, dns_ing_state, DNS_RESOLVE_ERROR, end_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "dns_ing_state, DNS_RESOLVE_ERROR, end_state" << std::endl;
                 return true;
             });
             //20
             STATE_MACHINE_ADD_ROW(this, begin_state, READY_CONNECT, connect_begin_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "begin_state, READY_CONNECT, connect_begin_state" << std::endl;
                 return true;
             });
             //21
             STATE_MACHINE_ADD_ROW(this, connecting_state, CLOSE, disconnect_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "connecting_state, CLOSE, disconnect_state" << std::endl;
                 return true;
             });
             //22
             STATE_MACHINE_ADD_ROW(this, disconnect_state, SWITCH_IP, dns_end_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "disconnect_state, SWITCH_IP, connecting_state" << std::endl;
                 return true;
             });
             //23
             STATE_MACHINE_ADD_ROW(this, disconnect_state, RETRY, connect_begin_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "disconnect_state, RETRY, dns_end_state" << std::endl;
                 return true;
             });
             //24
             STATE_MACHINE_ADD_ROW(this, connected_state, READY_SEND, send_begin_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "connected_state, READY_SEND, send_begin_state" << std::endl;
                 return true;
             });
             //25
             STATE_MACHINE_ADD_ROW(this, ssl_ing_state, CLOSE, disconnect_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "ssl_ing_state, CLOSE, disconnect_state" << std::endl;
                 return true;
             });
             //26
-            STATE_MACHINE_ADD_ROW(this, begin_state, SEND, send_begin_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "begin_state, SEND, send_begin_state" << std::endl;
+            STATE_MACHINE_ADD_ROW(this, begin_state, READY_SEND, send_begin_state, [=](state_machine* fsm) -> bool {
                 return true;
             });
             //27
             STATE_MACHINE_ADD_ROW(this, read_end_state, REDIRECT_INNER, send_begin_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "read_end_state, REDIRECT_INNER, send_begin_state" << std::endl;
                 return true;
             });
             //28
             STATE_MACHINE_ADD_ROW(this, read_end_state, FORWARD, send_begin_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "read_end_state, FORWARD, send_ing_state" << std::endl;
                 return true;
             });
             //29
             STATE_MACHINE_ADD_ROW(this, read_end_state, REDIRECT_OUTER, begin_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "read_end_state, REDIRECT_OUTER, begin_state" << std::endl;
                 return true;
             });
             //30
             STATE_MACHINE_ADD_ROW(this, disconnect_state, GIVE_UP, end_state, [=](state_machine* fsm) -> bool {
-                std::cout << __LINE__ << " : " << "disconnect_state, GIVE_UP, end_state" << std::endl;
                 return true;
             });
 
@@ -178,50 +148,44 @@ namespace plan9
         }
 
     private:
-
-        typedef enum http_event_ {
-            FETCH,//开始执行请求数据操作
-            PUSH_WAITING_QUEUE,//压入请求队列
-            READY_DNS,//
-            DNS_RESOLVE,//dns解析
-            DNS_RESOLVE_OK,//dns解析成功
-            DNS_RESOLVE_ERROR,//dns解析失败
-            READY_CONNECT,
-            OPEN,//连接TCP
-            OPEN_SUCCESS,//连接成功
-            CLOSE,//关闭TCP
-            SSL_CONNECT,//SSL握手开始
-            SSL_CONNECT_SUCCESS,//SSL握手成功
-            READY_SEND,//
-            SEND,//发送数据
-            SEND_FINISH,//发送数据完成
-            READY_RECV,
-            RECV,//接收数据
-            RECV_FINISH,//接收数据完成
-            GIVE_UP,//没有连接上服务器，直接放弃连接
-            RETRY,//重试连接服务器
-            REDIRECT_INNER,//重定向内部
-            REDIRECT_OUTER,//重定向外部
-            FORWARD,//
-            FINISH,//请求结束
-            SWITCH_IP//换IP重新连接
-        } http_event;
+        static const std::string FETCH;//开始执行请求数据操作
+        static const std::string PUSH_WAITING_QUEUE;//压入请求队列
+        static const std::string READY_DNS;//
+        static const std::string DNS_RESOLVE;//dns解析
+        static const std::string DNS_RESOLVE_OK;//dns解析成功
+        static const std::string DNS_RESOLVE_ERROR;//dns解析失败
+        static const std::string READY_CONNECT;
+        static const std::string OPEN;//连接TCP
+        static const std::string OPEN_SUCCESS;//连接成功
+        static const std::string CLOSE;//关闭TCP
+        static const std::string SSL_CONNECT;//SSL握手开始
+        static const std::string SSL_CONNECT_SUCCESS;//SSL握手成功
+        static const std::string READY_SEND;//
+        static const std::string SEND;//发送数据
+        static const std::string SEND_FINISH;//发送数据完成
+        static const std::string READY_RECV;
+        static const std::string RECV;//接收数据
+        static const std::string RECV_FINISH;//接收数据完成
+        static const std::string GIVE_UP;//没有连接上服务器，直接放弃连接
+        static const std::string RETRY;//重试连接服务器
+        static const std::string REDIRECT_INNER;//重定向内部
+        static const std::string REDIRECT_OUTER;//重定向外部
+        static const std::string FORWARD;//
+        static const std::string FINISH;//请求结束
+        static const std::string SWITCH_IP;//换IP重新连接
 
         // HTTP的初始状态
         struct init_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
 
         //开始执行请求
         struct begin_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* impl = (ahttp_impl*)fsm;
                 if (event == REDIRECT_OUTER) {
                     //重定向
@@ -240,46 +204,38 @@ namespace plan9
                 }
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //在请求队列中等待
         struct wait_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         struct dns_begin_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
+            void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
                 http->process_event(DNS_RESOLVE);
                 http->resolve();
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //dns解析中
         struct dns_ing_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //dns解析完成
         struct dns_end_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* impl = (ahttp_impl*)fsm;
                 if (event == SWITCH_IP) {
                     //换下一个IP
@@ -288,37 +244,31 @@ namespace plan9
                 impl->process_event(READY_CONNECT);
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //连接中
         struct connect_begin_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
                 http->process_event(OPEN);
                 http->connect();
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //连接中
         struct connecting_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //连接完成
         struct connected_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
                 if (http->request->is_use_ssl()) {
                     //HTTPS
@@ -329,127 +279,106 @@ namespace plan9
                 }
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //断开连接
         struct disconnect_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //ssl ing
         struct ssl_ing_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //ssl end
         struct ssl_end_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //发送数据中
         struct send_begin_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
                 http->process_event(SEND);
                 http->send();
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //发送数据中
         struct send_ing_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //发送数据结束
         struct send_end_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
                 http->process_event(READY_RECV);
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //读取数据中
         struct read_begin_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
                 http->process_event(RECV);
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //读取数据中
         struct read_ing_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //读取数据结束
         struct read_end_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
                 //TODO 判断Redirect/Forward情况
                 http->process_event(FINISH);
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
         //请求结束状态
         struct end_state : public state {
-            void on_entry(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
+                std::cout << http->get_trace();
                 http->remove_http();
                 http->send_callback();
             }
 
-            void on_exit(int event, state_machine *fsm) override {
-                std::cout << typeid(this).name() << "  " << __FUNCTION__ << std::endl;
+            void on_exit(std::string event, state_machine *fsm) override {
             }
         };
 
-        void no_transition(std::shared_ptr<state> begin, int event) override {
-            std::cout << "no transition event " <<  event << std::endl;
-            assert(true);
+        void no_transition(std::shared_ptr<state> begin, std::string event) override {
+            assert(false);
         }
 
         std::shared_ptr<ahttp_request> request;
@@ -692,6 +621,32 @@ namespace plan9
             mgr->connect(this);
         }
     };
+
+    const std::string ahttp1::ahttp_impl::FETCH("FETCH");//开始执行请求数据操作
+    const std::string ahttp1::ahttp_impl::PUSH_WAITING_QUEUE("PUSH_WAITING_QUEUE");//压入请求队列
+    const std::string ahttp1::ahttp_impl::READY_DNS("READY_DNS");//
+    const std::string ahttp1::ahttp_impl::DNS_RESOLVE("DNS_RESOLVE");//dns解析
+    const std::string ahttp1::ahttp_impl::DNS_RESOLVE_OK("DNS_RESOLVE_OK");//dns解析成功
+    const std::string ahttp1::ahttp_impl::DNS_RESOLVE_ERROR("DNS_RESOLVE_ERROR");//dns解析失败
+    const std::string ahttp1::ahttp_impl::READY_CONNECT("READY_CONNECT");
+    const std::string ahttp1::ahttp_impl::OPEN("OPEN");//连接TCP
+    const std::string ahttp1::ahttp_impl::OPEN_SUCCESS("OPEN_SUCCESS");//连接成功
+    const std::string ahttp1::ahttp_impl::CLOSE("CLOSE");//关闭TCP
+    const std::string ahttp1::ahttp_impl::SSL_CONNECT("SSL_CONNECT");//SSL握手开始
+    const std::string ahttp1::ahttp_impl::SSL_CONNECT_SUCCESS("SSL_CONNECT_SUCCESS");//SSL握手成功
+    const std::string ahttp1::ahttp_impl::READY_SEND("READY_SEND");//
+    const std::string ahttp1::ahttp_impl::SEND("SEND");//发送数据
+    const std::string ahttp1::ahttp_impl::SEND_FINISH("SEND_FINISH");//发送数据完成
+    const std::string ahttp1::ahttp_impl::READY_RECV("READY_RECV");
+    const std::string ahttp1::ahttp_impl::RECV("RECV");//接收数据
+    const std::string ahttp1::ahttp_impl::RECV_FINISH("RECV_FINISH");//接收数据完成
+    const std::string ahttp1::ahttp_impl::GIVE_UP("GIVE_UP");//没有连接上服务器，直接放弃连接
+    const std::string ahttp1::ahttp_impl::RETRY("RETRY");//重试连接服务器
+    const std::string ahttp1::ahttp_impl::REDIRECT_INNER("REDIRECT_INNER");//重定向内部
+    const std::string ahttp1::ahttp_impl::REDIRECT_OUTER("REDIRECT_OUTER");//重定向外部
+    const std::string ahttp1::ahttp_impl::FORWARD("FORWARD");//
+    const std::string ahttp1::ahttp_impl::FINISH("FINISH");//请求结束
+    const std::string ahttp1::ahttp_impl::SWITCH_IP("SWITCH_IP");//换IP重新连接
 
     std::shared_ptr<ahttp1::ahttp_impl::ahttp_mgr> ahttp1::ahttp_impl::mgr = std::make_shared<ahttp1::ahttp_impl::ahttp_mgr>();
 

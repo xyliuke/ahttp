@@ -208,28 +208,28 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //    transition_row1<s1, s2> r1(1, [=](state_machine& fsm) -> bool {
 //        return true;
 //    });
-    {
+
         state_machine fsm;
-        STATE_MACHINE_ADD_ROW(&fsm, s1, 1, s2, [=](state_machine*) -> bool {
+        STATE_MACHINE_ADD_ROW(&fsm, s1, "1", s2, [=](state_machine*) -> bool {
             std::cout << "1 action" << std::endl;
             return true;
         });
-        STATE_MACHINE_ADD_ROW(&fsm, s2, 2, s3, [=](state_machine*) -> bool {
+        STATE_MACHINE_ADD_ROW(&fsm, s2, "2", s3, [=](state_machine*) -> bool {
             std::cout << "2 action" << std::endl;
             return false;
         });
-        STATE_MACHINE_ADD_ROW(&fsm, s2, 2, s4, [=](state_machine*) -> bool {
+        STATE_MACHINE_ADD_ROW(&fsm, s2, "2", s4, [=](state_machine*) -> bool {
             std::cout << "2 action" << std::endl;
             return true;
         });
 
         fsm.set_init_state<s1>();
         fsm.start();
-        fsm.process_event(1);
-        fsm.process_event(2);
-        fsm.process_event(1);
-    }
-    int i = 0;
+        fsm.process_event("1");
+        fsm.process_event("2");
+        fsm.process_event("1");
+
+    std::cout << fsm.get_trace();
 }
 - (IBAction)click_ssl:(id)sender {
 //    plan9::ahttp_request model;

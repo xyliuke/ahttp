@@ -10,18 +10,20 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <iostream>
+#include <stdlib.h>
 
 namespace plan9 {
     //TODO 实现简单的状态机
-    //TODO 并能跨语言调用
     class state_machine;
     class state;
 
 
     class state {
     public:
-        virtual void on_entry(int event, state_machine* fsm) {}
-        virtual void on_exit(int event, state_machine* fsm) {}
+        state();
+        virtual void on_entry(std::string event, state_machine* fsm) {}
+        virtual void on_exit(std::string event, state_machine* fsm) {}
         virtual const std::type_info& get_type();
         virtual void exec() {}
     };
@@ -32,7 +34,7 @@ namespace plan9 {
     public:
 
         template <typename B, typename E>
-        static std::shared_ptr<transition_row> get(state_machine* fsm, int event, std::function<bool(state_machine*)> action) {
+        static std::shared_ptr<transition_row> get(state_machine* fsm, std::string event, std::function<bool(state_machine*)> action) {
             std::shared_ptr<transition_row> ret = std::make_shared<transition_row>(event, action);
             ret->set_state<B, E>(fsm);
             return ret;
@@ -43,7 +45,7 @@ namespace plan9 {
          * @param event 迁移的事件
          * @param action 迁移的动作，返回true表示同意迁移，返回false表示不同意迁移
          */
-        transition_row(const int event, std::function<bool(state_machine*)> action)
+        transition_row(const std::string event, std::function<bool(state_machine*)> action)
                 : event_(event), action_(action) {
         }
         /**
@@ -63,14 +65,19 @@ namespace plan9 {
                 map_[fsm] = m;
             }
             if (m->find(b_hash_code) == m->end()) {
-                (*m)[b_hash_code] = std::make_shared<B>();
+                std::shared_ptr<state> obj = std::make_shared<B>();
+                (*m)[b_hash_code] = obj;
             }
             if (m->find(e_hash_code) == m->end()) {
-                (*m)[e_hash_code] = std::make_shared<E>();
+                std::shared_ptr<state> obj = std::make_shared<E>();
+                (*m)[e_hash_code] = obj;
             }
+
+            set_trace(typeid(B), typeid(E));
+
         }
 
-        bool is_match(int event, size_t begin) {
+        bool is_match(std::string event, size_t begin) {
             return event_ == event && begin == b_hash_code;
         }
 
@@ -99,12 +106,18 @@ namespace plan9 {
             map_.erase(fsm);
         }
 
+        std::string to_string() {
+            return trace;
+        }
+
     private:
         size_t b_hash_code;
         size_t e_hash_code;
-        const int event_;
+        const std::string event_;
         const std::function<bool(state_machine*)> action_;
         static std::map<state_machine*, std::shared_ptr<std::map<size_t, std::shared_ptr<state>>>> map_;
+        std::string trace;
+        void set_trace(const std::type_info& t1, const std::type_info& t2);
     };
 
     class state_machine {
@@ -128,21 +141,23 @@ namespace plan9 {
          * 触发某个事件
          * @param event 事件名
          */
-        void process_event(int event);
+        void process_event(std::string event);
         /**
          * 找不到对应的迁移状态后触发的函数
          * @param begin 触发前的状态
          * @param event 事件
          */
-        virtual void no_transition(std::shared_ptr<state> begin, int event);
+        virtual void no_transition(std::shared_ptr<state> begin, std::string event);
 
         template <typename B, typename E>
-        void add_row(int event, std::function<bool(state_machine*)> action) {
-            rows.push_back(transition_row::get<B, E>(this, event, action));
+        void add_row(std::string event, std::function<bool(state_machine*)> action) {
+            rows->push_back(transition_row::get<B, E>(this, event, action));
         };
+        std::string get_trace();
     private:
-        std::vector<std::shared_ptr<transition_row>> rows;
+        std::shared_ptr<std::vector<std::shared_ptr<transition_row>>> rows;
         size_t current;
+        std::shared_ptr<std::vector<std::shared_ptr<transition_row>>> trace;
     };
 
 #define STATE_MACHINE_ADD_ROW(state_machine_ptr, begin, event, end, action) (state_machine_ptr)->add_row<begin, end>(event, action)

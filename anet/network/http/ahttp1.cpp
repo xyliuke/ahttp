@@ -35,7 +35,7 @@ namespace plan9
 
     class ahttp1::ahttp_impl : public state_machine {
     public:
-        ahttp_impl() : tcp_id(-1) {
+        ahttp_impl() : tcp_id(-1), timer_id(-1) {
             //1
             STATE_MACHINE_ADD_ROW(this, init_state, PUSH_WAITING_QUEUE, wait_state, [=](state_machine* fsm) -> bool {
                 return true;
@@ -156,6 +156,57 @@ namespace plan9
             STATE_MACHINE_ADD_ROW(this, disconnect_state, GIVE_UP, end_state, [=](state_machine* fsm) -> bool {
                 return true;
             });
+            STATE_MACHINE_ADD_ROW(this, wait_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, begin_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, dns_begin_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, dns_ing_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, dns_end_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, connect_begin_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, connecting_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, connected_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, ssl_ing_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, ssl_end_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, send_begin_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, send_ing_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, send_end_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, read_begin_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, read_ing_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, read_end_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, disconnect_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
 
             set_init_state<init_state>();
             set_trace(true, [](std::string trace){
@@ -201,6 +252,7 @@ namespace plan9
         static const std::string FORWARD;//
         static const std::string FINISH;//请求结束
         static const std::string SWITCH_IP;//换IP重新连接
+        static const std::string TIME_OUT;
 
         // HTTP的初始状态
         struct init_state : public state {
@@ -208,6 +260,13 @@ namespace plan9
             }
 
             void on_exit(std::string event, state_machine *fsm) override {
+                ahttp_impl* http = (ahttp_impl*)fsm;
+                //添加超时功能
+                if (http->request->get_timeout() > 0) {
+                    http->timer_id = uv_wrapper::post_timer([=](){
+                        http->time_out();
+                    }, http->request->get_timeout() * 1000, 0);
+                }
             }
         };
 
@@ -416,6 +475,7 @@ namespace plan9
         std::shared_ptr<ahttp_response> response;
         std::function<void(std::shared_ptr<common_callback>ccb, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback;
         int tcp_id;
+        int timer_id;
 
         class ahttp_mgr {
         public:
@@ -802,6 +862,7 @@ namespace plan9
             mgr->remove_http(this);
         }
         void resolve() {
+            //TODO 当TIMEOUT事件触发后，其他事件再迁移，就会发生no_transition
             get_resolver()(request->get_domain(), request->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips){
                 if (ccb->success) {
                     push_ips(ips);
@@ -824,6 +885,10 @@ namespace plan9
         }
         void assign_reused_tcp() {
             mgr->assign_reused_tcp(this);
+        }
+        void time_out() {
+            mgr->remove_http(this);
+            process_event(TIME_OUT);
         }
     };
 
@@ -852,6 +917,7 @@ namespace plan9
     const std::string ahttp1::ahttp_impl::FORWARD("FORWARD");//
     const std::string ahttp1::ahttp_impl::FINISH("FINISH");//请求结束
     const std::string ahttp1::ahttp_impl::SWITCH_IP("SWITCH_IP");//换IP重新连接
+    const std::string ahttp1::ahttp_impl::TIME_OUT("TIME_OUT");
 
     std::shared_ptr<ahttp1::ahttp_impl::ahttp_mgr> ahttp1::ahttp_impl::mgr = std::make_shared<ahttp1::ahttp_impl::ahttp_mgr>();
 

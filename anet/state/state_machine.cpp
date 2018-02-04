@@ -71,8 +71,13 @@ namespace plan9
         }
         if (!exist) {
             no_transition(transition_row::get(this, current), event);
-            if (trace_callback) {
-                trace_callback("no transition");
+            if (is_trace && trace_callback) {
+                std::stringstream ss;
+                ss << "thread : ";
+                ss << std::this_thread::get_id();
+                ss << "\t";
+                ss << "no transition";
+                trace_callback(ss.str());
             }
         }
     }

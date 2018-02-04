@@ -425,18 +425,41 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
     using namespace plan9;
     using namespace std;
 
-    static std::shared_ptr<ahttp1> http;
-    http = std::make_shared<ahttp1>();
-    auto request = make_shared<ahttp_request>();
-    std::string url = "https://api.chesupai.cn";
-    request->set_url(url);
-    http->exec(request, [=](shared_ptr<common_callback> ccb, shared_ptr<ahttp_request> request, shared_ptr<ahttp_response> response) {
-        if (ccb->success) {
-            std::cout << response->get_body_string() << std::endl;
-        } else {
-            std::cout << ccb->reason << std::endl;
-        }
-    });
+    static shared_ptr<vector<std::shared_ptr<ahttp1>>> list;
+    if (!list) {
+        list = make_shared<vector<std::shared_ptr<ahttp1>>>();
+    } else {
+        list->clear();
+    }
+
+    for (int i = 0; i < 10; ++i) {
+        std::shared_ptr<ahttp1> http;
+        http = std::make_shared<ahttp1>();
+        list->push_back(http);
+        auto request = make_shared<ahttp_request>();
+        std::string url = "https://api.chesupai.cn";
+        request->set_url(url);
+        http->exec(request, [=](shared_ptr<common_callback> ccb, shared_ptr<ahttp_request> request, shared_ptr<ahttp_response> response) {
+            if (ccb->success) {
+                std::cout << response->get_body_string() << std::endl;
+            } else {
+                std::cout << ccb->reason << std::endl;
+            }
+        });
+    }
+
+//    static std::shared_ptr<ahttp1> http;
+//    http = std::make_shared<ahttp1>();
+//    auto request = make_shared<ahttp_request>();
+//    std::string url = "https://api.chesupai.cn";
+//    request->set_url(url);
+//    http->exec(request, [=](shared_ptr<common_callback> ccb, shared_ptr<ahttp_request> request, shared_ptr<ahttp_response> response) {
+//        if (ccb->success) {
+//            std::cout << response->get_body_string() << std::endl;
+//        } else {
+//            std::cout << ccb->reason << std::endl;
+//        }
+//    });
 }
 
 - (void) post {

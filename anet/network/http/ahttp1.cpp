@@ -35,7 +35,7 @@ namespace plan9
 
     class ahttp1::ahttp_impl : public state_machine {
     public:
-        ahttp_impl() {
+        ahttp_impl() : tcp_id(-1) {
             //1
             STATE_MACHINE_ADD_ROW(this, init_state, PUSH_WAITING_QUEUE, wait_state, [=](state_machine* fsm) -> bool {
                 return true;
@@ -158,6 +158,9 @@ namespace plan9
             });
 
             set_init_state<init_state>();
+            set_trace(true, [](std::string trace){
+                std::cout << trace << std::endl;
+            });
             start();
         }
 
@@ -165,7 +168,11 @@ namespace plan9
             this->request = request;
             this->response = std::make_shared<ahttp_response>();
             this->callback = callback;
-            mgr->push(this);
+            mgr->push_task(this);
+        }
+
+        static void set_max_connection(int max) {
+            mgr->set_max_connection(max);
         }
 
     private:
@@ -391,9 +398,10 @@ namespace plan9
         struct end_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
-                std::cout << http->get_trace();
                 http->remove_http();
                 http->send_callback();
+                //执行下一个任务
+                http->exec_next();
             }
 
             void on_exit(std::string event, state_machine *fsm) override {
@@ -407,23 +415,35 @@ namespace plan9
         std::shared_ptr<ahttp_request> request;
         std::shared_ptr<ahttp_response> response;
         std::function<void(std::shared_ptr<common_callback>ccb, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback;
+        int tcp_id;
 
         class ahttp_mgr {
         public:
             ahttp_mgr() : url_ips(std::make_shared<std::map<std::string, std::shared_ptr<std::vector<std::string>>>>()),
-                url_tcp(std::make_shared<std::map<std::string, std::shared_ptr<std::set<int>>>>()),
-                tcp_http(std::make_shared<std::map<int, std::shared_ptr<std::vector<ahttp_impl*>>>>()){
+                          url_tcp(std::make_shared<std::map<std::string, std::shared_ptr<std::set<int>>>>()),
+                          tcp_http(std::make_shared<std::map<int, std::shared_ptr<std::vector<ahttp_impl*>>>>()),
+                          url_http_unconnect(std::make_shared<std::map<std::string, std::shared_ptr<std::vector<ahttp_impl*>>>>()),
+                          max_connection_num(4){
             }
             /**
              * 添加请求到队列
              * @param impl
              */
-            void push(ahttp_impl* impl) {
-                if (is_exceed_max_connection_num()) {
+            void push_task(ahttp_impl* impl) {
+                if (is_exceed_max_connection_num(impl)) {
                     //超过最大连接数
+                    if (is_reused_tcp(impl)) {
+                        assign_reused_tcp(impl);
+                    } else {
+                        push_unconnect_queue(impl);
+                    }
                     impl->process_event(PUSH_WAITING_QUEUE);
                 } else {
-                    assign_reused_tcp(impl);
+                    if (is_reused_tcp(impl)) {
+                        assign_reused_tcp(impl);
+                    } else {
+                        push_unconnect_queue(impl);
+                    }
                     impl->process_event(FETCH);
                 }
             }
@@ -460,6 +480,7 @@ namespace plan9
                 int tcp_id = uv_wrapper::connect(get_ip(impl), impl->request->get_port(), impl->request->is_use_ssl(), impl->request->get_domain(),
                         [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
                             if (ccb->success) {
+                                impl->tcp_id = tcp_id;
                                 impl->process_event(OPEN_SUCCESS);
                             } else {
                                 impl->process_event(CLOSE);
@@ -481,8 +502,9 @@ namespace plan9
                         }, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
                             close(tcp_id);
                         });
-
+                impl->tcp_id = tcp_id;
                 push(tcp_id, impl);
+                remove_from_unconnected_queue(impl);
             }
 
             void send(ahttp_impl* impl) {
@@ -524,11 +546,92 @@ namespace plan9
                     it ++;
                 }
             }
+            void set_max_connection(int max) {
+                if (max > 0 && max < 16) {
+                    max_connection_num = max;
+                }
+            }
+            void exec_next(int tcp_id) {
+                mutex.lock();
+                ahttp_impl* http = nullptr;
+                if (tcp_http->find(tcp_id) != tcp_http->end()) {
+                    auto list = (*tcp_http)[tcp_id];
+                    if (list->size() > 0) {
+                        auto h = (*list)[0];
+                        if (h) {
+                            http = h;
+                        }
+                    } else {
+                        //去未连接队列中查找
+                        std::string host = get_host(tcp_id);
+                        if (host != "") {
+                            if (url_http_unconnect->size() > 0 && url_http_unconnect->find(host) != url_http_unconnect->end()) {
+                                auto list = (*url_http_unconnect)[host];
+                                if (list->size() > 0) {
+                                    http = *(list->begin());
+                                    list->erase(list->begin());
+                                }
+                            }
+                        }
+                    }
+                }
+                mutex.unlock();
+                if (http) {
+                    push(tcp_id, http);
+                    http->process_event(FETCH);
+                }
+            }
+            bool is_exceed_max_connection_num(ahttp_impl* http) {
+                int num = 0;
+                mutex.lock();
+                if (url_http_unconnect->find(http->request->get_domain()) != url_http_unconnect->end()) {
+                    auto list = (*url_http_unconnect)[http->request->get_domain()];
+                    if (list) {
+                        num += list->size();
+                    }
+                }
+                if (url_tcp->find(http->request->get_domain()) != url_tcp->end()) {
+                    auto list = (*url_tcp)[http->request->get_domain()];
+                    if (list) {
+                        num += list->size();
+                    }
+                }
+                mutex.unlock();
+                return num >= max_connection_num;
+            }
+            void assign_reused_tcp(ahttp_impl* http) {
+                if (is_reused_tcp(http)) {
+                    auto tcp_ids = (*url_tcp)[http->request->get_domain()];
+                    if (tcp_ids->size() > 0) {
+                        auto it = tcp_ids->begin();
+                        int tcp_id_task_min_num = -1;
+                        int tcp_id_ret = -1;
+                        while (it != tcp_ids->end()) {
+                            int tcp_id = *it;
+                            if (tcp_http->find(tcp_id) != tcp_http->end()) {
+                                auto list = (*tcp_http)[tcp_id];
+                                if (list->size() < tcp_id_task_min_num) {
+                                    tcp_id_task_min_num = (int)list->size();
+                                    tcp_id_ret = tcp_id;
+                                }
+                            } else {
+                                if (tcp_id_task_min_num > 0) {
+                                    tcp_id_task_min_num = 0;
+                                    tcp_id_ret = tcp_id;
+                                }
+                            }
+                            it ++;
+                        }
+                        if (tcp_id_ret > 0) {
+                            push(tcp_id_ret, http);
+                        }
+                    }
+                } else {
+
+                }
+            }
 
         private:
-            bool is_exceed_max_connection_num() {
-                return false;
-            }
 
             int get_tcp_id(ahttp_impl* impl) {
                 mutex.lock();
@@ -564,6 +667,7 @@ namespace plan9
             }
             void push(int tcp_id, ahttp_impl* http) {
                 mutex.lock();
+                http->tcp_id = tcp_id;
                 if (url_tcp->find(http->request->get_domain()) != url_tcp->end()) {
                     auto list = (*url_tcp)[http->request->get_domain()];
                     list->insert(tcp_id);
@@ -603,40 +707,57 @@ namespace plan9
                 mutex.unlock();
             }
 
-            void assign_reused_tcp(ahttp_impl* http) {
-                if (is_reused_tcp(http)) {
-                    auto tcp_ids = (*url_tcp)[http->request->get_domain()];
-                    if (tcp_ids->size() > 0) {
-                        auto it = tcp_ids->begin();
-                        int tcp_id_task_min_num = -1;
-                        int tcp_id_ret = -1;
-                        while (it != tcp_ids->end()) {
-                            int tcp_id = *it;
-                            if (tcp_http->find(tcp_id) != tcp_http->end()) {
-                                auto list = (*tcp_http)[tcp_id];
-                                if (list->size() < tcp_id_task_min_num) {
-                                    tcp_id_task_min_num = (int)list->size();
-                                    tcp_id_ret = tcp_id;
-                                }
-                            } else {
-                                if (tcp_id_task_min_num > 0) {
-                                    tcp_id_task_min_num = 0;
-                                    tcp_id_ret = tcp_id;
-                                }
-                            }
-                            it ++;
+            void push_unconnect_queue(ahttp_impl* http) {
+                mutex.lock();
+                if (url_http_unconnect->find(http->request->get_domain()) != url_http_unconnect->end()) {
+                    auto list = (*url_http_unconnect)[http->request->get_domain()];
+                    list->push_back(http);
+                } else {
+                    auto list = std::make_shared<std::vector<ahttp_impl*>>();
+                    list->push_back(http);
+                    (*url_http_unconnect)[http->request->get_domain()] = list;
+                }
+                mutex.unlock();
+            }
+
+            void remove_from_unconnected_queue(ahttp_impl *http) {
+                mutex.lock();
+                if (url_http_unconnect->find(http->request->get_domain()) != url_http_unconnect->end()) {
+                    auto list = (*url_http_unconnect)[http->request->get_domain()];
+                    auto it = list->begin();
+                    while (it != list->end()) {
+                        if (*it == http) {
+                            list->erase(it);
+                            break;
                         }
-                        if (tcp_id_ret > 0) {
-                            push(tcp_id_ret, http);
-                        }
+                        it ++;
                     }
                 }
+                mutex.unlock();
+            }
+
+            std::string get_host(int tcp_id) {
+                auto it = url_tcp->begin();
+                while (it != url_tcp->end()) {
+                    auto set = it->second;
+                    auto itt = set->begin();
+                    while (itt != set->end()) {
+                        if (*itt == tcp_id) {
+                            return it->first;
+                        }
+                        itt ++;
+                    }
+                    it ++;
+                }
+                return "";
             }
 
             std::shared_ptr<std::map<std::string, std::shared_ptr<std::vector<std::string>>>> url_ips;
             std::shared_ptr<std::map<int, std::shared_ptr<std::vector<ahttp_impl*>>>> tcp_http;
             std::shared_ptr<std::map<std::string, std::shared_ptr<std::set<int>>>> url_tcp;
+            std::shared_ptr<std::map<std::string, std::shared_ptr<std::vector<ahttp_impl*>>>> url_http_unconnect;
             mutex_wrap mutex;
+            int max_connection_num;
         };
 
         static std::shared_ptr<ahttp_mgr> mgr;
@@ -693,6 +814,17 @@ namespace plan9
         void connect() {
             mgr->connect(this);
         }
+
+        void exec_next() {
+            mgr->exec_next(tcp_id);
+        }
+
+        bool is_exceed_max_connection_num() {
+            return mgr->is_exceed_max_connection_num(this);
+        }
+        void assign_reused_tcp() {
+            mgr->assign_reused_tcp(this);
+        }
     };
 
     const std::string ahttp1::ahttp_impl::FETCH("FETCH");//开始执行请求数据操作
@@ -725,6 +857,10 @@ namespace plan9
 
     ahttp1::ahttp1() : impl(std::make_shared<ahttp1::ahttp_impl>()) {
 
+    }
+
+    void ahttp1::set_max_connection(int max) {
+        ahttp_impl::set_max_connection(max);
     }
 
     void ahttp1::exec(std::shared_ptr<ahttp_request> request, std::function<void(std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {

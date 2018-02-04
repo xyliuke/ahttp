@@ -153,11 +153,20 @@ namespace plan9 {
         void add_row(std::string event, std::function<bool(state_machine*)> action) {
             rows->push_back(transition_row::get<B, E>(this, event, action));
         };
+        /**
+         * 是否记录迁移动作，默认为false
+         * @param trace true表示记录
+         */
+        void set_trace(bool trace, std::function<void(std::string)> callback);
+
         std::string get_trace();
     private:
+        void record(std::shared_ptr<transition_row> row);
         std::shared_ptr<std::vector<std::shared_ptr<transition_row>>> rows;
         size_t current;
         std::shared_ptr<std::vector<std::shared_ptr<transition_row>>> trace;
+        bool is_trace;
+        std::function<void(std::string)> trace_callback;
     };
 
 #define STATE_MACHINE_ADD_ROW(state_machine_ptr, begin, event, end, action) (state_machine_ptr)->add_row<begin, end>(event, action)

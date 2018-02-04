@@ -4,6 +4,7 @@
 //
 
 #include <sstream>
+#include <thread>
 #include "state_machine.h"
 
 namespace plan9
@@ -28,7 +29,8 @@ namespace plan9
     }
 
     state_machine::state_machine() : current(0), rows(std::make_shared<std::vector<std::shared_ptr<transition_row>>>()),
-                                     trace(std::make_shared<std::vector<std::shared_ptr<transition_row>>>()){
+                                     trace(std::make_shared<std::vector<std::shared_ptr<transition_row>>>()),
+                                     is_trace(false) {
 
     }
 
@@ -52,7 +54,7 @@ namespace plan9
             if (row->is_match(event, current)) {
                 exist = true;
                 if (row->exec_action(this)) {
-                    trace->push_back(row);
+                    record(row);
                     auto c_state = transition_row::get(this, current);
                     if (c_state) {
                         c_state->on_exit(event, this);
@@ -69,12 +71,32 @@ namespace plan9
         }
         if (!exist) {
             no_transition(transition_row::get(this, current), event);
+            if (trace_callback) {
+                trace_callback("no transition");
+            }
         }
     }
 
     void state_machine::no_transition(std::shared_ptr<state> begin, std::string event) {
     }
 
+    void state_machine::record(std::shared_ptr<transition_row> row) {
+        if (is_trace) {
+            trace->push_back(row);
+            if (trace_callback) {
+                std::stringstream ss;
+                ss << "thread : ";
+                ss << std::this_thread::get_id();
+                ss << "\t";
+                ss << row->to_string();
+                trace_callback(ss.str());
+            }
+        }
+    }
+    void state_machine::set_trace(bool trace, std::function<void(std::string)> callback) {
+        is_trace = trace;
+        trace_callback = callback;
+    }
     std::string state_machine::get_trace() {
         std::stringstream ss;
         auto it = trace->begin();

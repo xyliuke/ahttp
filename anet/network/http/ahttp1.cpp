@@ -1151,4 +1151,8 @@ namespace plan9
     void ahttp1::cancel() {
         impl->cancel();
     }
+
+    void ahttp1::set_dns_resolve(std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> callback) {
+        impl->set_dns_resolve(callback);
+    }
 }

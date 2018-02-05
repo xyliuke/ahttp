@@ -35,7 +35,8 @@ namespace plan9
 
     class ahttp1::ahttp_impl : public state_machine {
     public:
-        ahttp_impl() : tcp_id(-1), timer_id(-1), validate_domain(false), validate_cert(false), low_priority(false) {
+        ahttp_impl() : tcp_id(-1), timer_id(-1), validate_domain(false), validate_cert(false), low_priority(false),
+                       dns_resolve_callback(nullptr) {
             //1
             STATE_MACHINE_ADD_ROW(this, init_state, PUSH_WAITING_QUEUE, wait_state, [=](state_machine* fsm) -> bool {
                 if (fsm->is_current_state<end_state>()) {
@@ -382,6 +383,10 @@ namespace plan9
                 remove_http();
                 process_event(CANCEL);
             }
+        }
+
+        void set_dns_resolve(std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> callback) {
+            this->dns_resolve_callback = callback;
         }
 
     private:

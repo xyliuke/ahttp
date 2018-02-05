@@ -64,6 +64,12 @@ namespace plan9
          */
         void cancel();
 
+        /**
+         * 设置dns解析的替换方案，默认使用libuv解析
+         * @param callback 结果回调
+         */
+        void set_dns_resolve(std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> callback);
+
     private:
         class ahttp_impl;
         std::shared_ptr<ahttp_impl> impl;

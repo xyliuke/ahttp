@@ -17,6 +17,21 @@ namespace plan9
         ahttp1();
 
         virtual ~ahttp1();
+
+        /**
+         * 设置是否自动使用代理，默认为false
+         * @param auto_use  true 表示请求时会自动获取代理服务器，并使用代理服务器；
+         * false 表示不自动获取最新的代理服务器，而是依赖set_proxy的配置
+         * @note 当auto_use由true修改为false时，自动清空proxy设置
+         */
+        static void set_auto_proxy(bool auto_use);
+
+        /**
+         * 设置代理功能，当设置set_auto_proxy由true变成false时，要重新设置
+         * @param host ip或者域名
+         * @param port 端口号
+         */
+        static void set_proxy(std::string host, int port);
         /**
          * 设置相同ip和端口号下的最大同时连接数
          * 未达到最大连接数数的请求，在已存在的tcp不空闲时，创建新的连接；存在空闲tcp时，优先复用原来tcp

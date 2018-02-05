@@ -492,6 +492,23 @@ namespace plan9
             mgr->set_max_connection(max);
         }
 
+        static void set_proxy(std::string host, int port) {
+//            if (proxy_host != host || port != proxy_port) {
+//                if (proxy_port > 0 && proxy_host.length() > 0) {
+//                    url_2_http.erase(get_unique_domain(proxy_host, proxy_port));
+//                }
+//                proxy_host = host;
+//                proxy_port = port;
+//            }
+        }
+
+        static void set_auto_proxy(bool auto_use) {
+//            if (auto_use_proxy && !auto_use) {
+//                set_proxy("", -1);
+//            }
+//            auto_use_proxy = auto_use;
+        }
+
         void is_validate_domain(bool validate) {
             validate_domain = validate;
         }
@@ -1381,6 +1398,14 @@ namespace plan9
 
     ahttp1::~ahttp1() {
         cancel();
+    }
+    //TODO 重构完成代理功能
+    void ahttp1::set_auto_proxy(bool auto_use) {
+        ahttp_impl::set_auto_proxy(auto_use);
+    }
+
+    void ahttp1::set_proxy(std::string host, int port) {
+        ahttp_impl::set_proxy(host, port);
     }
 
     void ahttp1::set_max_connection(int max) {

@@ -441,7 +441,7 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
         request->set_url(url);
 //        request->set_timeout(1);
 //        http->set_low_priority();
-        http->set_debug_mode(true);
+//        http->set_debug_mode(true);
         http->exec(request, [=](shared_ptr<common_callback> ccb, shared_ptr<ahttp_request> request, shared_ptr<ahttp_response> response) {
             if (ccb->success) {
                 std::cout << response->get_body_string() << std::endl;

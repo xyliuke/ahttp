@@ -35,7 +35,7 @@ namespace plan9
 
     class ahttp1::ahttp_impl : public state_machine {
     public:
-        ahttp_impl() : tcp_id(-1), timer_id(-1) {
+        ahttp_impl() : tcp_id(-1), timer_id(-1), validate_domain(false), validate_cert(false) {
             //1
             STATE_MACHINE_ADD_ROW(this, init_state, PUSH_WAITING_QUEUE, wait_state, [=](state_machine* fsm) -> bool {
                 if (fsm->is_current_state<end_state>()) {
@@ -307,6 +307,14 @@ namespace plan9
             mgr->set_max_connection(max);
         }
 
+        void is_validate_domain(bool validate) {
+            validate_domain = validate;
+        }
+
+        void is_validate_cert(bool validate) {
+            validate_cert = validate;
+        }
+
     private:
         static const std::string FETCH;//开始执行请求数据操作
         static const std::string PUSH_WAITING_QUEUE;//压入请求队列
@@ -344,7 +352,7 @@ namespace plan9
                 ahttp_impl* http = (ahttp_impl*)fsm;
                 //添加超时功能
                 if (http->request->get_timeout() > 0) {
-                    http->timer_id = uv_wrapper::post_timer([=](){
+                    http->timer_id = uv_wrapper::post_timer([http](){
                         http->time_out();
                     }, http->request->get_timeout() * 1000, 0);
                 }
@@ -440,6 +448,11 @@ namespace plan9
                 ahttp_impl* http = (ahttp_impl*)fsm;
                 if (http->request->is_use_ssl()) {
                     //HTTPS
+                    auto ssl = uv_wrapper::get_ssl_impl_by_tcp_id(http->tcp_id);
+                    if (ssl) {
+                        ssl->validate_domain(http->validate_domain);
+                        ssl->validate_cert(http->validate_cert);
+                    }
                     http->process_event(SSL_CONNECT);
                 } else {
                     //HTTP
@@ -538,7 +551,9 @@ namespace plan9
         struct end_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
-                http->cancel_timer();
+                if (event != TIME_OUT) {
+                    http->cancel_timer();
+                }
                 http->remove_http();
                 http->send_callback();
                 //执行下一个任务
@@ -550,7 +565,6 @@ namespace plan9
         };
 
         void no_transition(std::shared_ptr<state> begin, std::string event) override {
-            assert(false);
         }
 
         std::shared_ptr<ahttp_request> request;
@@ -558,6 +572,9 @@ namespace plan9
         std::function<void(std::shared_ptr<common_callback>ccb, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback;
         int tcp_id;
         int timer_id;
+        std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> dns_resolve_callback;
+        bool validate_domain;
+        bool validate_cert;
 
         class ahttp_mgr {
         public:
@@ -718,7 +735,7 @@ namespace plan9
                     }
                 }
                 mutex.unlock();
-                if (http) {
+                if (http && !(http->is_current_state<end_state>())) {
                     push(tcp_id, http);
                     http->process_event(FETCH);
                 }
@@ -916,7 +933,6 @@ namespace plan9
             }
             return default_dns_resolve;
         }
-        std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> dns_resolve_callback;
 
         void push_ips(std::shared_ptr<std::vector<std::string>> ips) {
             mgr->push_ips(this, ips);
@@ -945,12 +961,14 @@ namespace plan9
         }
         void resolve() {
             //TODO 当TIMEOUT事件触发后，其他事件再迁移，就会发生no_transition
-            get_resolver()(request->get_domain(), request->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips){
-                if (ccb->success) {
-                    push_ips(ips);
-                    process_event(DNS_RESOLVE_OK);
-                } else {
-                    process_event(DNS_RESOLVE_ERROR);
+            get_resolver()(request->get_domain(), request->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips) {
+                if (!is_current_state<end_state>()) {
+                    if (ccb->success) {
+                        push_ips(ips);
+                        process_event(DNS_RESOLVE_OK);
+                    } else {
+                        process_event(DNS_RESOLVE_ERROR);
+                    }
                 }
             });
         }
@@ -974,6 +992,9 @@ namespace plan9
         }
         void cancel_timer() {
             uv_wrapper::cancel_timer(timer_id);
+        }
+        void test() {
+
         }
     };
 
@@ -1016,5 +1037,13 @@ namespace plan9
 
     void ahttp1::exec(std::shared_ptr<ahttp_request> request, std::function<void(std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
         impl->exec(request, callback);
+    }
+
+    void ahttp1::is_validate_cert(bool validate) {
+        impl->is_validate_cert(validate);
+    }
+
+    void ahttp1::is_validate_domain(bool validate) {
+        impl->is_validate_domain(validate);
     }
 }

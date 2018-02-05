@@ -70,7 +70,9 @@ namespace plan9 {
         }
 
         ~function_wrap() {
-            function = nullptr;
+            if (function) {
+                function = nullptr;
+            }
         }
 
         bool minus() {

@@ -76,6 +76,8 @@ namespace plan9
                 ss << "thread : ";
                 ss << std::this_thread::get_id();
                 ss << "\t";
+                ss << event;
+                ss << "\t";
                 ss << "no transition";
                 trace_callback(ss.str());
             }

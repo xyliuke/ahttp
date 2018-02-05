@@ -23,7 +23,26 @@ namespace plan9
          * @param max 最大连接数
          */
         static void set_max_connection(int max);
+
+        /**
+         * HTTP请求最基本的方法
+         * @param request 请求参数的对象
+         * @param callback 回调
+         */
         void exec(std::shared_ptr<ahttp_request> request, std::function<void(std::shared_ptr<common_callback>ccb, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback);
+
+        /**
+         * 是否验证域名
+         * @param validate true 验证 false 不验证
+         */
+        void is_validate_domain(bool validate);
+
+        /**
+         * 是否验证证书
+         * @param validate validate true 验证 false 不验证
+         */
+        void is_validate_cert(bool validate);
+
     private:
         class ahttp_impl;
         std::shared_ptr<ahttp_impl> impl;

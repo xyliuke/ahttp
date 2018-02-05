@@ -70,6 +70,18 @@ namespace plan9
          */
         void set_dns_resolve(std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> callback);
 
+        /**
+         * 设置调试模式，在调试模式下，会收集网络各阶段信息，状态机的迁移路径，默认不是debug模式
+         * @param debug true表示debug模式
+         */
+        void set_debug_mode(bool debug);
+
+        /**
+         * 获取请求过程中网络相关数据信息
+         * @return 返回kv格式的请求数据
+         */
+        std::shared_ptr<std::map<std::string, std::string>> get_network_info();
+
     private:
         class ahttp_impl;
         std::shared_ptr<ahttp_impl> impl;

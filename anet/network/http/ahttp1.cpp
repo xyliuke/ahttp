@@ -6,12 +6,145 @@
 #include <assert.h>
 #include <set>
 #include <iostream>
+#include <sstream>
 #include "ahttp1.h"
 #include "state_machine.h"
 #include "uv_wrapper.hpp"
 
 namespace plan9
 {
+    class http_info {
+    public:
+
+        http_info() : info(std::make_shared<std::map<std::string, std::string>>()) {
+
+        }
+
+        void set_proxy(bool used) {
+            push("proxy", used ? "1" : "0");
+        }
+
+        void set_reused_tcp(bool reused) {
+            push("reused_tcp", reused ? "1" : "0");
+        }
+
+        void set_fetch_time() {
+            fetch = get_current_time();
+            std::stringstream ss;
+            ss << (fetch / 1000);
+            push("fetch", ss.str());
+        }
+
+        void set_remote_ip_port(std::string ip, int port) {
+            std::stringstream ss;
+            ss << ip;
+            ss << ":";
+            ss << port;
+            push("remote", ss.str());
+        }
+
+        void set_remote_ip_port(std::string ip, std::string port) {
+            std::stringstream ss;
+            ss << ip;
+            ss << ":";
+            ss << port;
+            push("remote", ss.str());
+        }
+
+        void set_dns_start_time() {
+            push("dns_start", get_current_time_string());
+        }
+
+        void set_dns_end_time() {
+            push("dns_end", get_current_time_string());
+        }
+
+        void set_connect_start_time() {
+            push("connect_start", get_current_time_string());
+        }
+
+        void set_connect_end_time() {
+            push("connect_end", get_current_time_string());
+        }
+
+        void set_ssl_start_time() {
+            push("ssl_start", get_current_time_string());
+        }
+        void set_ssl_end_time() {
+            push("ssl_end", get_current_time_string());
+        }
+
+        void set_request_start_time() {
+            push("request_start", get_current_time_string());
+        }
+        void set_request_end_time() {
+            push("request_end", get_current_time_string());
+        }
+        void set_response_start_time() {
+            push("response_start", get_current_time_string());
+        }
+
+        void set_response_end_time() {
+            long end = get_current_time();
+            std::stringstream ss;
+            ss << (end / 1000);
+            push("response_end", ss.str());
+            std::stringstream sss;
+            sss << ((end - fetch) / 1000);
+            push("total", sss.str());
+        }
+
+        void set_request_data_size(int size) {
+            std::stringstream ss;
+            ss << size;
+            push("request_bytes", ss.str());
+        }
+
+        void set_response_data_size(int size) {
+            std::stringstream ss;
+            ss << size;
+            push("response_bytes", ss.str());
+        }
+
+        void set_local_ip_port(std::string ip, int port) {
+            std::stringstream ss;
+            ss << ip;
+            ss << ":";
+            ss << port;
+            push("local", ss.str());
+        }
+
+        void set_local_ip_port(std::string ip, std::string port) {
+            std::stringstream ss;
+            ss << ip;
+            ss << ":";
+            ss << port;
+            push("local", ss.str());
+        }
+
+        std::shared_ptr<std::map<std::string, std::string>> get_info() {
+            return info;
+        }
+
+    private:
+        std::shared_ptr<std::map<std::string, std::string>> info;
+        std::string get_current_time_string() {
+            std::stringstream ss;
+            ss << (get_current_time() / 1000);
+            return ss.str();
+        }
+        long get_current_time() {
+            auto tp = std::chrono::system_clock::now();
+            return tp.time_since_epoch().count();
+        }
+        void push(std::string key, std::string value) {
+            if (info) {
+                (*info)[key] = value;
+            }
+        }
+        long fetch;
+    };
+
     class mutex_wrap {
     public:
         mutex_wrap() {
@@ -36,7 +169,7 @@ namespace plan9
     class ahttp1::ahttp_impl : public state_machine {
     public:
         ahttp_impl() : tcp_id(-1), timer_id(-1), validate_domain(false), validate_cert(false), low_priority(false),
-                       dns_resolve_callback(nullptr) {
+                       dns_resolve_callback(nullptr), debug_mode(false), info(std::make_shared<http_info>()) {
             //1
             STATE_MACHINE_ADD_ROW(this, init_state, PUSH_WAITING_QUEUE, wait_state, [=](state_machine* fsm) -> bool {
                 if (fsm->is_current_state<end_state>()) {
@@ -345,9 +478,6 @@ namespace plan9
             });
 
             set_init_state<init_state>();
-            set_trace(true, [](std::string trace){
-                std::cout << trace << std::endl;
-            });
             start();
         }
 
@@ -389,6 +519,16 @@ namespace plan9
             this->dns_resolve_callback = callback;
         }
 
+        std::shared_ptr<std::map<std::string, std::string>> get_debug_info() {
+            return info->get_info();
+        };
+
+        void set_debug_mode(bool debug) {
+            debug_mode = debug;
+            set_trace(debug, [](std::string trace){
+                std::cout << trace << std::endl;
+            });
+        }
     private:
         static const std::string FETCH;//开始执行请求数据操作
         static const std::string PUSH_WAITING_QUEUE;//压入请求队列
@@ -438,13 +578,16 @@ namespace plan9
         struct begin_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* impl = (ahttp_impl*)fsm;
+                impl->set_fetch_time();
                 if (event == REDIRECT_OUTER) {
                     //重定向
 //                    impl->process_event(SEND);
                 } else {
                     if (impl->is_reused_tcp()) {
+                        impl->set_reused_tcp(true);
                         impl->process_event(READY_SEND);
                     } else {
+                        impl->set_reused_tcp(false);
                         if (impl->request->is_ip_format_host()) {
                             //ip直连
                             impl->process_event(READY_CONNECT);
@@ -469,6 +612,7 @@ namespace plan9
         struct dns_begin_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
+                http->set_dns_start_time();
                 http->process_event(DNS_RESOLVE);
                 http->resolve();
             }
@@ -491,6 +635,8 @@ namespace plan9
                 if (event == SWITCH_IP) {
                     //换下一个IP
                     impl->change_ip();
+                } else {
+                    impl->set_dns_end_time();
                 }
                 impl->process_event(READY_CONNECT);
             }
@@ -502,6 +648,7 @@ namespace plan9
         struct connect_begin_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
+                http->set_connect_start_time();
                 http->process_event(OPEN);
                 http->connect();
             }
@@ -521,6 +668,8 @@ namespace plan9
         struct connected_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
+                http->set_connect_end_time();
+                http->set_local_info();
                 if (http->request->is_use_ssl()) {
                     //HTTPS
                     auto ssl = uv_wrapper::get_ssl_impl_by_tcp_id(http->tcp_id);
@@ -549,6 +698,8 @@ namespace plan9
         //ssl ing
         struct ssl_ing_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
+                ahttp_impl* http = (ahttp_impl*)fsm;
+                http->set_ssl_start_time();
             }
 
             void on_exit(std::string event, state_machine *fsm) override {
@@ -558,6 +709,7 @@ namespace plan9
         struct ssl_end_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
+                http->set_ssl_end_time();
                 http->process_event(READY_SEND);
             }
 
@@ -568,6 +720,7 @@ namespace plan9
         struct send_begin_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
+                http->set_request_start_time();
                 http->process_event(SEND);
                 http->send();
             }
@@ -587,6 +740,7 @@ namespace plan9
         struct send_end_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
+                http->set_request_end_time();
                 http->process_event(READY_RECV);
             }
 
@@ -597,6 +751,7 @@ namespace plan9
         struct read_begin_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
+                http->set_response_start_time();
                 http->process_event(RECV);
             }
 
@@ -616,7 +771,13 @@ namespace plan9
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
                 //TODO 判断Redirect/Forward情况
-                http->process_event(FINISH);
+                if (event == REDIRECT_OUTER || event == REDIRECT_INNER || event == FORWARD) {
+
+                } else {
+                    http->set_response_data_size();
+                    http->set_response_end_time();
+                    http->process_event(FINISH);
+                }
             }
 
             void on_exit(std::string event, state_machine *fsm) override {
@@ -651,6 +812,8 @@ namespace plan9
         bool validate_domain;
         bool validate_cert;
         bool low_priority;
+        std::shared_ptr<http_info> info;
+        bool debug_mode;
 
         class ahttp_mgr {
         public:
@@ -755,6 +918,7 @@ namespace plan9
                         uv_wrapper::write(tcp_id, data, len, [=](std::shared_ptr<common_callback> write_callback){
                             if ((sent + len) >= total) {
                                 //发送完成
+                                impl->set_request_data_size(total);
                                 impl->process_event(SEND_FINISH);
                             }
                         });
@@ -1084,6 +1248,101 @@ namespace plan9
         void cancel_timer() {
             uv_wrapper::cancel_timer(timer_id);
         }
+
+        void set_fetch_time() {
+            if (debug_mode) {
+                info->set_fetch_time();
+            }
+        }
+
+        void set_local_info() {
+            if (debug_mode) {
+                auto tcp_info = uv_wrapper::get_info(tcp_id);
+                info->set_local_ip_port((*tcp_info)["local_ip"], (*tcp_info)["local_port"]);
+                info->set_remote_ip_port((*tcp_info)["remote_ip"], (*tcp_info)["remote_port"]);
+            }
+        }
+
+        void set_dns_start_time() {
+            if (debug_mode) {
+                info->set_dns_start_time();
+            }
+        }
+
+        void set_dns_end_time() {
+            if (debug_mode) {
+                info->set_dns_end_time();
+            }
+        }
+
+        void set_connect_start_time() {
+            if (debug_mode) {
+                info->set_connect_start_time();
+            }
+        }
+
+        void set_connect_end_time() {
+            if (debug_mode) {
+                info->set_connect_end_time();
+            }
+        }
+
+        void set_ssl_start_time() {
+            if (debug_mode) {
+                info->set_ssl_start_time();
+            }
+        }
+        void set_ssl_end_time() {
+            if (debug_mode) {
+                info->set_ssl_end_time();
+            }
+        }
+
+        void set_request_start_time() {
+            if (debug_mode) {
+                info->set_request_start_time();
+            }
+        }
+        void set_request_end_time() {
+            if (debug_mode) {
+                info->set_request_end_time();
+            }
+        }
+        void set_response_start_time() {
+            if (debug_mode) {
+                info->set_response_start_time();
+            }
+        }
+
+        void set_response_end_time() {
+            if (debug_mode) {
+                info->set_response_end_time();
+            }
+        }
+
+        void set_request_data_size(int size) {
+            if (debug_mode) {
+                info->set_request_data_size(size);
+            }
+        }
+
+        void set_response_data_size() {
+            if (debug_mode) {
+                info->set_response_data_size(response->get_response_length());
+            }
+        }
+
+        void set_reused_tcp(bool reused) {
+            if (debug_mode) {
+                info->set_reused_tcp(reused);
+            }
+        }
+
+        void set_used_proxy(bool proxy) {
+            if (debug_mode) {
+                info->set_proxy(proxy);
+            }
+        }
     };
 
     const std::string ahttp1::ahttp_impl::FETCH("FETCH");//开始执行请求数据操作
@@ -1154,5 +1413,13 @@ namespace plan9
 
     void ahttp1::set_dns_resolve(std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> callback) {
         impl->set_dns_resolve(callback);
+    }
+
+    std::shared_ptr<std::map<std::string, std::string>> ahttp1::get_network_info() {
+        return impl->get_debug_info();
+    }
+
+    void ahttp1::set_debug_mode(bool debug) {
+        impl->set_debug_mode(debug);
     }
 }

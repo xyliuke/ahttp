@@ -432,18 +432,25 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
         list->clear();
     }
 
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 1; ++i) {
         std::shared_ptr<ahttp1> http;
         http = std::make_shared<ahttp1>();
-//        list->push_back(http);
+        list->push_back(http);
         auto request = make_shared<ahttp_request>();
         std::string url = "https://api.chesupai.cn";
         request->set_url(url);
 //        request->set_timeout(1);
-        http->set_low_priority();
+//        http->set_low_priority();
+        http->set_debug_mode(true);
         http->exec(request, [=](shared_ptr<common_callback> ccb, shared_ptr<ahttp_request> request, shared_ptr<ahttp_response> response) {
             if (ccb->success) {
                 std::cout << response->get_body_string() << std::endl;
+                std::map<std::string, std::string>::iterator it = http->get_network_info()->begin();
+                while (it != http->get_network_info()->end()) {
+                    std::cout << it->first << ":" << it->second << std::endl;
+                    it ++;
+                }
+
             } else {
                 std::cout << ccb->reason << std::endl;
             }

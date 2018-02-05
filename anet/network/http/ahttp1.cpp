@@ -38,70 +38,121 @@ namespace plan9
         ahttp_impl() : tcp_id(-1), timer_id(-1) {
             //1
             STATE_MACHINE_ADD_ROW(this, init_state, PUSH_WAITING_QUEUE, wait_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //2
             STATE_MACHINE_ADD_ROW(this, init_state, FETCH, begin_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //3
             STATE_MACHINE_ADD_ROW(this, wait_state, FETCH, begin_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //4
             STATE_MACHINE_ADD_ROW(this, begin_state, READY_DNS, dns_begin_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //5
             STATE_MACHINE_ADD_ROW(this, dns_begin_state, DNS_RESOLVE, dns_ing_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //6
             STATE_MACHINE_ADD_ROW(this, dns_ing_state, DNS_RESOLVE_OK, dns_end_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //7
             STATE_MACHINE_ADD_ROW(this, dns_end_state, READY_CONNECT, connect_begin_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //8
             STATE_MACHINE_ADD_ROW(this, connect_begin_state, OPEN, connecting_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //9
             STATE_MACHINE_ADD_ROW(this, connecting_state, OPEN_SUCCESS, connected_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //10
             STATE_MACHINE_ADD_ROW(this, connected_state, SSL_CONNECT, ssl_ing_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //11
             STATE_MACHINE_ADD_ROW(this, ssl_ing_state, SSL_CONNECT_SUCCESS, ssl_end_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //12
             STATE_MACHINE_ADD_ROW(this, ssl_end_state, READY_SEND, send_begin_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //13
             STATE_MACHINE_ADD_ROW(this, send_begin_state, SEND, send_ing_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //14
             STATE_MACHINE_ADD_ROW(this, send_ing_state, SEND_FINISH, send_end_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //15
             STATE_MACHINE_ADD_ROW(this, send_end_state, READY_RECV, read_begin_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //16
             STATE_MACHINE_ADD_ROW(this, read_begin_state, RECV, read_ing_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //17
             STATE_MACHINE_ADD_ROW(this, read_ing_state, RECV_FINISH, read_end_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //18
@@ -114,42 +165,72 @@ namespace plan9
             });
             //20
             STATE_MACHINE_ADD_ROW(this, begin_state, READY_CONNECT, connect_begin_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //21
             STATE_MACHINE_ADD_ROW(this, connecting_state, CLOSE, disconnect_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //22
             STATE_MACHINE_ADD_ROW(this, disconnect_state, SWITCH_IP, dns_end_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //23
             STATE_MACHINE_ADD_ROW(this, disconnect_state, RETRY, connect_begin_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //24
             STATE_MACHINE_ADD_ROW(this, connected_state, READY_SEND, send_begin_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //25
             STATE_MACHINE_ADD_ROW(this, ssl_ing_state, CLOSE, disconnect_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //26
             STATE_MACHINE_ADD_ROW(this, begin_state, READY_SEND, send_begin_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //27
             STATE_MACHINE_ADD_ROW(this, read_end_state, REDIRECT_INNER, send_begin_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //28
             STATE_MACHINE_ADD_ROW(this, read_end_state, FORWARD, send_begin_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //29
             STATE_MACHINE_ADD_ROW(this, read_end_state, REDIRECT_OUTER, begin_state, [=](state_machine* fsm) -> bool {
+                if (fsm->is_current_state<end_state>()) {
+                    return false;
+                }
                 return true;
             });
             //30
@@ -457,6 +538,7 @@ namespace plan9
         struct end_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
+                http->cancel_timer();
                 http->remove_http();
                 http->send_callback();
                 //执行下一个任务
@@ -889,6 +971,9 @@ namespace plan9
         void time_out() {
             mgr->remove_http(this);
             process_event(TIME_OUT);
+        }
+        void cancel_timer() {
+            uv_wrapper::cancel_timer(timer_id);
         }
     };
 

@@ -159,6 +159,17 @@ namespace plan9 {
          */
         void set_trace(bool trace, std::function<void(std::string)> callback);
 
+        /**
+         * 判断当前是否指定状态
+         * @tparam T 状态类
+         * @return true表示当前状态相同
+         */
+        template <typename T>
+        bool is_current_state() {
+            const std::type_info& t = typeid(T);
+            return t.hash_code() == current;
+        }
+
         std::string get_trace();
     private:
         void record(std::shared_ptr<transition_row> row);

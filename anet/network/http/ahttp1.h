@@ -15,6 +15,8 @@ namespace plan9
 
     public:
         ahttp1();
+
+        virtual ~ahttp1();
         /**
          * 设置相同ip和端口号下的最大同时连接数
          * 未达到最大连接数数的请求，在已存在的tcp不空闲时，创建新的连接；存在空闲tcp时，优先复用原来tcp
@@ -56,6 +58,11 @@ namespace plan9
          * 达到最大连接数时，等待tcp空闲，再复用tcp进行请求
          */
         void set_high_priority();
+
+        /**
+         * 取消请求
+         */
+        void cancel();
 
     private:
         class ahttp_impl;

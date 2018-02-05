@@ -435,7 +435,7 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
     for (int i = 0; i < 10; ++i) {
         std::shared_ptr<ahttp1> http;
         http = std::make_shared<ahttp1>();
-        list->push_back(http);
+//        list->push_back(http);
         auto request = make_shared<ahttp_request>();
         std::string url = "https://api.chesupai.cn";
         request->set_url(url);

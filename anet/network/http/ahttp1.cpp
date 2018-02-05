@@ -288,6 +288,60 @@ namespace plan9
             STATE_MACHINE_ADD_ROW(this, disconnect_state, TIME_OUT, end_state, [=](state_machine* fsm) -> bool {
                 return true;
             });
+            STATE_MACHINE_ADD_ROW(this, init_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, wait_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, begin_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, dns_begin_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, dns_ing_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, dns_end_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, connect_begin_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, connecting_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, connected_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, ssl_ing_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, ssl_end_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, send_begin_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, send_ing_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, send_end_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, read_begin_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, read_ing_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, read_end_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
+            STATE_MACHINE_ADD_ROW(this, disconnect_state, CANCEL, end_state, [=](state_machine* fsm) -> bool {
+                return true;
+            });
 
             set_init_state<init_state>();
             set_trace(true, [](std::string trace){
@@ -323,6 +377,13 @@ namespace plan9
             low_priority = true;
         }
 
+        void cancel() {
+            if (!is_current_state<end_state>()) {
+                remove_http();
+                process_event(CANCEL);
+            }
+        }
+
     private:
         static const std::string FETCH;//开始执行请求数据操作
         static const std::string PUSH_WAITING_QUEUE;//压入请求队列
@@ -350,6 +411,7 @@ namespace plan9
         static const std::string FINISH;//请求结束
         static const std::string SWITCH_IP;//换IP重新连接
         static const std::string TIME_OUT;
+        static const std::string CANCEL;
 
         // HTTP的初始状态
         struct init_state : public state {
@@ -741,8 +803,21 @@ namespace plan9
                             if (url_http_unconnect->size() > 0 && url_http_unconnect->find(host) != url_http_unconnect->end()) {
                                 auto list = (*url_http_unconnect)[host];
                                 if (list->size() > 0) {
-                                    http = *(list->begin());
-                                    list->erase(list->begin());
+                                    auto it = list->begin();
+                                    bool find = false;
+                                    while (it != list->end()) {
+                                        if (!((*it)->low_priority)) {
+                                            http = *it;
+                                            list->erase(it);
+                                            find = true;
+                                            break;
+                                        }
+                                        it ++;
+                                    }
+                                    if (!find) {
+                                        http = *(list->begin());
+                                        list->erase(list->begin());
+                                    }
                                 }
                             }
                         }
@@ -773,34 +848,30 @@ namespace plan9
                 return num >= max_connection_num;
             }
             void assign_reused_tcp(ahttp_impl* http) {
-                if (is_reused_tcp(http)) {
-                    auto tcp_ids = (*url_tcp)[http->request->get_domain()];
-                    if (tcp_ids->size() > 0) {
-                        auto it = tcp_ids->begin();
-                        int tcp_id_task_min_num = -1;
-                        int tcp_id_ret = -1;
-                        while (it != tcp_ids->end()) {
-                            int tcp_id = *it;
-                            if (tcp_http->find(tcp_id) != tcp_http->end()) {
-                                auto list = (*tcp_http)[tcp_id];
-                                if (list->size() < tcp_id_task_min_num) {
-                                    tcp_id_task_min_num = (int)list->size();
-                                    tcp_id_ret = tcp_id;
-                                }
-                            } else {
-                                if (tcp_id_task_min_num > 0) {
-                                    tcp_id_task_min_num = 0;
-                                    tcp_id_ret = tcp_id;
-                                }
+                auto tcp_ids = (*url_tcp)[http->request->get_domain()];
+                if (tcp_ids->size() > 0) {
+                    auto it = tcp_ids->begin();
+                    int tcp_id_task_min_num = -1;
+                    int tcp_id_ret = -1;
+                    while (it != tcp_ids->end()) {
+                        int tcp_id = *it;
+                        if (tcp_http->find(tcp_id) != tcp_http->end()) {
+                            auto list = (*tcp_http)[tcp_id];
+                            if (list->size() < tcp_id_task_min_num) {
+                                tcp_id_task_min_num = (int)list->size();
+                                tcp_id_ret = tcp_id;
                             }
-                            it ++;
+                        } else {
+                            if (tcp_id_task_min_num > 0) {
+                                tcp_id_task_min_num = 0;
+                                tcp_id_ret = tcp_id;
+                            }
                         }
-                        if (tcp_id_ret > 0) {
-                            push(tcp_id_ret, http);
-                        }
+                        it ++;
                     }
-                } else {
-
+                    if (tcp_id_ret > 0) {
+                        push(tcp_id_ret, http);
+                    }
                 }
             }
 
@@ -1036,11 +1107,16 @@ namespace plan9
     const std::string ahttp1::ahttp_impl::FINISH("FINISH");//请求结束
     const std::string ahttp1::ahttp_impl::SWITCH_IP("SWITCH_IP");//换IP重新连接
     const std::string ahttp1::ahttp_impl::TIME_OUT("TIME_OUT");
+    const std::string ahttp1::ahttp_impl::CANCEL("CANCEL");
 
     std::shared_ptr<ahttp1::ahttp_impl::ahttp_mgr> ahttp1::ahttp_impl::mgr = std::make_shared<ahttp1::ahttp_impl::ahttp_mgr>();
 
     ahttp1::ahttp1() : impl(std::make_shared<ahttp1::ahttp_impl>()) {
 
+    }
+
+    ahttp1::~ahttp1() {
+        cancel();
     }
 
     void ahttp1::set_max_connection(int max) {
@@ -1065,5 +1141,9 @@ namespace plan9
 
     void ahttp1::set_high_priority() {
         impl->set_high_priority();
+    }
+
+    void ahttp1::cancel() {
+        impl->cancel();
     }
 }

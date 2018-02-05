@@ -35,7 +35,7 @@ namespace plan9
 
     class ahttp1::ahttp_impl : public state_machine {
     public:
-        ahttp_impl() : tcp_id(-1), timer_id(-1), validate_domain(false), validate_cert(false) {
+        ahttp_impl() : tcp_id(-1), timer_id(-1), validate_domain(false), validate_cert(false), low_priority(false) {
             //1
             STATE_MACHINE_ADD_ROW(this, init_state, PUSH_WAITING_QUEUE, wait_state, [=](state_machine* fsm) -> bool {
                 if (fsm->is_current_state<end_state>()) {
@@ -315,6 +315,14 @@ namespace plan9
             validate_cert = validate;
         }
 
+        void set_high_priority() {
+            low_priority = false;
+        }
+
+        void set_low_priority() {
+            low_priority = true;
+        }
+
     private:
         static const std::string FETCH;//开始执行请求数据操作
         static const std::string PUSH_WAITING_QUEUE;//压入请求队列
@@ -575,6 +583,7 @@ namespace plan9
         std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> dns_resolve_callback;
         bool validate_domain;
         bool validate_cert;
+        bool low_priority;
 
         class ahttp_mgr {
         public:
@@ -589,16 +598,21 @@ namespace plan9
              * @param impl
              */
             void push_task(ahttp_impl* impl) {
-                if (is_exceed_max_connection_num(impl)) {
-                    //超过最大连接数
-                    if (is_reused_tcp(impl)) {
+                bool reused = is_reused_tcp(impl);
+                bool exist = true;
+                if (impl->low_priority && !reused) {
+                    exist = is_exist_http_in_unconnect_queue(impl);
+                }
+                if ((impl->low_priority && (reused || exist)) || is_exceed_max_connection_num(impl)) {
+                    //超过最大连接数或者优先级低
+                    if (reused) {
                         assign_reused_tcp(impl);
                     } else {
                         push_unconnect_queue(impl);
                     }
                     impl->process_event(PUSH_WAITING_QUEUE);
                 } else {
-                    if (is_reused_tcp(impl)) {
+                    if (reused) {
                         assign_reused_tcp(impl);
                     } else {
                         push_unconnect_queue(impl);
@@ -879,6 +893,13 @@ namespace plan9
                 mutex.unlock();
             }
 
+            bool is_exist_http_in_unconnect_queue(ahttp_impl* http) {
+                mutex.lock();
+                bool ret = url_http_unconnect->find(http->request->get_domain()) != url_http_unconnect->end();
+                mutex.unlock();
+                return ret;
+            }
+
             void remove_from_unconnected_queue(ahttp_impl *http) {
                 mutex.lock();
                 if (url_http_unconnect->find(http->request->get_domain()) != url_http_unconnect->end()) {
@@ -980,21 +1001,12 @@ namespace plan9
             mgr->exec_next(tcp_id);
         }
 
-        bool is_exceed_max_connection_num() {
-            return mgr->is_exceed_max_connection_num(this);
-        }
-        void assign_reused_tcp() {
-            mgr->assign_reused_tcp(this);
-        }
         void time_out() {
             mgr->remove_http(this);
             process_event(TIME_OUT);
         }
         void cancel_timer() {
             uv_wrapper::cancel_timer(timer_id);
-        }
-        void test() {
-
         }
     };
 
@@ -1045,5 +1057,13 @@ namespace plan9
 
     void ahttp1::is_validate_domain(bool validate) {
         impl->is_validate_domain(validate);
+    }
+
+    void ahttp1::set_low_priority() {
+        impl->set_low_priority();
+    }
+
+    void ahttp1::set_high_priority() {
+        impl->set_high_priority();
     }
 }

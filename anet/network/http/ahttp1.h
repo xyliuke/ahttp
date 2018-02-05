@@ -43,6 +43,20 @@ namespace plan9
          */
         void is_validate_cert(bool validate);
 
+        /**
+         * 设置低优先级，默认为高优先级
+         * 设置低优先级后，会优先考虑复用tcp的情况，只有在没有tcp连接情况下，才会创建新的连接
+         */
+        void set_low_priority();
+
+        /**
+         * 设置高优先级
+         * 默认为高优先级，默认情况下，
+         * 未达到最大连接数数的请求，在已存在的tcp不空闲时，创建新的连接；存在空闲tcp时，优先复用原来tcp
+         * 达到最大连接数时，等待tcp空闲，再复用tcp进行请求
+         */
+        void set_high_priority();
+
     private:
         class ahttp_impl;
         std::shared_ptr<ahttp_impl> impl;

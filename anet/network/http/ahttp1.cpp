@@ -10,6 +10,7 @@
 #include "ahttp1.h"
 #include "state_machine.h"
 #include "uv_wrapper.hpp"
+#include "local_proxy.h"
 
 namespace plan9
 {
@@ -100,7 +101,7 @@ namespace plan9
             push("request_bytes", ss.str());
         }
 
-        void set_response_data_size(int size) {
+        void set_response_data_size(long size) {
             std::stringstream ss;
             ss << size;
             push("response_bytes", ss.str());
@@ -492,21 +493,19 @@ namespace plan9
             mgr->set_max_connection(max);
         }
 
+
         static void set_proxy(std::string host, int port) {
-//            if (proxy_host != host || port != proxy_port) {
-//                if (proxy_port > 0 && proxy_host.length() > 0) {
-//                    url_2_http.erase(get_unique_domain(proxy_host, proxy_port));
-//                }
-//                proxy_host = host;
-//                proxy_port = port;
-//            }
+            if (proxy_host != host || port != proxy_port) {
+                proxy_host = host;
+                proxy_port = port;
+            }
         }
 
         static void set_auto_proxy(bool auto_use) {
-//            if (auto_use_proxy && !auto_use) {
-//                set_proxy("", -1);
-//            }
-//            auto_use_proxy = auto_use;
+            if (auto_use_proxy && !auto_use) {
+                set_proxy("", -1);
+            }
+            auto_use_proxy = auto_use;
         }
 
         void is_validate_domain(bool validate) {
@@ -596,22 +595,35 @@ namespace plan9
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* impl = (ahttp_impl*)fsm;
                 impl->set_fetch_time();
-                if (event == REDIRECT_OUTER) {
-                    //重定向
-//                    impl->process_event(SEND);
-                } else {
-                    if (impl->is_reused_tcp()) {
-                        impl->set_reused_tcp(true);
-                        impl->process_event(READY_SEND);
+                auto next = [=]() {
+                    impl->request->set_uesd_proxy(ahttp_impl::is_use_proxy());
+                    impl->set_used_proxy();
+                    if (event == REDIRECT_OUTER) {
+                        //重定向
+                        //                    impl->process_event(SEND);
                     } else {
-                        impl->set_reused_tcp(false);
-                        if (impl->request->is_ip_format_host()) {
-                            //ip直连
-                            impl->process_event(READY_CONNECT);
+                        if (impl->is_reused_tcp()) {
+                            impl->set_reused_tcp(true);
+                            impl->process_event(READY_SEND);
                         } else {
-                            impl->process_event(READY_DNS);
+                            impl->set_reused_tcp(false);
+
+                            if (impl->request->is_ip_format_host() || (is_use_proxy() && ahttp_request::is_ip_format(proxy_host))) {
+                                //ip直连
+                                impl->process_event(READY_CONNECT);
+                            } else {
+                                impl->process_event(READY_DNS);
+                            }
+
                         }
                     }
+                };
+                if (impl->auto_use_proxy) {
+                    ahttp_impl::get_auto_proxy([=](){
+                        next();
+                    });
+                } else {
+                    next();
                 }
             }
 
@@ -687,7 +699,7 @@ namespace plan9
                 ahttp_impl* http = (ahttp_impl*)fsm;
                 http->set_connect_end_time();
                 http->set_local_info();
-                if (http->request->is_use_ssl()) {
+                if (http->is_ssl_connect()) {
                     //HTTPS
                     auto ssl = uv_wrapper::get_ssl_impl_by_tcp_id(http->tcp_id);
                     if (ssl) {
@@ -831,8 +843,9 @@ namespace plan9
         bool low_priority;
         std::shared_ptr<http_info> info;
         bool debug_mode;
-//        static std::string proxy_host;
-//        static int proxy_port;
+        static std::string proxy_host;
+        static int proxy_port;
+        static bool auto_use_proxy;
 
         class ahttp_mgr {
         public:
@@ -842,10 +855,7 @@ namespace plan9
                           url_http_unconnect(std::make_shared<std::map<std::string, std::shared_ptr<std::vector<ahttp_impl*>>>>()),
                           max_connection_num(4) {
             }
-            /**
-             * 添加请求到队列
-             * @param impl
-             */
+
             void push_task(ahttp_impl* impl) {
                 bool reused = is_reused_tcp(impl);
                 bool exist = true;
@@ -881,9 +891,24 @@ namespace plan9
                     if (url_ips->find(http->get_uni_domain()) != url_ips->end()) {
                         //TODO 设置IP的选择性
                         return (*(*url_ips)[http->get_uni_domain()])[0];
+                    } else {
+                        if (http->is_use_proxy() && http->request->is_ip_format(ahttp_impl::proxy_host)) {
+                            return ahttp_impl::proxy_host;
+                        }
                     }
                 }
                 return "";
+            }
+
+            int get_port(ahttp_impl* http) {
+                if (http) {
+                    if (ahttp_impl::is_use_proxy()) {
+                        return ahttp_impl::proxy_port;
+                    } else {
+                        return http->request->get_port();
+                    }
+                }
+                return -1;
             }
 
             void switch_ip(ahttp_impl* http) {}
@@ -899,7 +924,7 @@ namespace plan9
             }
 
             void connect(ahttp_impl* impl) {
-                int tcp_id = uv_wrapper::connect(get_ip(impl), impl->request->get_port(), impl->request->is_use_ssl(), impl->request->get_domain(),
+                int tcp_id = uv_wrapper::connect(get_ip(impl), get_port(impl), impl->is_ssl_connect(), impl->request->get_domain(),
                         [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
                             if (ccb->success) {
                                 impl->tcp_id = tcp_id;
@@ -1019,6 +1044,11 @@ namespace plan9
             }
             bool is_exceed_max_connection_num(ahttp_impl* http) {
                 int num = 0;
+                int max = max_connection_num;
+                if (ahttp_impl::is_use_proxy()) {
+                    //使用代理，则只有一个连接
+                    max = 1;
+                }
                 mutex.lock();
                 if (url_http_unconnect->find(http->get_uni_domain()) != url_http_unconnect->end()) {
                     auto list = (*url_http_unconnect)[http->get_uni_domain()];
@@ -1033,7 +1063,7 @@ namespace plan9
                     }
                 }
                 mutex.unlock();
-                return num >= max_connection_num;
+                return num >= max;
             }
             void assign_reused_tcp(ahttp_impl* http) {
                 auto tcp_ids = (*url_tcp)[http->get_uni_domain()];
@@ -1357,9 +1387,9 @@ namespace plan9
             }
         }
 
-        void set_used_proxy(bool proxy) {
+        void set_used_proxy() {
             if (debug_mode) {
-                info->set_proxy(proxy);
+                info->set_proxy(is_use_proxy());
             }
         }
 
@@ -1369,6 +1399,30 @@ namespace plan9
             ss << ":";
             ss << request->get_port();
             return ss.str();
+        }
+
+        static bool is_use_proxy() {
+            return proxy_port > 0 && "" != proxy_host;
+        }
+
+        bool is_ssl_connect() {
+            return request->is_use_ssl() && !(is_use_proxy());
+        }
+
+        static void get_auto_proxy(std::function<void()> callback) {
+            local_proxy::get_proxy([=](std::shared_ptr<std::map<std::string, std::string>> proxy){
+                if (proxy->find("HTTPPort") != proxy->end() && proxy->find("HTTPProxy") != proxy->end()) {
+                    std::string port = proxy->at("HTTPPort");
+                    proxy_host = proxy->at("HTTPProxy");
+                    proxy_port = atoi(port.c_str());
+                } else {
+                    proxy_host = "";
+                    proxy_port = -1;
+                }
+                if (callback) {
+                    callback();
+                }
+            });
         }
     };
 
@@ -1399,6 +1453,10 @@ namespace plan9
     const std::string ahttp1::ahttp_impl::SWITCH_IP("SWITCH_IP");//换IP重新连接
     const std::string ahttp1::ahttp_impl::TIME_OUT("TIME_OUT");
     const std::string ahttp1::ahttp_impl::CANCEL("CANCEL");
+    std::string ahttp1::ahttp_impl::proxy_host("");
+    int ahttp1::ahttp_impl::proxy_port = -1;
+    bool ahttp1::ahttp_impl::auto_use_proxy = false;
+
 
     std::shared_ptr<ahttp1::ahttp_impl::ahttp_mgr> ahttp1::ahttp_impl::mgr = std::make_shared<ahttp1::ahttp_impl::ahttp_mgr>();
 

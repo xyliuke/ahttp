@@ -432,7 +432,7 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
         list->clear();
     }
 
-    for (int i = 0; i < 1; ++i) {
+    for (int i = 0; i < 5; ++i) {
         std::shared_ptr<ahttp1> http;
         http = std::make_shared<ahttp1>();
         list->push_back(http);
@@ -441,7 +441,9 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
         request->set_url(url);
 //        request->set_timeout(1);
 //        http->set_low_priority();
-//        http->set_debug_mode(true);
+        http->set_debug_mode(true);
+//        http->set_proxy("127.0.0.1", 8888);
+        http->set_auto_proxy(true);
         http->exec(request, [=](shared_ptr<common_callback> ccb, shared_ptr<ahttp_request> request, shared_ptr<ahttp_response> response) {
             if (ccb->success) {
                 std::cout << response->get_body_string() << std::endl;

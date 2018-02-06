@@ -831,6 +831,8 @@ namespace plan9
         bool low_priority;
         std::shared_ptr<http_info> info;
         bool debug_mode;
+//        static std::string proxy_host;
+//        static int proxy_port;
 
         class ahttp_mgr {
         public:
@@ -838,7 +840,7 @@ namespace plan9
                           url_tcp(std::make_shared<std::map<std::string, std::shared_ptr<std::set<int>>>>()),
                           tcp_http(std::make_shared<std::map<int, std::shared_ptr<std::vector<ahttp_impl*>>>>()),
                           url_http_unconnect(std::make_shared<std::map<std::string, std::shared_ptr<std::vector<ahttp_impl*>>>>()),
-                          max_connection_num(4){
+                          max_connection_num(4) {
             }
             /**
              * 添加请求到队列
@@ -870,15 +872,15 @@ namespace plan9
 
             void push_ips(ahttp_impl* http, std::shared_ptr<std::vector<std::string>> ips) {
                 if (http) {
-                    (*url_ips)[http->request->get_domain()] = ips;
+                    (*url_ips)[http->get_uni_domain()] = ips;
                 }
             }
 
             std::string get_ip(ahttp_impl* http) {
                 if (http) {
-                    if (url_ips->find(http->request->get_domain()) != url_ips->end()) {
+                    if (url_ips->find(http->get_uni_domain()) != url_ips->end()) {
                         //TODO 设置IP的选择性
-                        return (*(*url_ips)[http->request->get_domain()])[0];
+                        return (*(*url_ips)[http->get_uni_domain()])[0];
                     }
                 }
                 return "";
@@ -887,8 +889,8 @@ namespace plan9
             void switch_ip(ahttp_impl* http) {}
 
             bool is_reused_tcp(ahttp_impl *http) {
-                if (http && url_tcp->find(http->request->get_domain()) != url_tcp->end()) {
-                    auto list = (*url_tcp)[http->request->get_domain()];
+                if (http && url_tcp->find(http->get_uni_domain()) != url_tcp->end()) {
+                    auto list = (*url_tcp)[http->get_uni_domain()];
                     if (list->size() > 0) {
                         return true;
                     }
@@ -1018,14 +1020,14 @@ namespace plan9
             bool is_exceed_max_connection_num(ahttp_impl* http) {
                 int num = 0;
                 mutex.lock();
-                if (url_http_unconnect->find(http->request->get_domain()) != url_http_unconnect->end()) {
-                    auto list = (*url_http_unconnect)[http->request->get_domain()];
+                if (url_http_unconnect->find(http->get_uni_domain()) != url_http_unconnect->end()) {
+                    auto list = (*url_http_unconnect)[http->get_uni_domain()];
                     if (list) {
                         num += list->size();
                     }
                 }
-                if (url_tcp->find(http->request->get_domain()) != url_tcp->end()) {
-                    auto list = (*url_tcp)[http->request->get_domain()];
+                if (url_tcp->find(http->get_uni_domain()) != url_tcp->end()) {
+                    auto list = (*url_tcp)[http->get_uni_domain()];
                     if (list) {
                         num += list->size();
                     }
@@ -1034,7 +1036,7 @@ namespace plan9
                 return num >= max_connection_num;
             }
             void assign_reused_tcp(ahttp_impl* http) {
-                auto tcp_ids = (*url_tcp)[http->request->get_domain()];
+                auto tcp_ids = (*url_tcp)[http->get_uni_domain()];
                 if (tcp_ids->size() > 0) {
                     auto it = tcp_ids->begin();
                     int tcp_id_task_min_num = -1;
@@ -1098,13 +1100,13 @@ namespace plan9
             void push(int tcp_id, ahttp_impl* http) {
                 mutex.lock();
                 http->tcp_id = tcp_id;
-                if (url_tcp->find(http->request->get_domain()) != url_tcp->end()) {
-                    auto list = (*url_tcp)[http->request->get_domain()];
+                if (url_tcp->find(http->get_uni_domain()) != url_tcp->end()) {
+                    auto list = (*url_tcp)[http->get_uni_domain()];
                     list->insert(tcp_id);
                 } else {
                     auto list = std::make_shared<std::set<int>>();
                     list->insert(tcp_id);
-                    (*url_tcp)[http->request->get_domain()] = list;
+                    (*url_tcp)[http->get_uni_domain()] = list;
                 }
 
                 std::shared_ptr<std::vector<ahttp_impl*>> list;
@@ -1139,28 +1141,28 @@ namespace plan9
 
             void push_unconnect_queue(ahttp_impl* http) {
                 mutex.lock();
-                if (url_http_unconnect->find(http->request->get_domain()) != url_http_unconnect->end()) {
-                    auto list = (*url_http_unconnect)[http->request->get_domain()];
+                if (url_http_unconnect->find(http->get_uni_domain()) != url_http_unconnect->end()) {
+                    auto list = (*url_http_unconnect)[http->get_uni_domain()];
                     list->push_back(http);
                 } else {
                     auto list = std::make_shared<std::vector<ahttp_impl*>>();
                     list->push_back(http);
-                    (*url_http_unconnect)[http->request->get_domain()] = list;
+                    (*url_http_unconnect)[http->get_uni_domain()] = list;
                 }
                 mutex.unlock();
             }
 
             bool is_exist_http_in_unconnect_queue(ahttp_impl* http) {
                 mutex.lock();
-                bool ret = url_http_unconnect->find(http->request->get_domain()) != url_http_unconnect->end();
+                bool ret = url_http_unconnect->find(http->get_uni_domain()) != url_http_unconnect->end();
                 mutex.unlock();
                 return ret;
             }
 
             void remove_from_unconnected_queue(ahttp_impl *http) {
                 mutex.lock();
-                if (url_http_unconnect->find(http->request->get_domain()) != url_http_unconnect->end()) {
-                    auto list = (*url_http_unconnect)[http->request->get_domain()];
+                if (url_http_unconnect->find(http->get_uni_domain()) != url_http_unconnect->end()) {
+                    auto list = (*url_http_unconnect)[http->get_uni_domain()];
                     auto it = list->begin();
                     while (it != list->end()) {
                         if (*it == http) {
@@ -1359,6 +1361,14 @@ namespace plan9
             if (debug_mode) {
                 info->set_proxy(proxy);
             }
+        }
+
+        std::string get_uni_domain() {
+            std::stringstream ss;
+            ss << request->get_domain();
+            ss << ":";
+            ss << request->get_port();
+            return ss.str();
         }
     };
 

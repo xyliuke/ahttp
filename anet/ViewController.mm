@@ -442,8 +442,16 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //        request->set_timeout(1);
 //        http->set_low_priority();
         http->set_debug_mode(true);
+        http->set_dns_resolve([=](std::string url, int port , std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)> callback){
+//        124.250.45.37
+            if (callback) {
+                auto list = std::make_shared<std::vector<std::string>>();
+                list->push_back("124.250.45.37");
+                callback(common_callback::get(), list);
+            }
+        });
 //        http->set_proxy("127.0.0.1", 8888);
-        http->set_auto_proxy(true);
+//        http->set_auto_proxy(true);
         http->exec(request, [=](shared_ptr<common_callback> ccb, shared_ptr<ahttp_request> request, shared_ptr<ahttp_response> response) {
             if (ccb->success) {
                 std::cout << response->get_body_string() << std::endl;

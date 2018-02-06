@@ -14,6 +14,130 @@
 
 namespace plan9
 {
+    class mutex_wrap {
+    public:
+        mutex_wrap() {
+            uv_mutex_init(&mutex);
+        }
+
+        void lock() {
+            uv_mutex_lock(&mutex);
+        }
+
+        void unlock() {
+            uv_mutex_unlock(&mutex);
+        }
+
+        ~mutex_wrap() {
+            uv_mutex_destroy(&mutex);
+        }
+    private:
+        uv_mutex_t mutex;
+    };
+
+    static int dns_cache_time = 1000 * 60;
+    static void http_default_cache_resolve(std::string url, int port, std::function<void(std::shared_ptr<common_callback>,
+            std::shared_ptr<std::vector<std::string>>)> callback) {
+        static mutex_wrap mutex;
+        class ip_cache {
+        public:
+            ip_cache() : time(std::chrono::system_clock::now().time_since_epoch().count() / 1000),
+                         callbacks(std::make_shared<std::vector<std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>>>()){
+            }
+
+            bool is_too_long(long t) {
+                if (dns_cache_time > 0) {
+                    return t - time > dns_cache_time;
+                }
+                return true;
+            }
+
+            bool is_cache() {
+                return dns_cache_time > 0;
+            }
+
+            void push_callback(std::function<void(std::shared_ptr<common_callback>,
+                    std::shared_ptr<std::vector<std::string>>)> cb) {
+                if (cb) {
+                    mutex.lock();
+                    callbacks->push_back(cb);
+                    mutex.unlock();
+                }
+            }
+
+            void callback(std::shared_ptr<common_callback> ccb) {
+                mutex.lock();
+                auto it = callbacks->begin();
+                while (it != callbacks->end()) {
+                    if (*it) {
+                        (*it)(ccb, ips);
+                    }
+                    it ++;
+                }
+                callbacks->clear();
+                mutex.unlock();
+            }
+
+            bool has_callback() {
+                mutex.lock();
+                bool ret = callbacks->size() > 0;
+                mutex.unlock();
+                return ret;
+            }
+
+            void reset() {
+                ips = nullptr;
+                time = std::chrono::system_clock::now().time_since_epoch().count() / 1000;
+            }
+            std::shared_ptr<std::vector<std::string>> ips;
+        private:
+            long time;
+            std::shared_ptr<std::vector<std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>>> callbacks;
+        };
+        static std::map<std::string, std::shared_ptr<ip_cache>> cache;
+        std::stringstream ss;
+        ss << url;
+        ss << ":";
+        ss << port;
+        long time = std::chrono::system_clock::now().time_since_epoch().count() / 1000;
+
+        std::string key = ss.str();
+        if (cache.find(key) != cache.end()) {
+            auto ip = cache[key];
+            if (ip->is_cache() && ip->is_too_long(time)) {
+                ip->reset();
+                ip->push_callback(callback);
+            } else {
+                if (ip->ips) {
+                    if (callback) {
+                        callback(common_callback::get(), ip->ips);
+                    }
+                    return;
+                } else {
+                    bool has = ip->has_callback();
+                    ip->push_callback(callback);
+                    if (has) {
+                        return;
+                    }
+                }
+            }
+        } else {
+            auto ip = std::make_shared<ip_cache>();
+            ip->push_callback(callback);
+            cache[key] = ip;
+        }
+
+        uv_wrapper::resolve(url, port, [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips) {
+            if (cache.find(key) != cache.end()) {
+                auto ip = cache[key];
+                if (ccb->success) {
+                    ip->ips = ips;
+                }
+                ip->callback(ccb);
+            }
+        });
+    }
+
     class http_info {
     public:
 
@@ -101,7 +225,7 @@ namespace plan9
             push("request_bytes", ss.str());
         }
 
-        void set_response_data_size(long size) {
+        void set_response_data_size(int size) {
             std::stringstream ss;
             ss << size;
             push("response_bytes", ss.str());
@@ -146,31 +270,13 @@ namespace plan9
         long fetch;
     };
 
-    class mutex_wrap {
-    public:
-        mutex_wrap() {
-            uv_mutex_init(&mutex);
-        }
-
-        void lock() {
-            uv_mutex_lock(&mutex);
-        }
-
-        void unlock() {
-            uv_mutex_unlock(&mutex);
-        }
-
-        ~mutex_wrap() {
-            uv_mutex_destroy(&mutex);
-        }
-    private:
-        uv_mutex_t mutex;
-    };
-
     class ahttp1::ahttp_impl : public state_machine {
     public:
         ahttp_impl() : tcp_id(-1), timer_id(-1), validate_domain(false), validate_cert(false), low_priority(false),
                        dns_resolve_callback(nullptr), debug_mode(false), info(std::make_shared<http_info>()) {
+            static int count = 0;
+            id = count;
+            count ++;
             //1
             STATE_MACHINE_ADD_ROW(this, init_state, PUSH_WAITING_QUEUE, wait_state, [=](state_machine* fsm) -> bool {
                 if (fsm->is_current_state<end_state>()) {
@@ -541,8 +647,8 @@ namespace plan9
 
         void set_debug_mode(bool debug) {
             debug_mode = debug;
-            set_trace(debug, [](std::string trace){
-                std::cout << trace << std::endl;
+            set_trace(debug, [=](std::string trace){
+                std::cout << "id : " << id << "\t" << trace << std::endl;
             });
         }
     private:
@@ -846,6 +952,7 @@ namespace plan9
         static std::string proxy_host;
         static int proxy_port;
         static bool auto_use_proxy;
+        int id;
 
         class ahttp_mgr {
         public:
@@ -857,7 +964,8 @@ namespace plan9
             }
 
             void push_task(ahttp_impl* impl) {
-                bool reused = is_reused_tcp(impl);
+                int size;
+                bool reused = is_reused_tcp(impl, &size);
                 bool exist = true;
                 if (impl->low_priority && !reused) {
                     exist = is_exist_http_in_unconnect_queue(impl);
@@ -871,7 +979,7 @@ namespace plan9
                     }
                     impl->process_event(PUSH_WAITING_QUEUE);
                 } else {
-                    if (reused) {
+                    if (reused && size == 0) {
                         assign_reused_tcp(impl);
                     } else {
                         push_unconnect_queue(impl);
@@ -913,10 +1021,12 @@ namespace plan9
 
             void switch_ip(ahttp_impl* http) {}
 
-            bool is_reused_tcp(ahttp_impl *http) {
+            bool is_reused_tcp(ahttp_impl *http, int* size) {
+                *size = 0;
                 if (http && url_tcp->find(http->get_uni_domain()) != url_tcp->end()) {
                     auto list = (*url_tcp)[http->get_uni_domain()];
                     if (list->size() > 0) {
+                        *size = (int)(list->size());
                         return true;
                     }
                 }
@@ -1263,14 +1373,14 @@ namespace plan9
         }
 
         bool is_reused_tcp() {
-            return mgr->is_reused_tcp(this);
+            int size;
+            return mgr->is_reused_tcp(this, &size) && size == 0;
         }
 
         void remove_http() {
             mgr->remove_http(this);
         }
         void resolve() {
-            //TODO 当TIMEOUT事件触发后，其他事件再迁移，就会发生no_transition
             get_resolver()(request->get_domain(), request->get_port(), [=](std::shared_ptr<common_callback> ccb, std::shared_ptr<std::vector<std::string>> ips) {
                 if (!is_current_state<end_state>()) {
                     if (ccb->success) {
@@ -1377,7 +1487,7 @@ namespace plan9
 
         void set_response_data_size() {
             if (debug_mode) {
-                info->set_response_data_size(response->get_response_length());
+                info->set_response_data_size((int)response->get_response_length());
             }
         }
 
@@ -1410,19 +1520,29 @@ namespace plan9
         }
 
         static void get_auto_proxy(std::function<void()> callback) {
-            local_proxy::get_proxy([=](std::shared_ptr<std::map<std::string, std::string>> proxy){
-                if (proxy->find("HTTPPort") != proxy->end() && proxy->find("HTTPProxy") != proxy->end()) {
-                    std::string port = proxy->at("HTTPPort");
-                    proxy_host = proxy->at("HTTPProxy");
-                    proxy_port = atoi(port.c_str());
-                } else {
-                    proxy_host = "";
-                    proxy_port = -1;
-                }
+            static long time = 0;
+            long cur = std::chrono::system_clock::now().time_since_epoch().count() / 1000;
+            if (cur - time > 2000) {
+                time = cur;
+                local_proxy::get_proxy([=](std::shared_ptr<std::map<std::string, std::string>> proxy){
+                    if (proxy->find("HTTPPort") != proxy->end() && proxy->find("HTTPProxy") != proxy->end()) {
+                        std::string port = proxy->at("HTTPPort");
+                        proxy_host = proxy->at("HTTPProxy");
+                        proxy_port = atoi(port.c_str());
+                    } else {
+                        proxy_host = "";
+                        proxy_port = -1;
+                    }
+                    if (callback) {
+                        callback();
+                    }
+                });
+            } else {
                 if (callback) {
                     callback();
                 }
-            });
+            }
+
         }
     };
 

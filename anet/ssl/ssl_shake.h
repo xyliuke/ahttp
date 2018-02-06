@@ -23,6 +23,10 @@ namespace plan9
 
         void validate_domain(bool validate);
         void validate_cert(bool validate);
+
+        bool is_domain_invalidation() override;
+        bool is_cert_invalidation() override;
+
     private:
         class ssl_shake_impl;
         std::shared_ptr<ssl_shake_impl> impl;

@@ -24,6 +24,8 @@ namespace plan9 {
         virtual void write(char* data, long len, std::function<void(std::shared_ptr<common_callback>, char* data, long len)> callback)= 0;
         virtual void validate_domain(bool validate) = 0;
         virtual void validate_cert(bool validate) = 0;
+        virtual bool is_domain_invalidation() = 0;
+        virtual bool is_cert_invalidation() = 0;
     };
 
     class uv_wrapper {

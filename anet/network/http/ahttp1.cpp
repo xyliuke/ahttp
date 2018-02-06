@@ -11,6 +11,7 @@
 #include "state_machine.h"
 #include "uv_wrapper.hpp"
 #include "local_proxy.h"
+#include "common_callback_err_wrapper.h"
 
 namespace plan9
 {
@@ -648,7 +649,7 @@ namespace plan9
         void set_debug_mode(bool debug) {
             debug_mode = debug;
             set_trace(debug, [=](std::string trace){
-                std::cout << "id : " << id << "\t" << trace << std::endl;
+                std::cout << std::chrono::system_clock::now().time_since_epoch().count() / 1000 << "\tid : " << id << "\t" << trace << std::endl;
             });
         }
     private:
@@ -825,6 +826,8 @@ namespace plan9
         //断开连接
         struct disconnect_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
+                ahttp_impl* http = (ahttp_impl*)fsm;
+                http->process_event(GIVE_UP);
             }
 
             void on_exit(std::string event, state_machine *fsm) override {
@@ -941,6 +944,7 @@ namespace plan9
         std::shared_ptr<ahttp_request> request;
         std::shared_ptr<ahttp_response> response;
         std::function<void(std::shared_ptr<common_callback>ccb, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback;
+        std::shared_ptr<common_callback> ccb;
         int tcp_id;
         int timer_id;
         std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> dns_resolve_callback;
@@ -1036,6 +1040,7 @@ namespace plan9
             void connect(ahttp_impl* impl) {
                 int tcp_id = uv_wrapper::connect(get_ip(impl), get_port(impl), impl->is_ssl_connect(), impl->request->get_domain(),
                         [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
+                            impl->ccb = ccb;
                             if (ccb->success) {
                                 impl->tcp_id = tcp_id;
                                 impl->process_event(OPEN_SUCCESS);
@@ -1043,6 +1048,7 @@ namespace plan9
                                 impl->process_event(CLOSE);
                             }
                         }, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
+                            impl->ccb = ccb;
                             if (ccb->success) {
                                 impl->process_event(SSL_CONNECT_SUCCESS);
                             } else {
@@ -1057,6 +1063,7 @@ namespace plan9
                                 }
                             }
                         }, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
+                            impl->ccb = ccb;
                             close(tcp_id);
                         });
                 impl->tcp_id = tcp_id;
@@ -1261,6 +1268,14 @@ namespace plan9
             }
 
             void close(int tcp_id) {
+                if (tcp_http->find(tcp_id) != tcp_http->end()) {
+                    auto list = (*tcp_http)[tcp_id];
+                    auto it = list->begin();
+                    while (it != list->end()) {
+                        (*it)->process_event(CLOSE);
+                        it ++;
+                    }
+                }
                 mutex.lock();
                 tcp_http->erase(tcp_id);
                 auto it = url_tcp->begin();
@@ -1368,7 +1383,7 @@ namespace plan9
 
         void send_callback() {
             if (callback) {
-                callback(common_callback::get(), request, response);
+                callback(ccb, request, response);
             }
         }
 
@@ -1402,6 +1417,7 @@ namespace plan9
 
         void time_out() {
             mgr->remove_http(this);
+            ccb = common_callback_err_wrapper::get(E_TIME_OUT);
             process_event(TIME_OUT);
         }
         void cancel_timer() {

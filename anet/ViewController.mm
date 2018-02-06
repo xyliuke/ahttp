@@ -432,7 +432,7 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
         list->clear();
     }
 
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 1; ++i) {
         std::shared_ptr<ahttp1> http;
         http = std::make_shared<ahttp1>();
         list->push_back(http);
@@ -442,27 +442,28 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //        request->set_timeout(1);
 //        http->set_low_priority();
         http->set_debug_mode(true);
-        http->set_dns_resolve([=](std::string url, int port , std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)> callback){
-//        124.250.45.37
-            if (callback) {
-                auto list = std::make_shared<std::vector<std::string>>();
-                list->push_back("124.250.45.37");
-                callback(common_callback::get(), list);
-            }
-        });
+//        http->set_dns_resolve([=](std::string url, int port , std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)> callback){
+//            if (callback) {
+//                auto list = std::make_shared<std::vector<std::string>>();
+//                list->push_back("124.250.45.37");
+//                list->push_back("124.250.45.39");
+//                callback(common_callback::get(), list);
+//            }
+//        });
 //        http->set_proxy("127.0.0.1", 8888);
 //        http->set_auto_proxy(true);
+        http->is_validate_cert(true);
+        http->is_validate_domain(true);
         http->exec(request, [=](shared_ptr<common_callback> ccb, shared_ptr<ahttp_request> request, shared_ptr<ahttp_response> response) {
             if (ccb->success) {
                 std::cout << response->get_body_string() << std::endl;
-                std::map<std::string, std::string>::iterator it = http->get_network_info()->begin();
-                while (it != http->get_network_info()->end()) {
-                    std::cout << it->first << ":" << it->second << std::endl;
-                    it ++;
-                }
-
             } else {
                 std::cout << ccb->reason << std::endl;
+            }
+            std::map<std::string, std::string>::iterator it = http->get_network_info()->begin();
+            while (it != http->get_network_info()->end()) {
+                std::cout << it->first << ":" << it->second << std::endl;
+                it ++;
             }
         });
     }

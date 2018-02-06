@@ -7,6 +7,7 @@
 //
 
 #include "uv_wrapper.hpp"
+#include "common_callback_err_wrapper.h"
 #include <map>
 #include <sstream>
 #include <list>
@@ -618,7 +619,19 @@ namespace plan9 {
             tcp_id_2_content.erase(tcp_id);
             uv_close((uv_handle_t*)(content->tcp), nullptr);
             if (content->close_callback) {
-                content->close_callback(common_callback::get(), tcp_id);
+                std::shared_ptr<common_callback> ccb;
+                if (content->ssl_impl) {
+                    if (content->ssl_impl->is_cert_invalidation()) {
+                        ccb = common_callback_err_wrapper::get(E_SSL_VERIFY_CERT_FAIL);
+                    } else if (content->ssl_impl->is_domain_invalidation()) {
+                        ccb = common_callback_err_wrapper::get(E_SSL_VERIFY_HOST_FAIL);
+                    } else {
+                        ccb = common_callback::get();
+                    }
+                } else {
+                    ccb = common_callback::get();
+                }
+                content->close_callback(ccb, tcp_id);
             }
         }
     }

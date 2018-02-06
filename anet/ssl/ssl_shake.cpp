@@ -95,6 +95,7 @@ namespace plan9
                 if (validate_domain) {
                     int  err = X509_STORE_CTX_get_error(ctx);
                     if (err == X509_V_ERR_HOSTNAME_MISMATCH) {
+                        impl->set_invalidation_domain_result(true);
                         return 0;
                     }
                 }
@@ -111,6 +112,7 @@ namespace plan9
                         X509* v = sk_X509_value(chain, num - 1);
                         bool ver = verify_cert(v);
                         impl->has_validated_cert = tri_true;
+                        impl->set_invalidation_cert_result(!ver);
                         if (ver) {
                             return 1;
                         } else {
@@ -124,7 +126,7 @@ namespace plan9
         }
 
         ssl_shake_impl() : buf((char*)malloc(buf_len)), ctx(nullptr), validate_cert_bool(false), validate_domain_bool(false),
-                        has_validated_cert(tri_undefined) {
+                        has_validated_cert(tri_undefined), invalidate_domain_result(false), invalidate_cert_result(false) {
             ssl = SSL_new(get_ssl_ctx());
             read_bio = BIO_new(BIO_s_mem());
             write_bio = BIO_new(BIO_s_mem());
@@ -159,7 +161,8 @@ namespace plan9
             SSL_set_tlsext_host_name(ssl, host.c_str());
             X509_VERIFY_PARAM* param = SSL_get0_param(ssl);
             X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
-            X509_VERIFY_PARAM_set1_host(param, host.c_str(), host.length());
+//            X509_VERIFY_PARAM_set1_host(param, host.c_str(), host.length());
+            X509_VERIFY_PARAM_set1_host(param, "guazi.com", 9);
         }
 
         void write(char *data, long len, std::function<void(std::shared_ptr<common_callback>, char *data, long len)> callback) {
@@ -228,6 +231,20 @@ namespace plan9
             validate_cert_bool = validate;
         }
 
+        bool is_domain_invalidation() {
+            return invalidate_domain_result;
+        }
+        bool is_cert_invalidation() {
+            return invalidate_cert_result;
+        }
+
+        void set_invalidation_domain_result(bool invalidation) {
+            invalidate_domain_result = invalidation;
+        }
+
+        void set_invalidation_cert_result(bool invalidation) {
+            invalidate_cert_result = invalidation;
+        }
 
     private:
         bool do_shake_finish(int tcp_id) {
@@ -279,6 +296,8 @@ namespace plan9
         bool validate_domain_bool;//是否验证域名
         bool validate_cert_bool;//是否验证证书
         tri_bool has_validated_cert;//已经验证通过了的标志，避免多次验证
+        bool invalidate_domain_result;
+        bool invalidate_cert_result;
     };
 
     int ssl_shake::ssl_shake_impl::buf_len = 10240;
@@ -311,5 +330,13 @@ namespace plan9
 
     void ssl_shake::validate_cert(bool validate) {
         impl->validate_cert(validate);
+    }
+
+    bool ssl_shake::is_domain_invalidation() {
+        return impl->is_domain_invalidation();
+    }
+
+    bool ssl_shake::is_cert_invalidation() {
+        return impl->is_cert_invalidation();
     }
 }

@@ -1268,15 +1268,12 @@ namespace plan9
             }
 
             void close(int tcp_id) {
-                if (tcp_http->find(tcp_id) != tcp_http->end()) {
-                    auto list = (*tcp_http)[tcp_id];
-                    auto it = list->begin();
-                    while (it != list->end()) {
-                        (*it)->process_event(CLOSE);
-                        it ++;
-                    }
-                }
                 mutex.lock();
+                std::shared_ptr<std::vector<ahttp_impl*>> list;
+                if (tcp_http->find(tcp_id) != tcp_http->end()) {
+                    list = (*tcp_http)[tcp_id];
+                }
+
                 tcp_http->erase(tcp_id);
                 auto it = url_tcp->begin();
                 while (it != url_tcp->end()) {
@@ -1292,6 +1289,12 @@ namespace plan9
                     it ++;
                 }
                 mutex.unlock();
+
+                auto itt = list->begin();
+                while (itt != list->end()) {
+                    (*itt)->process_event(CLOSE);
+                    itt ++;
+                }
             }
 
             void push_unconnect_queue(ahttp_impl* http) {

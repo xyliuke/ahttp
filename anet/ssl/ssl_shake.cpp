@@ -161,8 +161,7 @@ namespace plan9
             SSL_set_tlsext_host_name(ssl, host.c_str());
             X509_VERIFY_PARAM* param = SSL_get0_param(ssl);
             X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
-//            X509_VERIFY_PARAM_set1_host(param, host.c_str(), host.length());
-            X509_VERIFY_PARAM_set1_host(param, "guazi.com", 9);
+            X509_VERIFY_PARAM_set1_host(param, host.c_str(), host.length());
         }
 
         void write(char *data, long len, std::function<void(std::shared_ptr<common_callback>, char *data, long len)> callback) {

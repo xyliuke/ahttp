@@ -398,7 +398,7 @@ namespace plan9 {
             std::string reason = std::string(uv_err_name(status));
             if (resolver != nullptr && resolver->data != nullptr) {
                 auto func = (function_wrap<std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>> *) resolver->data;
-                func->function(common_callback::get(false, -1, reason), nullptr);
+                func->function(common_callback_err_wrapper::get(E_DNS_RESOLVE), nullptr);
                 delete resolver->data;
                 resolver->data = nullptr;
             }

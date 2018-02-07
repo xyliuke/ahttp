@@ -1386,6 +1386,9 @@ namespace plan9
 
         void send_callback() {
             if (callback) {
+                if (!ccb) {
+                    ccb = common_callback::get();
+                }
                 callback(ccb, request, response);
             }
         }
@@ -1405,6 +1408,7 @@ namespace plan9
                         push_ips(ips);
                         process_event(DNS_RESOLVE_OK);
                     } else {
+                        this->ccb = ccb;
                         process_event(DNS_RESOLVE_ERROR);
                     }
                 }

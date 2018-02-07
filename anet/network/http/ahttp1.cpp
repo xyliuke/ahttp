@@ -17,23 +17,15 @@ namespace plan9
 {
     class mutex_wrap {
     public:
-        mutex_wrap() {
-            uv_mutex_init(&mutex);
-        }
-
         void lock() {
-            uv_mutex_lock(&mutex);
+            mutex.lock();
         }
 
         void unlock() {
-            uv_mutex_unlock(&mutex);
-        }
-
-        ~mutex_wrap() {
-            uv_mutex_destroy(&mutex);
+            mutex.unlock();
         }
     private:
-        uv_mutex_t mutex;
+        std::recursive_mutex mutex;
     };
 
     static int dns_cache_time = 1000 * 60;

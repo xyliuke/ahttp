@@ -432,7 +432,7 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
         list->clear();
     }
 
-    for (int i = 0; i < 1; ++i) {
+    for (int i = 0; i < 5; ++i) {
         std::shared_ptr<ahttp1> http;
         http = std::make_shared<ahttp1>();
         list->push_back(http);

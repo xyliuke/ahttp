@@ -12,6 +12,7 @@
 #include "uv_wrapper.hpp"
 #include "local_proxy.h"
 #include "common_callback_err_wrapper.h"
+#include "log_interface.h"
 
 namespace plan9
 {
@@ -588,6 +589,25 @@ namespace plan9
             mgr->push_task(this);
         }
 
+        void get(std::string url, int timeout, std::shared_ptr<std::map<std::string, std::string>> header, std::function<void(std::shared_ptr<common_callback>ccb, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
+            std::shared_ptr<ahttp_request> req = std::make_shared<ahttp_request>();
+            req->set_method(ahttp_request::METHOD_GET);
+            req->set_timeout(timeout);
+            req->set_url(url);
+            req->append_header(header);
+            exec(req, callback);
+        }
+
+        void post(std::string url, int timeout, std::shared_ptr<std::map<std::string, std::string>> header, std::shared_ptr<std::map<std::string, std::string>> form, std::function<void(std::shared_ptr<common_callback>ccb, std::shared_ptr<ahttp_request>, std::shared_ptr<ahttp_response>)> callback) {
+            std::shared_ptr<ahttp_request> req = std::make_shared<ahttp_request>();
+            req->set_method(ahttp_request::METHOD_POST);
+            req->set_timeout(timeout);
+            req->set_url(url);
+            req->append_header(header);
+            req->append_body_data(form);
+            exec(req, callback);
+        }
+
         static void set_max_connection(int max) {
             mgr->set_max_connection(max);
         }
@@ -631,18 +651,41 @@ namespace plan9
         }
 
         void set_dns_resolve(std::function<void(std::string url, int port, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)>)> callback) {
-            this->dns_resolve_callback = callback;
+            this->dns_resolve_callback = std::move(callback);
         }
 
         std::shared_ptr<std::map<std::string, std::string>> get_debug_info() {
             return info->get_info();
         };
 
-        void set_debug_mode(bool debug) {
+        std::string get_network_info_string() {
+            using namespace std;
+            auto m = get_debug_info();
+            auto it = m->begin();
+            stringstream ss;
+            while (it != m->end()) {
+                ss << it->first;
+                ss << ":";
+                ss << it->second;
+                ss << "\n";
+                it ++;
+            }
+            return ss.str();
+        }
+
+        void set_debug_mode(bool debug, std::function<void(std::string)> callback) {
             debug_mode = debug;
-            set_trace(debug, [=](std::string trace){
-                std::cout << std::chrono::system_clock::now().time_since_epoch().count() / 1000 << "\tid : " << id << "\t" << trace << std::endl;
-            });
+            if (debug_mode) {
+                debug_callback = callback;
+                if (debug_callback) {
+                    set_trace(debug, callback);
+                } else {
+                    set_trace(debug, [=](std::string trace){
+                        std::cout << std::chrono::system_clock::now().time_since_epoch().count() / 1000 << "\tid : " << id << "\t" << trace << std::endl;
+                    });
+                }
+            }
+
         }
     private:
         static const std::string FETCH;//开始执行请求数据操作
@@ -681,17 +724,18 @@ namespace plan9
             void on_exit(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
                 //添加超时功能
-                if (http->request->get_timeout() > 0) {
-                    http->timer_id = uv_wrapper::post_timer([http](){
-                        http->time_out();
-                    }, http->request->get_timeout() * 1000, 0);
-                }
+//                if (http->request->get_timeout() > 0) {
+//                    http->timer_id = uv_wrapper::post_timer([http](){
+//                        http->time_out();
+//                    }, http->request->get_timeout() * 1000, 0);
+//                }
             }
         };
 
         //开始执行请求
         struct begin_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
+                log_mgr::log<NET>(log_level::LOG_LEVEL_DEBUG, "");
                 ahttp_impl* impl = (ahttp_impl*)fsm;
                 impl->set_fetch_time();
                 auto next = [=]() {
@@ -804,6 +848,7 @@ namespace plan9
                     if (ssl) {
                         ssl->validate_domain(http->validate_domain);
                         ssl->validate_cert(http->validate_cert);
+                        ssl->set_debug_mode(http->debug_mode, http->debug_callback);
                     }
                     http->process_event(SSL_CONNECT);
                 } else {
@@ -945,6 +990,7 @@ namespace plan9
         bool low_priority;
         std::shared_ptr<http_info> info;
         bool debug_mode;
+        std::function<void(std::string)> debug_callback;
         static std::string proxy_host;
         static int proxy_port;
         static bool auto_use_proxy;
@@ -1021,7 +1067,7 @@ namespace plan9
                 *size = 0;
                 if (http && url_tcp->find(http->get_uni_domain()) != url_tcp->end()) {
                     auto list = (*url_tcp)[http->get_uni_domain()];
-                    if (list->size() > 0) {
+                    if (!list->empty()) {
                         *size = (int)(list->size());
                         return true;
                     }
@@ -1619,6 +1665,19 @@ namespace plan9
         impl->exec(request, callback);
     }
 
+    void ahttp1::get(std::string url, int timeout, std::shared_ptr<std::map<std::string, std::string>> header,
+                     std::function<void(std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request>,
+                                        std::shared_ptr<ahttp_response>)> callback) {
+        impl->get(url, timeout, header, callback);
+    }
+
+    void ahttp1::post(std::string url, int timeout, std::shared_ptr<std::map<std::string, std::string>> header,
+                      std::shared_ptr<std::map<std::string, std::string>> form,
+                      std::function<void(std::shared_ptr<common_callback> ccb, std::shared_ptr<ahttp_request>,
+                                         std::shared_ptr<ahttp_response>)> callback) {
+        impl->post(url, timeout, header, form, callback);
+    }
+
     void ahttp1::is_validate_cert(bool validate) {
         impl->is_validate_cert(validate);
     }
@@ -1647,7 +1706,11 @@ namespace plan9
         return impl->get_debug_info();
     }
 
-    void ahttp1::set_debug_mode(bool debug) {
-        impl->set_debug_mode(debug);
+    std::string ahttp1::get_network_info_string() {
+        return impl->get_network_info_string();
+    }
+
+    void ahttp1::set_debug_mode(bool debug, std::function<void(std::string)> callback) {
+        impl->set_debug_mode(debug, callback);
     }
 }

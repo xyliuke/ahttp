@@ -16,6 +16,7 @@ namespace plan9
     class ssl_shake : public ssl_interface {
     public:
         ssl_shake();
+
         void set_host(std::string host);
         void on_connect(int tcp_id, std::function<void(std::shared_ptr<common_callback>)> callback);
         void on_read(int tcp_id, char* data, long len, std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<char>, long)> callback);
@@ -26,7 +27,7 @@ namespace plan9
 
         bool is_domain_invalidation() override;
         bool is_cert_invalidation() override;
-
+        void set_debug_mode(bool debug, std::function<void(std::string)> callback) override ;
     private:
         class ssl_shake_impl;
         std::shared_ptr<ssl_shake_impl> impl;

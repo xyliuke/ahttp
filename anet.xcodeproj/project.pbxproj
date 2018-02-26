@@ -80,6 +80,7 @@
 		6135E7B61D407B3A68DEFDBF /* uncompr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = uncompr.c; sourceTree = "<group>"; };
 		6135E7C79A9FA933F2B1015E /* android-ifaddrs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "android-ifaddrs.h"; sourceTree = "<group>"; };
 		6135E7FC24274F97C3677DB8 /* inffast.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = inffast.c; sourceTree = "<group>"; };
+		6135E891403F257973F6DB70 /* log_interface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = log_interface.h; sourceTree = "<group>"; };
 		6135E8A1FF67BD7F03564A37 /* uv-bsd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-bsd.h"; sourceTree = "<group>"; };
 		6135E8F538475A8DA976F7C8 /* zlib_wrap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zlib_wrap.cpp; sourceTree = "<group>"; };
 		6135E8F90876AD42F14334A5 /* ping.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ping.cpp; sourceTree = "<group>"; };
@@ -357,6 +358,7 @@
 			children = (
 				6135EC1B25AAC197290954FC /* log.cpp */,
 				6135E4131715A56FF1D1CD3D /* log.h */,
+				6135E891403F257973F6DB70 /* log_interface.h */,
 			);
 			path = log;
 			sourceTree = "<group>";

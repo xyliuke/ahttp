@@ -13,8 +13,10 @@
 #include <openssl/x509_vfy.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include <openssl/opensslv.h>
 #include <map>
 #include <vector>
+#include <sstream>
 
 
 namespace plan9
@@ -77,18 +79,14 @@ namespace plan9
         }
 
         static int verify_callback(int ok, X509_STORE_CTX* ctx) {
-//            X509* cert = X509_STORE_CTX_get_current_cert(ctx);
-//            BIO* bio = BIO_new(BIO_s_mem());
-//            X509_print(bio, cert);
-//            char buf[10240];
-//            int ret = BIO_read(bio, buf, 10240);
-//            printf("%s", buf);
-
-
-
             SSL* ssl = (SSL*)X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
             if (ssl_impl_map.find(ssl) != ssl_impl_map.end()) {
                 ssl_shake_impl* impl = ssl_impl_map[ssl];
+                impl->debug_cert_msg(ctx);
+
+
+
+
                 bool validate_domain = impl->validate_domain_bool;
                 bool validate_cert = impl->validate_cert_bool;
 
@@ -125,9 +123,73 @@ namespace plan9
             return 1;
         }
 
+        static void dummy_ssl_set_info_callback(const SSL *ssl, int where, int ret) {
+            std::string str;
+            int w = where & ~SSL_ST_MASK;
+
+            if (w & SSL_ST_CONNECT)
+                str = "SSL_connect";
+            else if (w & SSL_ST_ACCEPT)
+                str = "SSL_accept";
+            else {
+                str = "undefined";
+            }
+
+            std::stringstream ss;
+            if (where & SSL_CB_LOOP) {
+                ss << str;
+                ss << ":";
+                ss << SSL_state_string_long(ssl);
+            } else if (where & SSL_CB_ALERT) {
+                str = (where & SSL_CB_READ) ? "read" : "write";
+                ss << "SSL3 alert ";
+                ss << str;
+                ss << ":";
+                ss << SSL_alert_type_string_long(ret);
+                ss << ":";
+                ss << SSL_alert_desc_string_long(ret);
+            } else if (where & SSL_CB_EXIT) {
+                if (ret == 0) {
+                    ss << str;
+                    ss << ":failed in ";
+                    ss << SSL_state_string_long(ssl);
+                } else if (ret < 0) {
+                    ss << str;
+                    ss << ":error in ";
+                    ss << SSL_state_string_long(ssl);
+                }
+            }
+
+            if (ssl_impl_map.find((SSL*)ssl) != ssl_impl_map.end()) {
+                ssl_shake_impl *impl = ssl_impl_map[(SSL*)ssl];
+                impl->debug(ss.str());
+            }
+        }
+
+        static void  dummy_ssl_set_msg_callback(int write_p, int version, int content_type, const void *buf, size_t len,
+                                                SSL *ssl, void *arg) {
+            std::stringstream ss;
+            ss << "Message callback with length: ";
+            ss << len;
+            ss << "\twrite ";
+            ss << write_p;
+            ss << " version ";
+            ss << version;
+            ss << " contentType ";
+            ss << content_type;
+
+            if (ssl_impl_map.find(ssl) != ssl_impl_map.end()) {
+                ssl_shake_impl *impl = ssl_impl_map[ssl];
+                impl->debug(ss.str());
+            }
+        }
+
         ssl_shake_impl() : buf((char*)malloc(buf_len)), ctx(nullptr), validate_cert_bool(false), validate_domain_bool(false),
-                        has_validated_cert(tri_undefined), invalidate_domain_result(false), invalidate_cert_result(false) {
+                        has_validated_cert(tri_undefined), invalidate_domain_result(false), invalidate_cert_result(false),
+                        debug_mode(false) , debug_callback(nullptr), has_debug_cert(false) {
             ssl = SSL_new(get_ssl_ctx());
+            SSL_set_info_callback(ssl, dummy_ssl_set_info_callback);
+            SSL_set_msg_callback(ssl, dummy_ssl_set_msg_callback);
             read_bio = BIO_new(BIO_s_mem());
             write_bio = BIO_new(BIO_s_mem());
             SSL_set_bio(ssl, read_bio, write_bio);
@@ -195,21 +257,30 @@ namespace plan9
             if (SSL_is_init_finished(ssl)) {
                 if (callback) {
                     int ret = BIO_write(read_bio, data, (int)len);
+                    std::cout << "ssl will deal size " << ret << std::endl;
                     if (ret >= 0) {
-                        static int num = 10240;
+                        static int num = 1024 * 64;
                         std::shared_ptr<char> buf(new char[num]{});
-                        ret = SSL_read(ssl, buf.get(), num);
+                        int ret_read = SSL_read(ssl, buf.get(), num);
+                        std::cout << "ssl deal size " << ret << " result size " << ret_read << std::endl;
+                        if (ret_read <= 0) {
+                            int e = SSL_get_error(ssl, ret_read);
+                            if (e == SSL_ERROR_WANT_READ) {
+                                return;
+                            }
+                        }
+                        std::cout << "ssl " << buf.get();
                         std::shared_ptr<common_callback> ccb = std::make_shared<common_callback>();
-                        if (ret < 0) {
+                        if (ret_read < 0) {
                             ccb->success = false;
                             ccb->error_code = -1;
                             ccb->reason = "ssl read error";
-                        } else if (ret == 0){
+                        } else if (ret_read == 0){
                             ccb->success = false;
                             ccb->error_code = -2;
                             ccb->reason = "ssl close";
                         }
-                        callback(ccb, buf, ret);
+                        callback(ccb, buf, ret_read);
                     }
                 }
             } else {
@@ -245,6 +316,23 @@ namespace plan9
             invalidate_cert_result = invalidation;
         }
 
+        void set_debug_mode(bool debug, std::function<void(std::string)> callback) {
+            debug_mode = debug;
+            if (debug) {
+                debug_callback = callback;
+            }
+        }
+
+        void debug(std::string msg) {
+            if (debug_mode) {
+                if (debug_callback) {
+                    debug_callback(std::move(msg));
+                } else {
+                    std::cout << msg << std::endl;
+                }
+            }
+        }
+
     private:
         bool do_shake_finish(int tcp_id) {
             if (!SSL_is_init_finished(ssl)) {
@@ -278,12 +366,24 @@ namespace plan9
                 SSL_load_error_strings();
                 ERR_load_BIO_strings();
                 ctx = SSL_CTX_new(SSLv23_client_method());
-//                SSL_CTX_set_info_callback(ctx, dummy_ssl_info_callback);
-//                SSL_CTX_set_msg_callback(ctx, dummy_ssl_msg_callback);
+                SSL_CTX_set_info_callback(ctx, dummy_ssl_info_callback);
+                SSL_CTX_set_msg_callback(ctx, dummy_ssl_msg_callback);
                 SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
                 assert(ctx);
             }
             return ctx;
+        }
+
+        void debug_cert_msg(X509_STORE_CTX* ctx) {
+            if (!has_debug_cert) {
+                X509* cert = X509_STORE_CTX_get_current_cert(ctx);
+                BIO* bio = BIO_new(BIO_s_mem());
+                X509_print(bio, cert);
+                char buf[10240];
+                int ret = BIO_read(bio, buf, 10240);
+                debug(std::string(buf, ret));
+                has_debug_cert = true;
+            }
         }
     private:
         SSL_CTX* ctx;
@@ -297,9 +397,13 @@ namespace plan9
         tri_bool has_validated_cert;//已经验证通过了的标志，避免多次验证
         bool invalidate_domain_result;
         bool invalidate_cert_result;
+        bool debug_mode;
+        std::function<void(std::string)> debug_callback;
+        bool has_debug_cert;
+
     };
 
-    int ssl_shake::ssl_shake_impl::buf_len = 10240;
+    int ssl_shake::ssl_shake_impl::buf_len = 64 * 1020;
     std::map<SSL*, ssl_shake::ssl_shake_impl*> ssl_shake::ssl_shake_impl::ssl_impl_map;
     std::shared_ptr<std::vector<X509*>> ssl_shake::ssl_shake_impl::ca;
 
@@ -337,5 +441,9 @@ namespace plan9
 
     bool ssl_shake::is_cert_invalidation() {
         return impl->is_cert_invalidation();
+    }
+
+    void ssl_shake::set_debug_mode(bool debug, std::function<void(std::string)> callback) {
+        impl->set_debug_mode(debug, callback);
     }
 }

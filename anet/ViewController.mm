@@ -35,11 +35,17 @@ std::shared_ptr<plan9::ahttp> ah;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    plan9::uv_wrapper::init(nullptr);
+//    plan9::uv_wrapper::init(nullptr);
+    plan9::uv_wrapper::init([=]{
+        plan9::uv_wrapper::post_serial_queue([]{
+            std::cout << "init suc\n";
+        });
+    });
     plan9::uv_wrapper::set_ssl_impl([=] () -> std::shared_ptr<plan9::ssl_interface> {
         std::shared_ptr<plan9::ssl_interface> ret = std::make_shared<plan9::ssl_shake>();
         return ret;
     });
+//    std::cout << plan9::ssl_shake::version();
 
 //    NSDictionary *d = (__bridge NSDictionary *)dic;
 
@@ -432,16 +438,23 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
         list->clear();
     }
 
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 1; ++i) {
         std::shared_ptr<ahttp1> http;
         http = std::make_shared<ahttp1>();
         list->push_back(http);
         auto request = make_shared<ahttp_request>();
-        std::string url = "https://api.chesupai.cn";
+        std::string url = "https://www.baidu.com";
+//        url = "https://cn.bing.com/";
+//        url = "https://api.chesupai.cn/customer/index/data/?idfa=01D4B665-11AB-45FA-A8EB-2172CA06A566&osv=iOS11.2&net=data&screenWH=750%2C1334&deviceId=FDAB131D-04B6-475A-8C82-A48FC5EA4FEE&city_id=12&platform=1&dpi=326&versionId=2.9.0&deviceModel=iPhone&page_size=20&model=x86_64&sign=4b1a809279223c733a2acd097d34a1eb";
+//        url = "http://api.chesupai.cn/customer/detail/info?id=1429449&idfa=11BFBC7A-98EF-4B37-A216-E8DAF0ABAB8B&osv=iOS8.1&net=wifi&screenWH=750%252C1334&deviceId=3200A4C2-C469-469D-A42A-920B1A5A0216&deviceModel=iPhoneSimulator&platform=1&dpi=326&versionId=2.7.3&model=x86_64&pushTYpe=0&sign=9102c932d5e96cd5129b1c35f9baee28";
+//        url = "https://api.chesupai.cn";
+//        url = "https://weibo.com";
         request->set_url(url);
 //        request->set_timeout(1);
 //        http->set_low_priority();
-        http->set_debug_mode(true);
+        http->set_debug_mode(true, [](std::string msg) {
+            std::cout << msg << std::endl;
+        });
 //        http->set_dns_resolve([=](std::string url, int port , std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)> callback){
 //            if (callback) {
 //                auto list = std::make_shared<std::vector<std::string>>();
@@ -452,14 +465,16 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
 //        });
 //        http->set_proxy("127.0.0.1", 8888);
 //        http->set_auto_proxy(true);
-        http->is_validate_cert(true);
-        http->is_validate_domain(true);
+//        http->is_validate_cert(true);
+//        http->is_validate_domain(true);
         http->exec(request, [=](shared_ptr<common_callback> ccb, shared_ptr<ahttp_request> request, shared_ptr<ahttp_response> response) {
             if (ccb->success) {
+//                std::cout << response->to_string() << std::endl;
                 std::cout << response->get_body_string() << std::endl;
             } else {
                 std::cout << ccb->reason << std::endl;
             }
+            std::cout << response->get_response_code() << std::endl;
             std::map<std::string, std::string>::iterator it = http->get_network_info()->begin();
             while (it != http->get_network_info()->end()) {
                 std::cout << it->first << ":" << it->second << std::endl;

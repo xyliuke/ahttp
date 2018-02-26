@@ -12,6 +12,7 @@
 #include <sstream>
 #include <list>
 #include <vector>
+#include <iostream>
 
 namespace plan9 {
 
@@ -254,7 +255,7 @@ namespace plan9 {
         f->is_canceled = false;
         async->data = (void *) f;
         uv_async_init(loop, async, async_callback);
-        uv_mutex_trylock(get_serial_mutex());
+        uv_mutex_lock(get_serial_mutex());
         serial_map[count] = f;
         uv_mutex_unlock(get_serial_mutex());
         uv_async_send(async);
@@ -441,6 +442,7 @@ namespace plan9 {
 
 
     static void read_callback(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf) {
+        std::cout << "read data size " << nread << std::endl;
         if (handle != nullptr && handle->data != nullptr) {
             uv_content_s* content = (uv_content_s*)(handle->data);
             if (content->ssl_enable && content->ssl_impl) {
@@ -482,19 +484,19 @@ namespace plan9 {
     }
 
     static void alloc_callback(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-        if (handle != nullptr && handle->data != nullptr) {
-            uv_content_s* content = (uv_content_s*)handle->data;
-            static int default_size = 64 * 1024;
-            if (content->read_buf == nullptr) {
-                uv_buf_t* b = new uv_buf_t;
-                b->base = (char*)malloc(default_size);
-                b->len = default_size;
-                content->read_buf = b;
-            }
-            *buf = *(content->read_buf);
-        } else {
+//        if (handle != nullptr && handle->data != nullptr) {
+//            uv_content_s* content = (uv_content_s*)handle->data;
+//            static int default_size = 64 * 1024;
+//            if (content->read_buf == nullptr) {
+//                uv_buf_t* b = new uv_buf_t;
+//                b->base = (char*)malloc(default_size);
+//                b->len = default_size;
+//                content->read_buf = b;
+//            }
+//            *buf = *(content->read_buf);
+//        } else {
             *buf = uv_buf_init((char*)malloc(suggested_size), suggested_size);
-        }
+//        }
     }
 
 
@@ -683,6 +685,7 @@ namespace plan9 {
     }
 
     void uv_wrapper::write(int tcp_id, std::shared_ptr<char> data, int len, std::function<void(std::shared_ptr<common_callback>)> callback) {
+        std::cout << "write data size " << len << std::endl;
         if (tcp_id_2_content.find(tcp_id) != tcp_id_2_content.end()) {
             auto content = tcp_id_2_content[tcp_id];
             if (content->tcp != nullptr) {

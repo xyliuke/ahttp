@@ -185,7 +185,7 @@ namespace plan9
             }
         }
 
-        ssl_shake_impl() : buf((char*)malloc(buf_len)), ctx(nullptr), validate_cert_bool(false), validate_domain_bool(false),
+        ssl_shake_impl() : buf((char*)malloc(buf_len)), validate_cert_bool(false), validate_domain_bool(false),
                         has_validated_cert(tri_undefined), invalidate_domain_result(false), invalidate_cert_result(false),
                         debug_mode(false) , debug_callback(nullptr), has_debug_cert(false) {
             ssl = SSL_new(get_ssl_ctx());
@@ -214,10 +214,6 @@ namespace plan9
             if (ssl != nullptr) {
                 SSL_free(ssl);
                 ssl = nullptr;
-            }
-            if (ctx != nullptr) {
-                SSL_CTX_free(ctx);
-                ctx = nullptr;
             }
         }
         void set_host(std::string host) {
@@ -364,6 +360,7 @@ namespace plan9
         };
 
         SSL_CTX* get_ssl_ctx() {
+            static SSL_CTX* ctx = nullptr;
             if (!ctx) {
                 SSL_library_init();
                 OpenSSL_add_all_algorithms();
@@ -390,7 +387,6 @@ namespace plan9
             }
         }
     private:
-        SSL_CTX* ctx;
         SSL* ssl;
         BIO* read_bio;
         BIO* write_bio;

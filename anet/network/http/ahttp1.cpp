@@ -839,7 +839,6 @@ namespace plan9
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
                 http->set_connect_end_time();
-                http->set_local_info();
                 if (http->is_ssl_connect()) {
                     //HTTPS
                     auto ssl = uv_wrapper::get_ssl_impl_by_tcp_id(http->tcp_id);
@@ -894,6 +893,7 @@ namespace plan9
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
                 http->set_request_start_time();
+                http->set_local_info();
                 http->process_event(SEND);
                 http->send();
             }
@@ -924,7 +924,6 @@ namespace plan9
         struct read_begin_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
                 ahttp_impl* http = (ahttp_impl*)fsm;
-                http->set_response_start_time();
                 http->process_event(RECV);
             }
 
@@ -1019,7 +1018,7 @@ namespace plan9
                     }
                     impl->process_event(PUSH_WAITING_QUEUE);
                 } else {
-                    if (reused && size == 0) {
+                    if (reused) {
                         assign_reused_tcp(impl);
                     } else {
                         push_unconnect_queue(impl);
@@ -1093,6 +1092,9 @@ namespace plan9
                         }, [=](int tcp_id, std::shared_ptr<char> data, int len) {
                             ahttp_impl* http = get_http(tcp_id);
                             if (http) {
+                                if (http->response->get_response_length() == 0) {
+                                    http->set_response_start_time();
+                                }
                                 bool finish = http->response->append_response_data(data, len);
                                 if (finish) {
                                     http->process_event(RECV_FINISH);
@@ -1431,7 +1433,7 @@ namespace plan9
 
         bool is_reused_tcp() {
             int size;
-            return mgr->is_reused_tcp(this, &size) && size == 0;
+            return mgr->is_reused_tcp(this, &size) && size > 0;
         }
 
         void remove_http() {

@@ -513,7 +513,7 @@ namespace plan9 {
             char ip[30];
             uv_ip4_name(in, ip, 30);
             content->local_ip = std::string(ip);
-            content->local_port = in->sin_port;
+            content->local_port = ntohs(in->sin_port);
             if (handle->type == UV_CONNECT) {
                 if (status >= 0) {
                     auto tcp_handle = content->tcp;
@@ -686,7 +686,6 @@ namespace plan9 {
     }
 
     void uv_wrapper::write(int tcp_id, std::shared_ptr<char> data, int len, std::function<void(std::shared_ptr<common_callback>)> callback) {
-        std::cout << "write data size " << len << std::endl;
         if (tcp_id_2_content.find(tcp_id) != tcp_id_2_content.end()) {
             auto content = tcp_id_2_content[tcp_id];
             if (content->tcp != nullptr) {

@@ -442,7 +442,6 @@ namespace plan9 {
 
 
     static void read_callback(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf) {
-        std::cout << "read data size " << nread << std::endl;
         if (handle != nullptr && handle->data != nullptr) {
             uv_content_s* content = (uv_content_s*)(handle->data);
             if (content->ssl_enable && content->ssl_impl) {
@@ -484,19 +483,21 @@ namespace plan9 {
     }
 
     static void alloc_callback(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-//        if (handle != nullptr && handle->data != nullptr) {
-//            uv_content_s* content = (uv_content_s*)handle->data;
-//            static int default_size = 64 * 1024;
-//            if (content->read_buf == nullptr) {
-//                uv_buf_t* b = new uv_buf_t;
-//                b->base = (char*)malloc(default_size);
-//                b->len = default_size;
-//                content->read_buf = b;
-//            }
-//            *buf = *(content->read_buf);
-//        } else {
-            *buf = uv_buf_init((char*)malloc(suggested_size), suggested_size);
-//        }
+        if (handle != nullptr && handle->data != nullptr) {
+            uv_content_s* content = (uv_content_s*)handle->data;
+            static int default_size = 64 * 1024;
+            if (content->read_buf == nullptr) {
+                uv_buf_t* b = new uv_buf_t;
+                b->base = (char*)malloc(default_size);
+                b->len = default_size;
+                content->read_buf = b;
+            }
+            buf->base = content->read_buf->base;
+            buf->len = content->read_buf->len;
+        } else {
+            buf->base = (char*)malloc(suggested_size);
+            buf->len = suggested_size;
+        }
     }
 
 

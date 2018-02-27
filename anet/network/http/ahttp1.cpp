@@ -12,7 +12,6 @@
 #include "uv_wrapper.hpp"
 #include "local_proxy.h"
 #include "common_callback_err_wrapper.h"
-#include "log_interface.h"
 
 namespace plan9
 {
@@ -735,7 +734,6 @@ namespace plan9
         //开始执行请求
         struct begin_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
-                log_mgr::log<NET>(log_level::LOG_LEVEL_DEBUG, "");
                 ahttp_impl* impl = (ahttp_impl*)fsm;
                 impl->set_fetch_time();
                 auto next = [=]() {

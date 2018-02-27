@@ -6,6 +6,7 @@
 #include "ssl_shake.h"
 #include "cert.h"
 #include "tri_bool.h"
+#include "char_array.h"
 #include <openssl/ssl.h>
 #include <assert.h>
 #include <iostream>
@@ -257,30 +258,33 @@ namespace plan9
             if (SSL_is_init_finished(ssl)) {
                 if (callback) {
                     int ret = BIO_write(read_bio, data, (int)len);
-                    std::cout << "ssl will deal size " << ret << std::endl;
                     if (ret >= 0) {
-                        static int num = 1024 * 64;
-                        std::shared_ptr<char> buf(new char[num]{});
-                        int ret_read = SSL_read(ssl, buf.get(), num);
-                        std::cout << "ssl deal size " << ret << " result size " << ret_read << std::endl;
+                        static int num = 10240;
+                        auto array = std::make_shared<char_array>(num);
+                        char buf[num];
+                        int ret_read = SSL_read(ssl, buf, num);
+                        std::shared_ptr<common_callback> ccb = std::make_shared<common_callback>();
                         if (ret_read <= 0) {
                             int e = SSL_get_error(ssl, ret_read);
                             if (e == SSL_ERROR_WANT_READ) {
                                 return;
                             }
+                            if (array->get_len() < 0) {
+                                ccb->success = false;
+                                ccb->error_code = -1;
+                                ccb->reason = "ssl read error";
+                            } else if (ret_read == 0){
+                                ccb->success = false;
+                                ccb->error_code = -2;
+                                ccb->reason = "ssl close";
+                            }
+                        } else {
+                            array->append(buf, ret_read);
+                            while ((ret_read = SSL_read(ssl, buf, num)) > 0) {
+                                array->append(buf, ret_read);
+                            }
                         }
-                        std::cout << "ssl " << buf.get();
-                        std::shared_ptr<common_callback> ccb = std::make_shared<common_callback>();
-                        if (ret_read < 0) {
-                            ccb->success = false;
-                            ccb->error_code = -1;
-                            ccb->reason = "ssl read error";
-                        } else if (ret_read == 0){
-                            ccb->success = false;
-                            ccb->error_code = -2;
-                            ccb->reason = "ssl close";
-                        }
-                        callback(ccb, buf, ret_read);
+                        callback(ccb, array->get_data(), array->get_len());
                     }
                 }
             } else {

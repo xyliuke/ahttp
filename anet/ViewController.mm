@@ -445,15 +445,16 @@ void ProxyAutoConfigurationResultCallback(void *client, CFArrayRef proxyList, CF
         auto request = make_shared<ahttp_request>();
         std::string url = "https://www.baidu.com";
 //        url = "https://cn.bing.com/";
-//        url = "https://api.chesupai.cn/customer/index/data/?idfa=01D4B665-11AB-45FA-A8EB-2172CA06A566&osv=iOS11.2&net=data&screenWH=750%2C1334&deviceId=FDAB131D-04B6-475A-8C82-A48FC5EA4FEE&city_id=12&platform=1&dpi=326&versionId=2.9.0&deviceModel=iPhone&page_size=20&model=x86_64&sign=4b1a809279223c733a2acd097d34a1eb";
+        url = "https://api.chesupai.cn/customer/index/data/?idfa=01D4B665-11AB-45FA-A8EB-2172CA06A566&osv=iOS11.2&net=data&screenWH=750%2C1334&deviceId=FDAB131D-04B6-475A-8C82-A48FC5EA4FEE&city_id=12&platform=1&dpi=326&versionId=2.9.0&deviceModel=iPhone&page_size=20&model=x86_64&sign=4b1a809279223c733a2acd097d34a1eb";
 //        url = "http://api.chesupai.cn/customer/detail/info?id=1429449&idfa=11BFBC7A-98EF-4B37-A216-E8DAF0ABAB8B&osv=iOS8.1&net=wifi&screenWH=750%252C1334&deviceId=3200A4C2-C469-469D-A42A-920B1A5A0216&deviceModel=iPhoneSimulator&platform=1&dpi=326&versionId=2.7.3&model=x86_64&pushTYpe=0&sign=9102c932d5e96cd5129b1c35f9baee28";
-//        url = "https://api.chesupai.cn";
+        url = "https://api.chesupai.cn";
 //        url = "https://weibo.com";
         request->set_url(url);
+//        request->append_header("Accept-Encoding", "gzip");
 //        request->set_timeout(1);
 //        http->set_low_priority();
         http->set_debug_mode(true, [](std::string msg) {
-            std::cout << msg << std::endl;
+//            std::cout << msg << std::endl;
         });
 //        http->set_dns_resolve([=](std::string url, int port , std::function<void(std::shared_ptr<common_callback>, std::shared_ptr<std::vector<std::string>>)> callback){
 //            if (callback) {

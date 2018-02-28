@@ -7,6 +7,7 @@
 #include <set>
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 #include "ahttp1.h"
 #include "state_machine.h"
 #include "uv_wrapper.hpp"
@@ -134,7 +135,7 @@ namespace plan9
     class http_info {
     public:
 
-        http_info() : info(std::make_shared<std::map<std::string, std::string>>()) {
+        http_info() : info(std::make_shared<std::map<std::string, std::string>>()), fetch(0) {
 
         }
 
@@ -224,6 +225,12 @@ namespace plan9
             push("response_bytes", ss.str());
         }
 
+        void set_raw_response_data_size(unsigned long size) {
+            std::stringstream ss;
+            ss << size;
+            push("raw_response_bytes", ss.str());
+        }
+
         void set_local_ip_port(std::string ip, int port) {
             std::stringstream ss;
             ss << ip;
@@ -238,6 +245,10 @@ namespace plan9
             ss << ":";
             ss << port;
             push("local", ss.str());
+        }
+
+        void set_compress_rate(float rate) {
+            push("compress_rate", rate);
         }
 
         std::shared_ptr<std::map<std::string, std::string>> get_info() {
@@ -260,6 +271,12 @@ namespace plan9
                 (*info)[key] = value;
             }
         }
+        void push(std::string key, float value) {
+            std::ostringstream ss;
+            ss << std::setprecision(2);
+            ss << value;
+            push(key, ss.str());
+        }
         long fetch;
     };
 
@@ -272,122 +289,71 @@ namespace plan9
             count ++;
             //1
             STATE_MACHINE_ADD_ROW(this, init_state, PUSH_WAITING_QUEUE, wait_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //2
             STATE_MACHINE_ADD_ROW(this, init_state, FETCH, begin_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //3
             STATE_MACHINE_ADD_ROW(this, wait_state, FETCH, begin_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //4
             STATE_MACHINE_ADD_ROW(this, begin_state, READY_DNS, dns_begin_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //5
             STATE_MACHINE_ADD_ROW(this, dns_begin_state, DNS_RESOLVE, dns_ing_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //6
             STATE_MACHINE_ADD_ROW(this, dns_ing_state, DNS_RESOLVE_OK, dns_end_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //7
             STATE_MACHINE_ADD_ROW(this, dns_end_state, READY_CONNECT, connect_begin_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //8
             STATE_MACHINE_ADD_ROW(this, connect_begin_state, OPEN, connecting_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //9
             STATE_MACHINE_ADD_ROW(this, connecting_state, OPEN_SUCCESS, connected_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //10
             STATE_MACHINE_ADD_ROW(this, connected_state, SSL_CONNECT, ssl_ing_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //11
             STATE_MACHINE_ADD_ROW(this, ssl_ing_state, SSL_CONNECT_SUCCESS, ssl_end_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //12
             STATE_MACHINE_ADD_ROW(this, ssl_end_state, READY_SEND, send_begin_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //13
             STATE_MACHINE_ADD_ROW(this, send_begin_state, SEND, send_ing_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //14
             STATE_MACHINE_ADD_ROW(this, send_ing_state, SEND_FINISH, send_end_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //15
             STATE_MACHINE_ADD_ROW(this, send_end_state, READY_RECV, read_begin_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //16
             STATE_MACHINE_ADD_ROW(this, read_begin_state, RECV, read_ing_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //17
             STATE_MACHINE_ADD_ROW(this, read_ing_state, RECV_FINISH, read_end_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //18
             STATE_MACHINE_ADD_ROW(this, read_end_state, FINISH, end_state, [=](state_machine* fsm) -> bool {
@@ -399,73 +365,43 @@ namespace plan9
             });
             //20
             STATE_MACHINE_ADD_ROW(this, begin_state, READY_CONNECT, connect_begin_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //21
             STATE_MACHINE_ADD_ROW(this, connecting_state, CLOSE, disconnect_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //22
             STATE_MACHINE_ADD_ROW(this, disconnect_state, SWITCH_IP, dns_end_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //23
             STATE_MACHINE_ADD_ROW(this, disconnect_state, RETRY, connect_begin_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //24
             STATE_MACHINE_ADD_ROW(this, connected_state, READY_SEND, send_begin_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //25
             STATE_MACHINE_ADD_ROW(this, ssl_ing_state, CLOSE, disconnect_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //26
             STATE_MACHINE_ADD_ROW(this, begin_state, READY_SEND, send_begin_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //27
             STATE_MACHINE_ADD_ROW(this, read_end_state, REDIRECT_INNER, send_begin_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //28
             STATE_MACHINE_ADD_ROW(this, read_end_state, FORWARD, send_begin_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //29
             STATE_MACHINE_ADD_ROW(this, read_end_state, REDIRECT_OUTER, begin_state, [=](state_machine* fsm) -> bool {
-                if (fsm->is_current_state<end_state>()) {
-                    return false;
-                }
-                return true;
+                return !(fsm->is_current_state<end_state>());
             });
             //30
             STATE_MACHINE_ADD_ROW(this, disconnect_state, GIVE_UP, end_state, [=](state_machine* fsm) -> bool {
@@ -721,7 +657,7 @@ namespace plan9
             }
 
             void on_exit(std::string event, state_machine *fsm) override {
-                ahttp_impl* http = (ahttp_impl*)fsm;
+                auto http = (ahttp_impl*)fsm;
                 //添加超时功能
 //                if (http->request->get_timeout() > 0) {
 //                    http->timer_id = uv_wrapper::post_timer([http](){
@@ -734,7 +670,7 @@ namespace plan9
         //开始执行请求
         struct begin_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
-                ahttp_impl* impl = (ahttp_impl*)fsm;
+                auto impl = (ahttp_impl*)fsm;
                 impl->set_fetch_time();
                 auto next = [=]() {
                     impl->request->set_uesd_proxy(ahttp_impl::is_use_proxy());
@@ -781,7 +717,7 @@ namespace plan9
         };
         struct dns_begin_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
-                ahttp_impl* http = (ahttp_impl*)fsm;
+                auto http = (ahttp_impl*)fsm;
                 http->set_dns_start_time();
                 http->process_event(DNS_RESOLVE);
                 http->resolve();
@@ -801,7 +737,7 @@ namespace plan9
         //dns解析完成
         struct dns_end_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
-                ahttp_impl* impl = (ahttp_impl*)fsm;
+                auto impl = (ahttp_impl*)fsm;
                 if (event == SWITCH_IP) {
                     //换下一个IP
                     impl->change_ip();
@@ -817,7 +753,7 @@ namespace plan9
         //连接中
         struct connect_begin_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
-                ahttp_impl* http = (ahttp_impl*)fsm;
+                auto http = (ahttp_impl*)fsm;
                 http->set_connect_start_time();
                 http->process_event(OPEN);
                 http->connect();
@@ -837,7 +773,7 @@ namespace plan9
         //连接完成
         struct connected_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
-                ahttp_impl* http = (ahttp_impl*)fsm;
+                auto http = (ahttp_impl*)fsm;
                 http->set_connect_end_time();
                 if (http->is_ssl_connect()) {
                     //HTTPS
@@ -860,7 +796,7 @@ namespace plan9
         //断开连接
         struct disconnect_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
-                ahttp_impl* http = (ahttp_impl*)fsm;
+                auto http = (ahttp_impl*)fsm;
                 http->process_event(GIVE_UP);
             }
 
@@ -870,7 +806,7 @@ namespace plan9
         //ssl ing
         struct ssl_ing_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
-                ahttp_impl* http = (ahttp_impl*)fsm;
+                auto http = (ahttp_impl*)fsm;
                 http->set_ssl_start_time();
             }
 
@@ -880,7 +816,7 @@ namespace plan9
         //ssl end
         struct ssl_end_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
-                ahttp_impl* http = (ahttp_impl*)fsm;
+                auto http = (ahttp_impl*)fsm;
                 http->set_ssl_end_time();
                 http->process_event(READY_SEND);
             }
@@ -891,7 +827,7 @@ namespace plan9
         //发送数据中
         struct send_begin_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
-                ahttp_impl* http = (ahttp_impl*)fsm;
+                auto http = (ahttp_impl*)fsm;
                 http->set_request_start_time();
                 http->set_local_info();
                 http->process_event(SEND);
@@ -912,7 +848,7 @@ namespace plan9
         //发送数据结束
         struct send_end_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
-                ahttp_impl* http = (ahttp_impl*)fsm;
+                auto http = (ahttp_impl*)fsm;
                 http->set_request_end_time();
                 http->process_event(READY_RECV);
             }
@@ -923,7 +859,7 @@ namespace plan9
         //读取数据中
         struct read_begin_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
-                ahttp_impl* http = (ahttp_impl*)fsm;
+                auto http = (ahttp_impl*)fsm;
                 http->process_event(RECV);
             }
 
@@ -941,7 +877,7 @@ namespace plan9
         //读取数据结束
         struct read_end_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
-                ahttp_impl* http = (ahttp_impl*)fsm;
+                auto http = (ahttp_impl*)fsm;
                 //TODO 判断Redirect/Forward情况
                 if (event == REDIRECT_OUTER || event == REDIRECT_INNER || event == FORWARD) {
 
@@ -958,7 +894,7 @@ namespace plan9
         //请求结束状态
         struct end_state : public state {
             void on_entry(std::string event, state_machine *fsm) override {
-                ahttp_impl* http = (ahttp_impl*)fsm;
+                auto http = (ahttp_impl*)fsm;
                 if (event != TIME_OUT) {
                     http->cancel_timer();
                 }
@@ -1074,35 +1010,36 @@ namespace plan9
 
             void connect(ahttp_impl* impl) {
                 int tcp_id = uv_wrapper::connect(get_ip(impl), get_port(impl), impl->is_ssl_connect(), impl->request->get_domain(),
-                        [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
+                        [=](std::shared_ptr<common_callback> ccb, int tcp_id_) {
                             impl->ccb = ccb;
                             if (ccb->success) {
-                                impl->tcp_id = tcp_id;
+                                impl->tcp_id = tcp_id_;
                                 impl->process_event(OPEN_SUCCESS);
                             } else {
                                 impl->process_event(CLOSE);
                             }
-                        }, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
+                        }, [=](std::shared_ptr<common_callback> ccb, int tcp_id_) {
                             impl->ccb = ccb;
                             if (ccb->success) {
                                 impl->process_event(SSL_CONNECT_SUCCESS);
                             } else {
                                 impl->process_event(CLOSE);
                             }
-                        }, [=](int tcp_id, std::shared_ptr<char> data, int len) {
-                            ahttp_impl* http = get_http(tcp_id);
+                        }, [=](int tcp_id_, std::shared_ptr<char> data, int len, unsigned long total_raw_len) {
+                            ahttp_impl* http = get_http(tcp_id_);
                             if (http) {
                                 if (http->response->get_response_length() == 0) {
                                     http->set_response_start_time();
                                 }
                                 bool finish = http->response->append_response_data(data, len);
                                 if (finish) {
+                                    http->set_raw_response_data_size(total_raw_len);
                                     http->process_event(RECV_FINISH);
                                 }
                             }
-                        }, [=](std::shared_ptr<common_callback> ccb, int tcp_id) {
+                        }, [=](std::shared_ptr<common_callback> ccb, int tcp_id_) {
                             impl->ccb = ccb;
-                            close(tcp_id);
+                            close(tcp_id_);
                         });
                 impl->tcp_id = tcp_id;
                 push(tcp_id, impl);
@@ -1128,7 +1065,7 @@ namespace plan9
             void remove_top_http(int tcp_id) {
                 if (tcp_http->find(tcp_id) != tcp_http->end()) {
                     auto list = (*tcp_http)[tcp_id];
-                    if (list->size() > 0) {
+                    if (!list->empty()) {
                         list->erase(list->begin());
                     }
                 }
@@ -1159,7 +1096,7 @@ namespace plan9
                 ahttp_impl* http = nullptr;
                 if (tcp_http->find(tcp_id) != tcp_http->end()) {
                     auto list = (*tcp_http)[tcp_id];
-                    if (list->size() > 0) {
+                    if (!list->empty()) {
                         auto h = (*list)[0];
                         if (h) {
                             http = h;
@@ -1168,7 +1105,7 @@ namespace plan9
                         //去未连接队列中查找
                         std::string host = get_host(tcp_id);
                         if (host != "") {
-                            if (url_http_unconnect->size() > 0 && url_http_unconnect->find(host) != url_http_unconnect->end()) {
+                            if (!url_http_unconnect->empty() && url_http_unconnect->find(host) != url_http_unconnect->end()) {
                                 auto list = (*url_http_unconnect)[host];
                                 if (list->size() > 0) {
                                     auto it = list->begin();
@@ -1222,7 +1159,7 @@ namespace plan9
             }
             void assign_reused_tcp(ahttp_impl* http) {
                 auto tcp_ids = (*url_tcp)[http->get_uni_domain()];
-                if (tcp_ids->size() > 0) {
+                if (tcp_ids && !tcp_ids->empty()) {
                     auto it = tcp_ids->begin();
                     int tcp_id_task_min_num = -1;
                     int tcp_id_ret = -1;
@@ -1276,7 +1213,7 @@ namespace plan9
             ahttp_impl* get_http(int tcp_id) {
                 if (tcp_http->find(tcp_id) != tcp_http->end()) {
                     auto list = (*tcp_http)[tcp_id];
-                    if (list->size() > 0) {
+                    if (!list->empty()) {
                         return (*list)[0];
                     }
                 }
@@ -1549,6 +1486,13 @@ namespace plan9
         void set_response_data_size() {
             if (debug_mode) {
                 info->set_response_data_size((int)response->get_response_length());
+                info->set_compress_rate(response->get_compress_rate());
+            }
+        }
+
+        void set_raw_response_data_size(unsigned long bytes) {
+            if (debug_mode) {
+                info->set_raw_response_data_size(bytes);
             }
         }
 
@@ -1587,8 +1531,8 @@ namespace plan9
                 time = cur;
                 local_proxy::get_proxy([=](std::shared_ptr<std::map<std::string, std::string>> proxy){
                     if (proxy->find("HTTPPort") != proxy->end() && proxy->find("HTTPProxy") != proxy->end()) {
-                        std::string port = proxy->at("HTTPPort");
-                        proxy_host = proxy->at("HTTPProxy");
+                        std::string port = (*proxy)["HTTPPort"];
+                        proxy_host = (*proxy)["HTTPProxy"];
                         proxy_port = atoi(port.c_str());
                     } else {
                         proxy_host = "";

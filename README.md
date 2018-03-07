@@ -14,12 +14,12 @@ ahttp是一个学习http client的库，完成了一些基本功能。本工程�
 - 一个简单的状态机实现
 - HTTP库使用状态机来实现
 - 实现HTTP库请求失败的原因
+- 编译成IOS可用的静态库
 
 待实现功能：
 - HTTP的Redirect/Forward协议
 - HTTP的connect方法
 - 断点上传功能
-- 编译成IOS可用的静态库
 - 实现Android环境下的自动使用代理功能和证书校验功能
 - 编译成Android可用的SO库
 - 支持HTTP2
